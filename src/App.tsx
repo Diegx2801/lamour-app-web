@@ -6,6 +6,7 @@ import GallerySection from "./components/home/GallerySection"
 import ServicesSection from "./components/home/ServicesSection"
 import PromosSection from "./components/home/PromosSection"
 import ReviewsSection from "./components/home/ReviewsSection"
+import HoursSection from "./components/home/HoursSection"
 import ContactSection from "./components/home/ContactSection"
 import FloatingWhatsApp from "./components/common/FloatingWhatsApp"
 
@@ -19,6 +20,7 @@ function App() {
       <ServicesSection />
       <PromosSection />
       <ReviewsSection />
+      <HoursSection />
       <ContactSection />
       <Footer />
       <FloatingWhatsApp />
