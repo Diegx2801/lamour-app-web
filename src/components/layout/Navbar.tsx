@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { Link } from "react-router"
 
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
@@ -12,6 +13,7 @@ function Navbar() {
           <p className="text-xs uppercase tracking-[0.35em] text-stone-500">
             Trujillo
           </p>
+
           <a
             href="#inicio"
             className="text-2xl font-semibold tracking-tight text-stone-950"
@@ -40,14 +42,12 @@ function Navbar() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <a
-            href="https://wa.me/51957230015"
-            target="_blank"
-            rel="noreferrer"
+          <Link
+            to="/reservar"
             className="hidden rounded-full bg-stone-950 px-5 py-3 text-sm font-medium text-white transition hover:opacity-90 md:inline-block"
           >
             Reservar ahora
-          </a>
+          </Link>
 
           <button
             type="button"
@@ -80,14 +80,13 @@ function Navbar() {
               Contacto
             </a>
 
-            <a
-              href="https://wa.me/51957230015"
-              target="_blank"
-              rel="noreferrer"
+            <Link
+              to="/reservar"
+              onClick={closeMenu}
               className="mt-2 inline-block rounded-full bg-stone-950 px-5 py-3 text-center text-sm font-medium text-white"
             >
               Reservar ahora
-            </a>
+            </Link>
           </nav>
         </div>
       )}

@@ -1,15 +1,17 @@
+import { Link } from "react-router"
+
 function HeroSection() {
   return (
     <section
       id="inicio"
-      className="mx-auto max-w-7xl px-6 py-20 grid md:grid-cols-2 gap-10"
+      className="mx-auto grid max-w-7xl gap-10 px-6 py-20 md:grid-cols-2"
     >
       <div>
-        <p className="uppercase text-sm tracking-[0.3em] text-stone-500">
+        <p className="text-sm uppercase tracking-[0.3em] text-stone-500">
           Cejas · Pestañas · Faciales
         </p>
 
-        <h1 className="mt-5 text-5xl md:text-6xl font-semibold leading-tight">
+        <h1 className="mt-5 text-5xl font-semibold leading-tight md:text-6xl">
           Belleza simple, elegante y lista para reservar.
         </h1>
 
@@ -19,23 +21,23 @@ function HeroSection() {
         </p>
 
         <div className="mt-8 flex gap-4">
-          <a
-            href="https://wa.me/51957230015"
-            className="bg-black text-white px-6 py-3 rounded-full"
+          <Link
+            to="/reservar"
+            className="rounded-full bg-black px-6 py-3 text-white"
           >
             Reservar ahora
-          </a>
+          </Link>
 
           <a
             href="#servicios"
-            className="border px-6 py-3 rounded-full"
+            className="rounded-full border px-6 py-3"
           >
             Ver servicios
           </a>
         </div>
       </div>
 
-      <div className="bg-[#e7ddd1] rounded-3xl p-10 flex items-end">
+      <div className="flex items-end rounded-3xl bg-[#e7ddd1] p-10">
         <p className="text-xl font-medium">
           Estética premium minimalista tipo Fresha
         </p>
