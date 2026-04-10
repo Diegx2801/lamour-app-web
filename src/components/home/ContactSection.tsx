@@ -2,6 +2,8 @@ function ContactSection() {
   return (
     <section id="contacto" className="mx-auto max-w-7xl px-6 pb-20 pt-8">
       <div className="grid gap-6 md:grid-cols-2">
+
+        {/* IZQUIERDA - INFO */}
         <div className="rounded-[2rem] bg-white p-8 shadow-sm">
           <p className="text-xs uppercase tracking-[0.35em] text-stone-500">
             Contáctanos
@@ -28,7 +30,8 @@ function ContactSection() {
             </p>
 
             <p>
-              <span className="font-semibold text-stone-900">Ciudad:</span> Trujillo
+              <span className="font-semibold text-stone-900">Ciudad:</span>{" "}
+              Trujillo
             </p>
           </div>
 
@@ -37,7 +40,7 @@ function ContactSection() {
               href="https://wa.me/51957230015"
               target="_blank"
               rel="noreferrer"
-              className="rounded-full bg-stone-950 px-6 py-3 text-sm font-medium text-white"
+              className="rounded-full bg-stone-950 px-6 py-3 text-sm font-medium text-white transition hover:opacity-90"
             >
               Ir a WhatsApp
             </a>
@@ -46,30 +49,33 @@ function ContactSection() {
               href="https://instagram.com/lamour.bs"
               target="_blank"
               rel="noreferrer"
-              className="rounded-full border border-stone-300 px-6 py-3 text-sm font-medium text-stone-800"
+              className="rounded-full border border-stone-300 px-6 py-3 text-sm font-medium text-stone-800 transition hover:bg-stone-100"
             >
               Ver Instagram
+            </a>
+
+            <a
+              href="https://maps.app.goo.gl/D26AhbnPBhXwTqmP9"
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-full border border-stone-300 px-6 py-3 text-sm font-medium text-stone-800 transition hover:bg-stone-100"
+            >
+              Cómo llegar
             </a>
           </div>
         </div>
 
-        <div className="rounded-[2rem] border border-dashed border-stone-300 bg-[#f2ebe2] p-8">
-          <p className="text-xs uppercase tracking-[0.35em] text-stone-500">
-            Resumen
-          </p>
-
-          <h2 className="mt-3 text-3xl font-semibold text-stone-950">
-            Lo que esta versión ya resuelve
-          </h2>
-
-          <ul className="mt-6 space-y-3 text-sm leading-7 text-stone-700">
-            <li>• Presentación elegante de la marca</li>
-            <li>• Catálogo organizado por categorías reales</li>
-            <li>• Promociones visibles</li>
-            <li>• Datos de contacto claros</li>
-            <li>• Base lista para integrar reserva y panel admin</li>
-          </ul>
+        {/* DERECHA - MAPA */}
+        <div className="rounded-[2rem] overflow-hidden shadow-sm">
+          <iframe
+            src="https://www.google.com/maps?q=Av.+Los+Ángeles+329+Trujillo&output=embed"
+            width="100%"
+            height="100%"
+            className="min-h-[300px] md:min-h-full border-0"
+            loading="lazy"
+          ></iframe>
         </div>
+
       </div>
     </section>
   )

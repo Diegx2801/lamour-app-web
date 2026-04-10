@@ -1,33 +1,96 @@
+import { useState } from "react"
+
 function Navbar() {
+  const [isOpen, setIsOpen] = useState(false)
+
+  const closeMenu = () => setIsOpen(false)
+
   return (
     <header className="sticky top-0 z-50 border-b border-stone-200/70 bg-[#f6f1e9]/90 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        
         <div>
           <p className="text-xs uppercase tracking-[0.35em] text-stone-500">
             Trujillo
           </p>
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <a
+            href="#inicio"
+            className="text-2xl font-semibold tracking-tight text-stone-950"
+            onClick={closeMenu}
+          >
             L’AMOUR.
-          </h1>
+          </a>
         </div>
 
-        <nav className="hidden md:flex gap-8 text-sm">
-          <a href="#inicio">Inicio</a>
-          <a href="#servicios">Servicios</a>
-          <a href="#promos">Promos</a>
-          <a href="#resenas">Reseñas</a>
-          <a href="#contacto">Contacto</a>
+        <nav className="hidden items-center gap-8 text-sm font-medium md:flex">
+          <a href="#inicio" className="transition hover:text-stone-500">
+            Inicio
+          </a>
+          <a href="#servicios" className="transition hover:text-stone-500">
+            Servicios
+          </a>
+          <a href="#promos" className="transition hover:text-stone-500">
+            Promos
+          </a>
+          <a href="#resenas" className="transition hover:text-stone-500">
+            Reseñas
+          </a>
+          <a href="#contacto" className="transition hover:text-stone-500">
+            Contacto
+          </a>
         </nav>
 
-        <a
-          href="https://wa.me/51957230015"
-          target="_blank"
-          className="bg-black text-white px-5 py-2 rounded-full text-sm"
-        >
-          Reservar
-        </a>
+        <div className="flex items-center gap-3">
+          <a
+            href="https://wa.me/51957230015"
+            target="_blank"
+            rel="noreferrer"
+            className="hidden rounded-full bg-stone-950 px-5 py-3 text-sm font-medium text-white transition hover:opacity-90 md:inline-block"
+          >
+            Reservar ahora
+          </a>
+
+          <button
+            type="button"
+            aria-label={isOpen ? "Cerrar menú" : "Abrir menú"}
+            aria-expanded={isOpen}
+            onClick={() => setIsOpen((prev) => !prev)}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-stone-300 bg-white text-stone-900 transition hover:bg-stone-100 md:hidden"
+          >
+            <span className="text-xl leading-none">{isOpen ? "✕" : "☰"}</span>
+          </button>
+        </div>
       </div>
+
+      {isOpen && (
+        <div className="border-t border-stone-200 bg-[#f6f1e9] px-6 py-5 md:hidden">
+          <nav className="flex flex-col gap-4 text-sm font-medium text-stone-800">
+            <a href="#inicio" onClick={closeMenu} className="transition hover:text-stone-500">
+              Inicio
+            </a>
+            <a href="#servicios" onClick={closeMenu} className="transition hover:text-stone-500">
+              Servicios
+            </a>
+            <a href="#promos" onClick={closeMenu} className="transition hover:text-stone-500">
+              Promos
+            </a>
+            <a href="#resenas" onClick={closeMenu} className="transition hover:text-stone-500">
+              Reseñas
+            </a>
+            <a href="#contacto" onClick={closeMenu} className="transition hover:text-stone-500">
+              Contacto
+            </a>
+
+            <a
+              href="https://wa.me/51957230015"
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 inline-block rounded-full bg-stone-950 px-5 py-3 text-center text-sm font-medium text-white"
+            >
+              Reservar ahora
+            </a>
+          </nav>
+        </div>
+      )}
     </header>
   )
 }
