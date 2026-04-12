@@ -9,21 +9,22 @@ import ReviewsSection from "../components/home/ReviewsSection"
 import HoursSection from "../components/home/HoursSection"
 import ContactSection from "../components/home/ContactSection"
 import FloatingWhatsApp from "../components/common/FloatingWhatsApp"
+import ServicesPreviewSection from "../components/home/ServicesPreviewSection"
 
 function HomePage() {
   return (
     <div className="min-h-screen bg-[#f6f1e9]">
-      <Navbar />
-      <HeroSection />
-      <AboutSection />
-      <GallerySection />
-      <ServicesSection />
-      <PromosSection />
-      <ReviewsSection />
-      <HoursSection />
-      <ContactSection />
-      <Footer />
-      <FloatingWhatsApp />
+    <Navbar />
+<HeroSection />
+<AboutSection />
+<ServicesPreviewSection />
+<GallerySection />
+<PromosSection />
+<ReviewsSection />
+<HoursSection />
+<ContactSection />
+<Footer />
+<FloatingWhatsApp />
     </div>
   )
 }

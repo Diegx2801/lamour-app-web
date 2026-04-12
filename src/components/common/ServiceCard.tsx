@@ -1,4 +1,11 @@
-import type { Service } from "../../types/service"
+import { Link } from "react-router"
+
+type Service = {
+  name: string
+  price: string
+  description: string
+  retouch?: string
+}
 
 type ServiceCardProps = {
   service: Service
@@ -6,32 +13,37 @@ type ServiceCardProps = {
 
 function ServiceCard({ service }: ServiceCardProps) {
   return (
-    <article className="rounded-3xl border border-stone-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
-      <div className="flex items-start justify-between gap-4">
-        <h3 className="text-lg font-semibold text-stone-950">{service.name}</h3>
-        <span className="rounded-full bg-stone-900 px-3 py-1 text-sm font-semibold text-white">
-          {service.price}
-        </span>
+    <article className="flex h-full flex-col justify-between rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl">
+      <div>
+        <div className="flex items-start justify-between gap-4">
+          <h4 className="text-2xl font-semibold text-stone-950">
+            {service.name}
+          </h4>
+
+          <span className="shrink-0 rounded-full bg-stone-950 px-4 py-2 text-sm font-medium text-white">
+            {service.price}
+          </span>
+        </div>
+
+        <p className="mt-4 min-h-[72px] text-sm leading-7 text-stone-600">
+          {service.description}
+        </p>
+
+        {service.retouch && (
+          <p className="mt-4 text-sm text-stone-600">
+            Retoque: <span className="font-medium text-stone-900">{service.retouch}</span>
+          </p>
+        )}
       </div>
 
-      <p className="mt-3 text-sm leading-6 text-stone-600">
-        {service.description}
-      </p>
-
-      {service.retouch ? (
-        <p className="mt-4 text-sm text-stone-500">
-          Retoque: <span className="font-medium text-stone-700">{service.retouch}</span>
-        </p>
-      ) : null}
-
-      <a
-        href="https://wa.me/51957230015"
-        target="_blank"
-        rel="noreferrer"
-        className="mt-5 inline-block rounded-full border border-stone-300 px-4 py-2 text-sm font-medium text-stone-800 transition hover:border-stone-900 hover:bg-stone-900 hover:text-white"
-      >
-        Reservar este servicio
-      </a>
+      <div className="mt-6">
+        <Link
+          to="/reservar"
+          className="inline-flex rounded-full border border-stone-300 px-5 py-3 text-sm font-medium text-stone-900 transition hover:bg-stone-50"
+        >
+          Reservar este servicio
+        </Link>
+      </div>
     </article>
   )
 }

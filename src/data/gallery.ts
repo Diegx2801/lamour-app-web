@@ -6,14 +6,14 @@ import pestanas1 from "../assets/pestanas1.jpg"
 import pestanas2 from "../assets/pestanas2.jpg"
 import pestanas3 from "../assets/pestanas3.jpg"
 
-type GalleryItem = {
+export type GalleryItem = {
   id: number
   image: string
   title: string
   category: string
 }
 
-const galleryItems: GalleryItem[] = [
+export const galleryItems: GalleryItem[] = [
   {
     id: 1,
     image: cejas1,
@@ -57,5 +57,3 @@ const galleryItems: GalleryItem[] = [
     category: "Pestañas",
   },
 ]
-
-export default galleryItems

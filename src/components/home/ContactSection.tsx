@@ -1,81 +1,94 @@
+import { Link } from "react-router"
+
 function ContactSection() {
   return (
-    <section id="contacto" className="mx-auto max-w-7xl px-6 pb-20 pt-8">
-      <div className="grid gap-6 md:grid-cols-2">
+    <section
+      id="contacto"
+      className="mx-auto max-w-7xl px-6 pb-20 pt-10"
+    >
+      <div className="mb-12 text-center">
+        <p className="text-xs uppercase tracking-[0.35em] text-stone-500">
+          Contacto
+        </p>
 
-        {/* IZQUIERDA - INFO */}
-        <div className="rounded-[2rem] bg-white p-8 shadow-sm">
-          <p className="text-xs uppercase tracking-[0.35em] text-stone-500">
-            Contáctanos
-          </p>
+        <h2 className="mt-3 text-3xl font-semibold text-stone-950 md:text-5xl">
+          Agenda tu experiencia L’AMOUR
+        </h2>
 
-          <h2 className="mt-3 text-3xl font-semibold text-stone-950">
-            Reserva o consulta directamente
-          </h2>
+        <p className="mt-4 text-sm text-stone-600">
+          Estamos listas para atenderte y ayudarte a elegir el servicio ideal.
+        </p>
+      </div>
 
-          <div className="mt-8 space-y-4 text-sm leading-7 text-stone-700">
-            <p>
-              <span className="font-semibold text-stone-900">Dirección:</span>{" "}
-              Av. Los Ángeles 329 (al costado de Barbarian)
+      <div className="grid gap-8 lg:grid-cols-[1fr_1.2fr]">
+        <div className="relative overflow-hidden rounded-[2rem] bg-white p-8 shadow-sm">
+          <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-[#eadfd3] blur-2xl" />
+
+          <div className="relative z-10">
+            <p className="text-sm font-medium uppercase tracking-[0.25em] text-stone-500">
+              Información
             </p>
 
-            <p>
-              <span className="font-semibold text-stone-900">WhatsApp:</span>{" "}
-              957 230 015
-            </p>
+            <div className="mt-8 space-y-5 text-sm leading-7 text-stone-700">
+              <div>
+                <p className="font-semibold text-stone-900">Dirección</p>
+                <p>Av. Los Ángeles 329, Trujillo</p>
+              </div>
 
-            <p>
-              <span className="font-semibold text-stone-900">Instagram:</span>{" "}
-              @lamour.bs
-            </p>
+              <div>
+                <p className="font-semibold text-stone-900">WhatsApp</p>
+                <p>957 230 015</p>
+              </div>
 
-            <p>
-              <span className="font-semibold text-stone-900">Ciudad:</span>{" "}
-              Trujillo
-            </p>
-          </div>
+              <div>
+                <p className="font-semibold text-stone-900">Instagram</p>
+                <p>@lamour.bs</p>
+              </div>
 
-          <div className="mt-8 flex flex-wrap gap-4">
-            <a
-              href="https://wa.me/51957230015"
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-full bg-stone-950 px-6 py-3 text-sm font-medium text-white transition hover:opacity-90"
-            >
-              Ir a WhatsApp
-            </a>
+              <div>
+                <p className="font-semibold text-stone-900">Atención</p>
+                <p>Previa reserva o coordinación</p>
+              </div>
+            </div>
 
-            <a
-              href="https://instagram.com/lamour.bs"
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-full border border-stone-300 px-6 py-3 text-sm font-medium text-stone-800 transition hover:bg-stone-100"
-            >
-              Ver Instagram
-            </a>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <a
+                href="https://wa.me/51957230015"
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-full bg-stone-950 px-5 py-3 text-sm font-medium text-white transition hover:opacity-90"
+              >
+                Escribir por WhatsApp
+              </a>
 
-            <a
-              href="https://maps.app.goo.gl/D26AhbnPBhXwTqmP9"
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-full border border-stone-300 px-6 py-3 text-sm font-medium text-stone-800 transition hover:bg-stone-100"
-            >
-              Cómo llegar
-            </a>
+              <a
+                href="https://instagram.com/lamour.bs"
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-full border border-stone-300 px-5 py-3 text-sm font-medium text-stone-900 transition hover:bg-stone-50"
+              >
+                Ver Instagram
+              </a>
+
+              <Link
+                to="/reservar"
+                className="rounded-full border border-stone-300 px-5 py-3 text-sm font-medium text-stone-900 transition hover:bg-stone-50"
+              >
+                Reservar online
+              </Link>
+            </div>
           </div>
         </div>
 
-        {/* DERECHA - MAPA */}
-        <div className="rounded-[2rem] overflow-hidden shadow-sm">
+        <div className="overflow-hidden rounded-[2rem] border border-stone-200 bg-white shadow-sm">
           <iframe
             src="https://www.google.com/maps?q=Av.+Los+Ángeles+329+Trujillo&output=embed"
             width="100%"
             height="100%"
-            className="min-h-[300px] md:min-h-full border-0"
+            className="min-h-[380px] w-full border-0"
             loading="lazy"
           ></iframe>
         </div>
-
       </div>
     </section>
   )

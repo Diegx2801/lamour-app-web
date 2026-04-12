@@ -1,5 +1,7 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Link } from "react-router"
+import { supabase } from "../lib/supabase"
+import { timeSlots } from "../data/timeSlots"
 
 type ReservationForm = {
   service: string
@@ -54,6 +56,52 @@ function ReservePage() {
   const [formData, setFormData] = useState<ReservationForm>(initialForm)
   const [error, setError] = useState("")
   const [successMessage, setSuccessMessage] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [availableSlots, setAvailableSlots] = useState<string[]>(timeSlots)
+  const [loadingSlots, setLoadingSlots] = useState(false)
+
+  useEffect(() => {
+    const fetchAvailableSlots = async () => {
+      if (!formData.date) {
+        setAvailableSlots(timeSlots)
+        return
+      }
+
+      try {
+        setLoadingSlots(true)
+
+        const { data, error } = await supabase
+          .from("appointments")
+          .select("time, status")
+          .eq("date", formData.date)
+          .neq("status", "cancelled")
+
+        if (error) {
+          throw new Error("No se pudieron cargar los horarios.")
+        }
+
+        const occupiedTimes = (data ?? []).map((item) =>
+          String(item.time).slice(0, 5)
+        )
+
+        const filteredSlots = timeSlots.filter(
+          (slot) => !occupiedTimes.includes(slot)
+        )
+
+        setAvailableSlots(filteredSlots)
+
+        if (formData.time && occupiedTimes.includes(formData.time)) {
+          setFormData((prev) => ({ ...prev, time: "" }))
+        }
+      } catch (err) {
+        setAvailableSlots(timeSlots)
+      } finally {
+        setLoadingSlots(false)
+      }
+    }
+
+    fetchAvailableSlots()
+  }, [formData.date])
 
   const handleChange = (
     event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -66,7 +114,7 @@ function ReservePage() {
     }))
   }
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
     setError("")
@@ -83,11 +131,104 @@ function ReservePage() {
       return
     }
 
-    setSuccessMessage(
-      `Reserva registrada localmente para ${formData.fullName}. Luego conectaremos este formulario con la base de datos.`
-    )
+    try {
+      setLoading(true)
 
-    setFormData(initialForm)
+      const { data: serviceRows, error: serviceError } = await supabase
+        .from("services")
+        .select("*")
+        .eq("name", formData.service)
+
+      const serviceData = serviceRows?.[0]
+
+      if (serviceError || !serviceData) {
+        throw new Error("No se encontró el servicio seleccionado.")
+      }
+
+      const { data: existingClient, error: clientFetchError } = await supabase
+        .from("clients")
+        .select("*")
+        .eq("phone", formData.phone)
+        .maybeSingle()
+
+      if (clientFetchError) {
+        throw new Error("Error al verificar cliente.")
+      }
+
+      let clientId = existingClient?.id
+
+      if (!clientId) {
+        const { data: newClient, error: clientInsertError } = await supabase
+          .from("clients")
+          .insert([
+            {
+              full_name: formData.fullName,
+              phone: formData.phone,
+            },
+          ])
+          .select()
+          .single()
+
+        if (clientInsertError || !newClient) {
+          throw new Error("No se pudo registrar el cliente.")
+        }
+
+        clientId = newClient.id
+      }
+
+      const { data: existingAppointments, error: appointmentCheckError } =
+        await supabase
+          .from("appointments")
+          .select("*")
+          .eq("date", formData.date)
+          .eq("time", formData.time)
+          .neq("status", "cancelled")
+
+      if (appointmentCheckError) {
+        throw new Error("Error al verificar disponibilidad del horario.")
+      }
+
+      if (existingAppointments && existingAppointments.length > 0) {
+        throw new Error("Este horario ya está ocupado.")
+      }
+
+      const totalPrice = Number(serviceData.price)
+      const depositAmount = 10
+      const remainingAmount = totalPrice - depositAmount
+
+      const { error: appointmentError } = await supabase
+        .from("appointments")
+        .insert([
+          {
+            client_id: clientId,
+            service_id: serviceData.id,
+            date: formData.date,
+            time: formData.time,
+            status: "pending",
+            notes: formData.notes,
+            total_price: totalPrice,
+            deposit_amount: depositAmount,
+            remaining_amount: remainingAmount,
+          },
+        ])
+
+      if (appointmentError) {
+        throw new Error("No se pudo registrar la reserva.")
+      }
+
+      setSuccessMessage(
+        "Reserva registrada correctamente. Para confirmar tu cita, realiza un abono de S/ 10 y envía tu comprobante."
+      )
+
+      setFormData(initialForm)
+      setAvailableSlots(timeSlots)
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Ocurrió un error inesperado."
+      setError(message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -181,13 +322,29 @@ function ReservePage() {
                 <label className="mb-2 block text-sm font-medium text-stone-800">
                   Hora *
                 </label>
-                <input
-                  type="time"
+                <select
                   name="time"
                   value={formData.time}
                   onChange={handleChange}
-                  className="w-full rounded-2xl border border-stone-300 px-4 py-3 outline-none"
-                />
+                  disabled={!formData.date || loadingSlots}
+                  className="w-full rounded-2xl border border-stone-300 px-4 py-3 outline-none disabled:bg-stone-100"
+                >
+                  <option value="">
+                    {!formData.date
+                      ? "Primero selecciona una fecha"
+                      : loadingSlots
+                      ? "Cargando horarios..."
+                      : availableSlots.length === 0
+                      ? "No hay horarios disponibles"
+                      : "Selecciona una hora"}
+                  </option>
+
+                  {availableSlots.map((slot) => (
+                    <option key={slot} value={slot}>
+                      {slot}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -219,9 +376,10 @@ function ReservePage() {
 
             <button
               type="submit"
-              className="rounded-full bg-stone-950 px-6 py-3 text-sm font-medium text-white transition hover:opacity-90"
+              disabled={loading}
+              className="rounded-full bg-stone-950 px-6 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-60"
             >
-              Solicitar reserva
+              {loading ? "Registrando..." : "Solicitar reserva"}
             </button>
           </form>
         </div>
