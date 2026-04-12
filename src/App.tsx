@@ -2,13 +2,13 @@ import { Route, Routes } from "react-router"
 import HomePage from "./pages/HomePage"
 import ReservePage from "./pages/ReservePage"
 import ServicesPage from "./pages/ServicesPage"
-
+import AdminPaymentsPage from "./pages/AdminPaymentsPage"
 import AdminLoginPage from "./pages/AdminLoginPage"
 import AdminDashboardPage from "./pages/AdminDashboardPage"
 import AdminReservationsPage from "./pages/AdminReservationsPage"
 import AdminCreateReservationPage from "./pages/AdminCreateReservationPage"
 import AdminAgendaPage from "./pages/AdminAgendaPage"
-
+import AdminEditReservationPage from "./pages/AdminEditReservationPage"
 import ProtectedRoute from "./components/auth/ProtectedRoute"
 
 function App() {
@@ -37,7 +37,14 @@ function App() {
     </ProtectedRoute>
   }
 />
-
+<Route
+  path="/admin/reservas/:id"
+  element={
+    <ProtectedRoute>
+      <AdminEditReservationPage />
+    </ProtectedRoute>
+  }
+/>
 <Route
   path="/admin/crear"
   element={
@@ -46,7 +53,14 @@ function App() {
     </ProtectedRoute>
   }
 />
-
+<Route
+  path="/admin/pagos/:id"
+  element={
+    <ProtectedRoute>
+      <AdminPaymentsPage />
+    </ProtectedRoute>
+  }
+/>
       <Route
         path="/admin/agenda"
         element={

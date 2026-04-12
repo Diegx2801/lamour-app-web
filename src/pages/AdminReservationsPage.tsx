@@ -213,30 +213,46 @@ function AdminReservationsPage() {
                       </span>
                     </td>
 
-                    <td className="px-5 py-4">
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          onClick={() => updateStatus(reservation.id, "confirmed")}
-                          className="rounded-full bg-green-600 px-3 py-1 text-xs text-white"
-                        >
-                          Confirmar
-                        </button>
+                 <td className="px-5 py-4">
+  <div className="flex flex-wrap gap-2">
 
-                        <button
-                          onClick={() => updateStatus(reservation.id, "completed")}
-                          className="rounded-full bg-blue-600 px-3 py-1 text-xs text-white"
-                        >
-                          Completar
-                        </button>
+    <Link
+      to={`/admin/reservas/${reservation.id}`}
+      className="rounded-full border border-stone-300 px-3 py-1 text-xs"
+    >
+      Editar
+    </Link>
 
-                        <button
-                          onClick={() => updateStatus(reservation.id, "cancelled")}
-                          className="rounded-full bg-red-600 px-3 py-1 text-xs text-white"
-                        >
-                          Cancelar
-                        </button>
-                      </div>
-                    </td>
+    <Link
+      to={`/admin/pagos/${reservation.id}`}
+      className="rounded-full border border-stone-300 px-3 py-1 text-xs"
+    >
+      Pagos
+    </Link>
+
+    <button
+      onClick={() => updateStatus(reservation.id, "confirmed")}
+      className="rounded-full bg-green-600 px-3 py-1 text-xs text-white"
+    >
+      Confirmar
+    </button>
+
+    <button
+      onClick={() => updateStatus(reservation.id, "completed")}
+      className="rounded-full bg-blue-600 px-3 py-1 text-xs text-white"
+    >
+      Completar
+    </button>
+
+    <button
+      onClick={() => updateStatus(reservation.id, "cancelled")}
+      className="rounded-full bg-red-600 px-3 py-1 text-xs text-white"
+    >
+      Cancelar
+    </button>
+
+  </div>
+</td>
 
                     <td className="px-5 py-4 text-stone-700">
                       S/ {Number(reservation.total_price ?? 0).toFixed(2)}
