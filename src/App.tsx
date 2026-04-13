@@ -9,6 +9,7 @@ import AdminReservationsPage from "./pages/AdminReservationsPage"
 import AdminCreateReservationPage from "./pages/AdminCreateReservationPage"
 import AdminAgendaPage from "./pages/AdminAgendaPage"
 import AdminEditReservationPage from "./pages/AdminEditReservationPage"
+
 import ProtectedRoute from "./components/auth/ProtectedRoute"
 
 function App() {
@@ -30,37 +31,41 @@ function App() {
       />
 
       <Route
-  path="/admin/reservas"
-  element={
-    <ProtectedRoute>
-      <AdminReservationsPage />
-    </ProtectedRoute>
-  }
-/>
-<Route
-  path="/admin/reservas/:id"
-  element={
-    <ProtectedRoute>
-      <AdminEditReservationPage />
-    </ProtectedRoute>
-  }
-/>
-<Route
-  path="/admin/crear"
-  element={
-    <ProtectedRoute>
-      <AdminCreateReservationPage />
-    </ProtectedRoute>
-  }
-/>
-<Route
-  path="/admin/pagos/:id"
-  element={
-    <ProtectedRoute>
-      <AdminPaymentsPage />
-    </ProtectedRoute>
-  }
-/>
+        path="/admin/reservas"
+        element={
+          <ProtectedRoute>
+            <AdminReservationsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/reservas/:id"
+        element={
+          <ProtectedRoute>
+            <AdminEditReservationPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/crear"
+        element={
+          <ProtectedRoute>
+            <AdminCreateReservationPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/pagos/:id"
+        element={
+          <ProtectedRoute>
+            <AdminPaymentsPage />
+          </ProtectedRoute>
+        }
+      />
+
       <Route
         path="/admin/agenda"
         element={
@@ -69,6 +74,8 @@ function App() {
           </ProtectedRoute>
         }
       />
+
+  
     </Routes>
   )
 }

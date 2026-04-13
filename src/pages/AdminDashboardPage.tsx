@@ -4,18 +4,27 @@ import { supabase } from "../lib/supabase"
 
 type Stats = {
   totalReservations: number
-  totalIncome: number
-  totalDeposits: number
-  totalPending: number
+  todayReservations: number
+  todayPending: number
+  todayConfirmed: number
+  todayCompleted: number
+  todayIncome: number
+  monthIncome: number
+  totalPendingAmount: number
 }
 
 function AdminDashboardPage() {
   const [stats, setStats] = useState<Stats>({
     totalReservations: 0,
-    totalIncome: 0,
-    totalDeposits: 0,
-    totalPending: 0,
+    todayReservations: 0,
+    todayPending: 0,
+    todayConfirmed: 0,
+    todayCompleted: 0,
+    todayIncome: 0,
+    monthIncome: 0,
+    totalPendingAmount: 0,
   })
+
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
@@ -30,35 +39,62 @@ function AdminDashboardPage() {
           .select("*")
 
         if (error) {
-          throw new Error("No se pudieron cargar los datos del dashboard.")
+          throw new Error("Error cargando datos.")
         }
 
         const rows = data ?? []
 
+        const today = new Date().toISOString().split("T")[0]
+        const currentMonth = today.slice(0, 7) // YYYY-MM
+
         const totalReservations = rows.length
 
-        const totalIncome = rows
+        const todayRows = rows.filter((r) => r.date === today)
+
+        const todayReservations = todayRows.length
+
+        const todayPending = todayRows.filter(
+          (r) => r.status === "pending"
+        ).length
+
+        const todayConfirmed = todayRows.filter(
+          (r) => r.status === "confirmed"
+        ).length
+
+        const todayCompleted = todayRows.filter(
+          (r) => r.status === "completed"
+        ).length
+
+        const todayIncome = todayRows
           .filter((r) => r.status === "completed")
           .reduce((acc, r) => acc + Number(r.total_price || 0), 0)
 
-        const totalDeposits = rows
-          .filter((r) => r.status === "confirmed")
-          .reduce((acc, r) => acc + Number(r.deposit_amount || 0), 0)
-
-        const totalPending = rows
-          .filter((r) => r.status === "pending")
+        const monthIncome = rows
+          .filter(
+            (r) =>
+              r.date?.startsWith(currentMonth) &&
+              r.status === "completed"
+          )
           .reduce((acc, r) => acc + Number(r.total_price || 0), 0)
+
+        const totalPendingAmount = rows
+          .filter((r) => r.status !== "completed")
+          .reduce((acc, r) => acc + Number(r.remaining_amount || 0), 0)
 
         setStats({
           totalReservations,
-          totalIncome,
-          totalDeposits,
-          totalPending,
+          todayReservations,
+          todayPending,
+          todayConfirmed,
+          todayCompleted,
+          todayIncome,
+          monthIncome,
+          totalPendingAmount,
         })
       } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Ocurrió un error inesperado."
-        setError(message)
+        setError(
+          err instanceof Error ? err.message : "Error inesperado."
+        )
       } finally {
         setLoading(false)
       }
@@ -70,87 +106,73 @@ function AdminDashboardPage() {
   return (
     <div className="min-h-screen bg-[#f6f1e9] px-6 py-12">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-xs uppercase tracking-[0.35em] text-stone-500">
-              Panel admin
-            </p>
-            <h1 className="mt-2 text-4xl font-semibold text-stone-950">
+            <h1 className="text-4xl font-semibold text-stone-950">
               Dashboard
             </h1>
-            <p className="mt-3 text-sm leading-7 text-stone-600">
-              Resumen general de reservas, abonos e ingresos.
+            <p className="text-sm text-stone-600 mt-2">
+              Métricas del negocio en tiempo real
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-3">
-  <Link
-    to="/admin/agenda"
-    className="rounded-full border border-stone-300 px-5 py-3 text-sm font-medium text-stone-800"
-  >
-    Agenda
-  </Link>
+          <div className="flex gap-2">
+            <Link to="/admin/agenda" className="border px-4 py-2 rounded">
+              Agenda
+            </Link>
 
-  <Link
-    to="/admin/reservas"
-    className="rounded-full border border-stone-300 px-5 py-3 text-sm font-medium text-stone-800"
-  >
-    Ver reservas
-  </Link>
-
-  <Link
-    to="/"
-    className="rounded-full bg-stone-950 px-5 py-3 text-sm font-medium text-white"
-  >
-    Inicio
-  </Link>
-</div>
+            <Link to="/admin/reservas" className="border px-4 py-2 rounded">
+              Reservas
+            </Link>
+          </div>
         </div>
 
-        {loading && (
-          <div className="rounded-[2rem] bg-white p-8 text-sm text-stone-600 shadow-sm">
-            Cargando dashboard...
-          </div>
-        )}
+        {loading && <p>Cargando...</p>}
+        {error && <p className="text-red-500">{error}</p>}
 
-        {error && (
-          <div className="rounded-[2rem] border border-red-200 bg-red-50 p-8 text-sm text-red-700">
-            {error}
-          </div>
-        )}
-
-        {!loading && !error && (
+        {!loading && (
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-[2rem] bg-white p-6 shadow-sm">
-              <p className="text-sm text-stone-500">Reservas registradas</p>
-              <h2 className="mt-3 text-3xl font-semibold text-stone-950">
-                {stats.totalReservations}
-              </h2>
-            </div>
 
-            <div className="rounded-[2rem] bg-white p-6 shadow-sm">
-              <p className="text-sm text-stone-500">Ingresos completados</p>
-              <h2 className="mt-3 text-3xl font-semibold text-stone-950">
-                S/ {stats.totalIncome.toFixed(2)}
-              </h2>
-            </div>
+            <Card title="Reservas totales" value={stats.totalReservations} />
 
-            <div className="rounded-[2rem] bg-white p-6 shadow-sm">
-              <p className="text-sm text-stone-500">Abonos confirmados</p>
-              <h2 className="mt-3 text-3xl font-semibold text-stone-950">
-                S/ {stats.totalDeposits.toFixed(2)}
-              </h2>
-            </div>
+            <Card title="Reservas hoy" value={stats.todayReservations} />
 
-            <div className="rounded-[2rem] bg-white p-6 shadow-sm">
-              <p className="text-sm text-stone-500">Pendiente por cobrar</p>
-              <h2 className="mt-3 text-3xl font-semibold text-stone-950">
-                S/ {stats.totalPending.toFixed(2)}
-              </h2>
-            </div>
+            <Card title="Pendientes hoy" value={stats.todayPending} />
+
+            <Card title="Confirmadas hoy" value={stats.todayConfirmed} />
+
+            <Card title="Completadas hoy" value={stats.todayCompleted} />
+
+            <Card
+              title="Ingresos hoy"
+              value={`S/ ${stats.todayIncome.toFixed(2)}`}
+            />
+
+            <Card
+              title="Ingresos del mes"
+              value={`S/ ${stats.monthIncome.toFixed(2)}`}
+            />
+
+            <Card
+              title="Saldo pendiente"
+              value={`S/ ${stats.totalPendingAmount.toFixed(2)}`}
+            />
+
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+function Card({ title, value }: { title: string; value: any }) {
+  return (
+    <div className="rounded-2xl bg-white p-6 shadow-sm">
+      <p className="text-sm text-stone-500">{title}</p>
+      <h2 className="mt-3 text-3xl font-semibold text-stone-950">
+        {value}
+      </h2>
     </div>
   )
 }

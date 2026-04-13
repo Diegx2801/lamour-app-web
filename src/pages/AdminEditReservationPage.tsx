@@ -2,6 +2,29 @@ import { useEffect, useState } from "react"
 import { Link, useNavigate, useParams } from "react-router"
 import { supabase } from "../lib/supabase"
 import { timeSlots } from "../data/timeSlots"
+import { getAvailableLashTimeSlots, hasCapacityForLashes } from "../lib/availability"
+
+type ReservationData = {
+  id: string
+  date: string
+  time: string
+  status: string
+  notes: string | null
+  services: {
+    id: string
+    name: string
+    category: string | null
+    duration_minutes: number | null
+  } | null
+}
+
+type AppointmentAvailabilityRow = {
+  date: string
+  time: string
+  status: string
+  serviceCategory: string | null
+  durationMinutes: number | null
+}
 
 function AdminEditReservationPage() {
   const { id } = useParams()
@@ -18,6 +41,7 @@ function AdminEditReservationPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
   const [availableSlots, setAvailableSlots] = useState<string[]>(timeSlots)
+  const [selectedServiceData, setSelectedServiceData] = useState<ReservationData["services"] | null>(null)
 
   useEffect(() => {
     const fetchReservation = async () => {
@@ -27,7 +51,19 @@ function AdminEditReservationPage() {
 
         const { data, error } = await supabase
           .from("appointments")
-          .select("id, date, time, status, notes")
+          .select(`
+            id,
+            date,
+            time,
+            status,
+            notes,
+            services (
+              id,
+              name,
+              category,
+              duration_minutes
+            )
+          `)
           .eq("id", id)
           .single()
 
@@ -35,12 +71,16 @@ function AdminEditReservationPage() {
           throw new Error("No se pudo cargar la reserva.")
         }
 
+        const reservation = data as any
+
         setForm({
-          date: data.date ?? "",
-          time: String(data.time).slice(0, 5),
-          status: data.status ?? "pending",
-          notes: data.notes ?? "",
+          date: reservation.date ?? "",
+          time: String(reservation.time).slice(0, 5),
+          status: reservation.status ?? "pending",
+          notes: reservation.notes ?? "",
         })
+
+        setSelectedServiceData(reservation.services ?? null)
       } catch (err) {
         setError(err instanceof Error ? err.message : "Ocurrió un error inesperado.")
       } finally {
@@ -63,7 +103,16 @@ function AdminEditReservationPage() {
       try {
         const { data, error } = await supabase
           .from("appointments")
-          .select("id, time, status")
+          .select(`
+            id,
+            date,
+            time,
+            status,
+            services (
+              category,
+              duration_minutes
+            )
+          `)
           .eq("date", form.date)
           .neq("status", "cancelled")
 
@@ -71,26 +120,52 @@ function AdminEditReservationPage() {
           throw new Error("No se pudieron cargar los horarios.")
         }
 
-        const occupiedTimes = (data ?? [])
-          .filter((item) => item.id !== id)
-          .map((item) => String(item.time).slice(0, 5))
-
-        const filteredSlots = timeSlots.filter(
-          (slot) => !occupiedTimes.includes(slot)
+        const appointments: (AppointmentAvailabilityRow & { id?: string })[] = ((data ?? []) as any[]).map(
+          (item) => ({
+            id: item.id,
+            date: item.date,
+            time: String(item.time).slice(0, 5),
+            status: item.status,
+            serviceCategory: item.services?.category ?? null,
+            durationMinutes: item.services?.duration_minutes ?? null,
+          })
         )
 
-        setAvailableSlots(filteredSlots)
+        const otherAppointments = appointments.filter((item) => item.id !== id)
 
-        if (form.time && occupiedTimes.includes(form.time)) {
-          setForm((prev) => ({ ...prev, time: "" }))
+        let filteredSlots = timeSlots
+
+        if (selectedServiceData?.category === "Pestañas") {
+          filteredSlots = getAvailableLashTimeSlots(
+            otherAppointments,
+            form.date,
+            timeSlots,
+            2,
+            Number(selectedServiceData.duration_minutes ?? 120)
+          )
+        } else {
+          const occupiedTimes = otherAppointments
+            .filter((item) => item.serviceCategory !== "Pestañas")
+            .map((item) => item.time)
+
+          filteredSlots = timeSlots.filter(
+            (slot) => !occupiedTimes.includes(slot)
+          )
         }
+
+        const currentTime = form.time
+        if (currentTime && !filteredSlots.includes(currentTime)) {
+          filteredSlots = [...filteredSlots, currentTime].sort()
+        }
+
+        setAvailableSlots(filteredSlots)
       } catch {
         setAvailableSlots(timeSlots)
       }
     }
 
     fetchAvailableSlots()
-  }, [form.date, id])
+  }, [form.date, id, selectedServiceData, form.time])
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -111,24 +186,59 @@ function AdminEditReservationPage() {
     try {
       setSaving(true)
 
-      const { data: existingAppointments, error: appointmentCheckError } =
+      const { data: rawAppointments, error: appointmentCheckError } =
         await supabase
           .from("appointments")
-          .select("id")
+          .select(`
+            id,
+            date,
+            time,
+            status,
+            services (
+              category,
+              duration_minutes
+            )
+          `)
           .eq("date", form.date)
-          .eq("time", form.time)
           .neq("status", "cancelled")
 
       if (appointmentCheckError) {
         throw new Error("Error al verificar disponibilidad del horario.")
       }
 
-      const conflicting = (existingAppointments ?? []).filter(
-        (item) => item.id !== id
+      const appointments: (AppointmentAvailabilityRow & { id?: string })[] = ((rawAppointments ?? []) as any[]).map(
+        (item) => ({
+          id: item.id,
+          date: item.date,
+          time: String(item.time).slice(0, 5),
+          status: item.status,
+          serviceCategory: item.services?.category ?? null,
+          durationMinutes: item.services?.duration_minutes ?? null,
+        })
       )
 
-      if (conflicting.length > 0) {
-        throw new Error("Ese horario ya está ocupado.")
+      const otherAppointments = appointments.filter((item) => item.id !== id)
+
+      if (selectedServiceData?.category === "Pestañas") {
+        const hasCapacity = hasCapacityForLashes(
+          otherAppointments,
+          form.date,
+          form.time,
+          2,
+          Number(selectedServiceData.duration_minutes ?? 120)
+        )
+
+        if (!hasCapacity) {
+          throw new Error("Ese horario ya no tiene disponibilidad para pestañas.")
+        }
+      } else {
+        const conflicting = otherAppointments.filter(
+          (item) => item.time === form.time && item.serviceCategory !== "Pestañas"
+        )
+
+        if (conflicting.length > 0) {
+          throw new Error("Ese horario ya está ocupado.")
+        }
       }
 
       const { error } = await supabase
