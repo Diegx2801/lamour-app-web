@@ -9,6 +9,7 @@ type AgendaReservation = {
   time: string
   status: string
   notes: string | null
+  lashista: string | null
   clients: any
   services: any
 }
@@ -87,6 +88,7 @@ function AdminAgendaPage() {
             time,
             status,
             notes,
+            lashista,
             clients (full_name, phone),
             services (name, category)
           `)
@@ -384,6 +386,10 @@ function AdminAgendaPage() {
 
                             <p className="text-xs text-stone-500">
                               {client?.phone ?? "Sin teléfono"}
+                            </p>
+
+                            <p className="mt-1 text-xs text-stone-500">
+                              Lashista: {reservation.lashista ?? "Sin asignar"}
                             </p>
 
                             {reservation.notes ? (

@@ -3,6 +3,7 @@ import { Link } from "react-router"
 import { supabase } from "../lib/supabase"
 import { timeSlots } from "../data/timeSlots"
 import { categories } from "../data/services"
+import qrPago from "../assets/qr-yape.png"
 import {
   getAvailableLashTimeSlots,
   hasCapacityForLashes,
@@ -121,6 +122,7 @@ function ReservePage() {
   const [services, setServices] = useState<ServiceRow[]>([])
   const [selectedServiceData, setSelectedServiceData] = useState<ServiceRow | null>(null)
   const [submittedReservation, setSubmittedReservation] = useState<SubmittedReservation | null>(null)
+  const [activeCategory, setActiveCategory] = useState("")
 
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
@@ -249,6 +251,7 @@ function ReservePage() {
 
     fetchAvailableSlots()
   }, [formData.date, formData.time, selectedServiceData])
+  
 
   const servicePrice = useMemo(() => {
     return Number(selectedServiceData?.price ?? 0)
@@ -305,6 +308,20 @@ function ReservePage() {
       .filter((category) => category.services.length > 0)
   }, [services, serviceIdsByName])
 
+  useEffect(() => {
+  if (!categoryCards.length) {
+    setActiveCategory("")
+    return
+  }
+
+  const categoryExists = categoryCards.some(
+    (category) => category.title === activeCategory
+  )
+
+  if (!activeCategory || !categoryExists) {
+    setActiveCategory(categoryCards[0].title)
+  }
+}, [categoryCards, activeCategory])
   const whatsappMessage = useMemo(() => {
     const reservation = submittedReservation
 
@@ -683,31 +700,78 @@ Teléfono: ${reservation.phone}`
               </p>
             </div>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <a
-                href={whatsappUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-full bg-stone-950 px-6 py-3 text-center text-sm font-medium text-white transition hover:opacity-90"
-              >
-                Enviar comprobante por WhatsApp
-              </a>
+            <div className="mt-8 grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+  <div className="rounded-[2rem] border border-stone-200 bg-stone-50 p-6">
+    <p className="text-xs uppercase tracking-[0.25em] text-stone-500">
+      Paso siguiente
+    </p>
 
-              <button
-                type="button"
-                onClick={handleNewReservation}
-                className="rounded-full border border-stone-300 px-6 py-3 text-sm font-medium text-stone-800"
-              >
-                Nueva reserva
-              </button>
+    <h2 className="mt-2 text-2xl font-semibold text-stone-950">
+      Realiza tu abono de S/ 10.00
+    </h2>
 
-              <Link
-                to="/"
-                className="rounded-full border border-stone-300 px-6 py-3 text-center text-sm font-medium text-stone-800"
-              >
-                Volver al inicio
-              </Link>
-            </div>
+    <p className="mt-3 text-sm leading-6 text-stone-600">
+      Escanea el código QR y realiza el abono para confirmar tu cita. Luego
+      envía tu comprobante por WhatsApp para completar la validación.
+    </p>
+
+    <div className="mt-5 rounded-2xl bg-white p-4 text-sm text-stone-700">
+      <p>
+        <span className="font-medium">Monto a abonar:</span> S/{" "}
+        {submittedReservation.depositAmount.toFixed(2)}
+      </p>
+      <p>
+        <span className="font-medium">Saldo restante:</span> S/{" "}
+        {submittedReservation.remainingAmount.toFixed(2)}
+      </p>
+    </div>
+
+    <div className="mt-5 space-y-2 text-sm text-stone-600">
+      <p>1. Escanea el QR desde tu app de pago.</p>
+      <p>2. Realiza el abono de S/ 10.00.</p>
+      <p>3. Envía tu comprobante por WhatsApp.</p>
+      <p>4. Espera la confirmación final de tu cita.</p>
+    </div>
+  </div>
+
+  <div className="rounded-[2rem] border border-stone-200 bg-white p-6">
+    <p className="text-sm font-semibold text-stone-950">Código QR de pago</p>
+
+    <div className="mt-4 flex justify-center rounded-2xl bg-stone-50 p-4">
+      <img
+        src={qrPago}
+        alt="Código QR para abono de reserva"
+        className="h-auto w-full max-w-[280px] rounded-2xl object-contain"
+      />
+    </div>
+
+    <div className="mt-5 flex flex-col gap-3">
+      <a
+        href={whatsappUrl}
+        target="_blank"
+        rel="noreferrer"
+        className="rounded-full bg-stone-950 px-6 py-3 text-center text-sm font-medium text-white transition hover:opacity-90"
+      >
+        Enviar comprobante por WhatsApp
+      </a>
+
+      <button
+        type="button"
+        onClick={handleNewReservation}
+        className="rounded-full border border-stone-300 px-6 py-3 text-sm font-medium text-stone-800"
+      >
+        Nueva reserva
+      </button>
+
+      <Link
+        to="/"
+        className="rounded-full border border-stone-300 px-6 py-3 text-center text-sm font-medium text-stone-800"
+      >
+        Volver al inicio
+      </Link>
+    </div>
+  </div>
+</div>
           </div>
         </div>
       </div>
@@ -761,107 +825,145 @@ Teléfono: ${reservation.phone}`
             </div>
 
             <form className="grid gap-5" onSubmit={handleSubmit}>
-              {step === 1 && (
-                <div className="space-y-6">
-                  {loadingServices && (
-                    <p className="text-sm text-stone-500">Cargando servicios...</p>
-                  )}
+             {step === 1 && (
+  <div className="space-y-5">
+    {loadingServices && (
+      <p className="text-sm text-stone-500">Cargando servicios...</p>
+    )}
 
-                  {!loadingServices &&
-                    categoryCards.map((category) => (
-                      <div key={category.title}>
-                        <div className="mb-3">
-                          <h3 className="text-lg font-semibold text-stone-950">
-                            {category.title}
-                          </h3>
-                          <p className="text-sm text-stone-500">
-                            {category.subtitle}
-                          </p>
-                        </div>
+    {!loadingServices && categoryCards.length > 0 && (
+      <>
+        <div className="flex flex-wrap gap-2">
+          {categoryCards.map((category) => {
+            const isActive = activeCategory === category.title
 
-                        <div className="grid gap-3 md:grid-cols-2">
-                          {category.services.map((service) => {
-                            const isSelected = formData.serviceId === service.id
+            return (
+              <button
+                key={category.title}
+                type="button"
+                onClick={() => {
+                  setActiveCategory(category.title)
+                  setFormData((prev) => ({
+                    ...prev,
+                    serviceId: "",
+                    date: "",
+                    time: "",
+                  }))
+                  setSelectedServiceData(null)
+                  setAvailableSlots([])
+                  setError("")
+                }}
+                className={`rounded-full border px-4 py-2 text-xs font-medium transition ${
+                  isActive
+                    ? "border-stone-950 bg-stone-950 text-white"
+                    : "border-stone-300 text-stone-700 hover:border-stone-500"
+                }`}
+              >
+                {category.title}
+              </button>
+            )
+          })}
+        </div>
 
-                            return (
-                              <button
-                                key={service.id}
-                                type="button"
-                                onClick={() => handleSelectService(service.id)}
-                                className={`rounded-2xl border p-4 text-left transition ${
-                                  isSelected
-                                    ? "border-stone-950 bg-stone-950 text-white"
-                                    : "border-stone-200 bg-white hover:border-stone-400"
-                                }`}
-                              >
-                                <div className="flex items-start justify-between gap-3">
-                                  <div>
-                                    <p className="font-semibold">
-                                      {service.name}
-                                    </p>
-                                    <p
-                                      className={`mt-1 text-sm ${
-                                        isSelected
-                                          ? "text-stone-200"
-                                          : "text-stone-500"
-                                      }`}
-                                    >
-                                      {service.description}
-                                    </p>
-                                  </div>
+        {categoryCards
+          .filter((category) => category.title === activeCategory)
+          .map((category) => (
+            <div key={category.title}>
+              <div className="mb-3">
+                <h3 className="text-lg font-semibold text-stone-950">
+                  {category.title}
+                </h3>
+                <p className="text-sm text-stone-500">{category.subtitle}</p>
+              </div>
 
-                                  <span
-                                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
-                                      isSelected
-                                        ? "bg-white text-stone-950"
-                                        : "bg-stone-100 text-stone-700"
-                                    }`}
-                                  >
-                                    {service.price}
-                                  </span>
-                                </div>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {category.services.map((service) => {
+                  const isSelected = formData.serviceId === service.id
 
-                                <div
-                                  className={`mt-3 flex flex-wrap gap-2 text-xs ${
-                                    isSelected ? "text-stone-200" : "text-stone-500"
-                                  }`}
-                                >
-                                  {service.duration_minutes ? (
-                                    <span>Duración: {service.duration_minutes} min</span>
-                                  ) : null}
-                                  {service.retouch ? (
-                                    <span>Retoque: {service.retouch}</span>
-                                  ) : null}
-                                </div>
-                              </button>
-                            )
-                          })}
-                        </div>
+                  return (
+                    <button
+                      key={service.id}
+                      type="button"
+                      onClick={() => handleSelectService(service.id)}
+                      className={`rounded-xl border px-3 py-3 text-left transition ${
+                        isSelected
+                          ? "border-stone-950 bg-stone-950 text-white"
+                          : "border-stone-200 bg-white hover:border-stone-400"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-semibold leading-tight">
+                          {service.name}
+                        </p>
+
+                        <span
+                          className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-medium ${
+                            isSelected
+                              ? "bg-white text-stone-950"
+                              : "bg-stone-100 text-stone-700"
+                          }`}
+                        >
+                          {service.price}
+                        </span>
                       </div>
-                    ))}
 
-                  {selectedServiceData && (
-                    <div className="rounded-2xl bg-stone-50 p-4 text-sm text-stone-700">
-                      <p>
-                        <span className="font-semibold">Servicio:</span>{" "}
-                        {selectedServiceData.name}
+                      <p
+                        className={`mt-1 text-xs leading-tight ${
+                          isSelected ? "text-stone-200" : "text-stone-500"
+                        }`}
+                      >
+                        {service.description}
                       </p>
-                      <p>
-                        <span className="font-semibold">Precio:</span> S/{" "}
-                        {Number(selectedServiceData.price).toFixed(2)}
-                      </p>
-                      <p>
-                        <span className="font-semibold">Categoría:</span>{" "}
-                        {selectedServiceData.category ?? "Sin categoría"}
-                      </p>
-                      <p>
-                        <span className="font-semibold">Duración:</span>{" "}
-                        {selectedServiceData.duration_minutes ?? 0} min
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
+
+                      <div
+                        className={`mt-2 flex flex-wrap gap-2 text-[10px] ${
+                          isSelected ? "text-stone-200" : "text-stone-500"
+                        }`}
+                      >
+                        {service.duration_minutes ? (
+                          <span>{service.duration_minutes} min</span>
+                        ) : null}
+                        {service.retouch ? (
+                          <span>Retoque: {service.retouch}</span>
+                        ) : null}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+
+        {selectedServiceData && (
+          <div className="rounded-xl bg-stone-50 p-3 text-xs text-stone-700">
+            <p>
+              <span className="font-semibold">Servicio:</span>{" "}
+              {selectedServiceData.name}
+            </p>
+            <p>
+              <span className="font-semibold">Precio:</span> S/{" "}
+              {Number(selectedServiceData.price).toFixed(2)}
+            </p>
+            <p>
+              <span className="font-semibold">Categoría:</span>{" "}
+              {selectedServiceData.category ?? "Sin categoría"}
+            </p>
+            <p>
+              <span className="font-semibold">Duración:</span>{" "}
+              {selectedServiceData.duration_minutes ?? 0} min
+            </p>
+          </div>
+        )}
+      </>
+    )}
+
+    {!loadingServices && categoryCards.length === 0 && (
+      <div className="rounded-2xl border border-dashed border-stone-300 px-4 py-4 text-sm text-stone-500">
+        No hay servicios disponibles en este momento.
+      </div>
+    )}
+  </div>
+)}
 
               {step === 2 && (
                 <div className="space-y-5">

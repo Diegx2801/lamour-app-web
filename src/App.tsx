@@ -9,7 +9,7 @@ import AdminReservationsPage from "./pages/AdminReservationsPage"
 import AdminCreateReservationPage from "./pages/AdminCreateReservationPage"
 import AdminAgendaPage from "./pages/AdminAgendaPage"
 import AdminEditReservationPage from "./pages/AdminEditReservationPage"
-
+import AdminClientHistoryPage from "./pages/AdminClientHistoryPage"
 import ProtectedRoute from "./components/auth/ProtectedRoute"
 
 function App() {
@@ -49,6 +49,15 @@ function App() {
       />
 
       <Route
+        path="/admin/clientes/:phone/historial"
+        element={
+          <ProtectedRoute>
+            <AdminClientHistoryPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/admin/crear"
         element={
           <ProtectedRoute>
@@ -74,8 +83,6 @@ function App() {
           </ProtectedRoute>
         }
       />
-
-  
     </Routes>
   )
 }

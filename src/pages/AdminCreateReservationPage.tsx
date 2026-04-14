@@ -31,6 +31,8 @@ type ScheduleBlockRow = {
   is_full_day: boolean
 }
 
+type LashistaOption = "Melissa" | "Katy" | ""
+
 function getRelatedService(
   service:
     | {
@@ -64,6 +66,7 @@ function AdminCreateReservationPage() {
     date: "",
     time: "",
     notes: "",
+    lashista: "" as LashistaOption,
   })
 
   const [services, setServices] = useState<ServiceRow[]>([])
@@ -414,6 +417,7 @@ function AdminCreateReservationPage() {
             time: form.time,
             status: "confirmed",
             notes: form.notes || null,
+            lashista: form.lashista || null,
             total_price: totalPrice,
             deposit_amount: deposit,
             remaining_amount: totalPrice - deposit,
@@ -496,6 +500,17 @@ function AdminCreateReservationPage() {
                 {service.name} — S/ {Number(service.price).toFixed(2)}
               </option>
             ))}
+          </select>
+
+          <select
+            name="lashista"
+            value={form.lashista}
+            onChange={handleChange}
+            className="w-full rounded-xl border px-4 py-3"
+          >
+            <option value="">Sin asignar</option>
+            <option value="Melissa">Melissa</option>
+            <option value="Katy">Katy</option>
           </select>
 
           <input
