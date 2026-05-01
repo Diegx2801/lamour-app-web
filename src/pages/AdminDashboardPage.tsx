@@ -1,6 +1,5 @@
 import { Link } from "react-router"
 import {
-  formatShortDate,
   getStatusLabel,
   useAdminDashboard,
 } from "../features/admin-dashboard/hooks/useAdminDashboard"
