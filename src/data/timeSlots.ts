@@ -1,4 +1,4 @@
-export const timeSlots = [
+export const timeSlots: string[] = [
   "09:00",
   "10:00",
   "11:00",
@@ -8,6 +8,5 @@ export const timeSlots = [
   "15:00",
   "16:00",
   "17:00",
-  "18:00",
-  "19:00",
+  "18:00"
 ]

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Navigate } from "react-router"
+import { Navigate, useLocation } from "react-router"
 import { supabase } from "../../lib/supabase"
 
 type ProtectedRouteProps = {
@@ -7,29 +7,54 @@ type ProtectedRouteProps = {
 }
 
 function ProtectedRoute({ children }: ProtectedRouteProps) {
+  const location = useLocation()
   const [loading, setLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   useEffect(() => {
-    const checkSession = async () => {
+    let isMounted = true
+
+    const loadSession = async () => {
       const { data } = await supabase.auth.getSession()
+
+      if (!isMounted) return
+
       setIsAuthenticated(!!data.session)
       setLoading(false)
     }
 
-    checkSession()
+    loadSession()
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!isMounted) return
+      setIsAuthenticated(!!session)
+      setLoading(false)
+    })
+
+    return () => {
+      isMounted = false
+      subscription.unsubscribe()
+    }
   }, [])
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f6f1e9]">
+      <div className="flex min-h-screen items-center justify-center bg-[#f6f1e9]">
         <p className="text-stone-600">Verificando sesión...</p>
       </div>
     )
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/admin/login" replace />
+    return (
+      <Navigate
+        to="/admin/login"
+        replace
+        state={{ from: location.pathname }}
+      />
+    )
   }
 
   return <>{children}</>

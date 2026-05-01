@@ -1,70 +1,65 @@
-export type AppointmentLike = {
+export type AppointmentAvailabilityRow = {
   date: string
   time: string
   status: string
-  serviceCategory?: string | null
-  durationMinutes?: number | null
+  serviceCategory: string | null
+  durationMinutes: number | null
 }
 
-const ACTIVE_STATUSES = new Set(["pending", "confirmed", "completed"])
-
-function timeToMinutes(time: string): number {
-  const [hours, minutes] = time.slice(0, 5).split(":").map(Number)
+function timeToMinutes(time: string) {
+  const [hours, minutes] = time.split(":").map(Number)
   return hours * 60 + minutes
 }
 
-function overlaps(
+function rangesOverlap(
   startA: number,
   endA: number,
   startB: number,
   endB: number
-): boolean {
+) {
   return startA < endB && startB < endA
 }
 
 export function hasCapacityForLashes(
-  appointments: AppointmentLike[],
-  selectedDate: string,
-  selectedTime: string,
-  capacity = 2,
-  durationMinutes = 120
-): boolean {
-  const newStart = timeToMinutes(selectedTime)
-  const newEnd = newStart + durationMinutes
+  appointments: AppointmentAvailabilityRow[],
+  date: string,
+  slot: string,
+  lashistas = 2,
+  serviceDuration = 120
+) {
+  const newStart = timeToMinutes(slot)
+  const newEnd = newStart + serviceDuration
 
-  let overlappingCount = 0
-
-  for (const appointment of appointments) {
-    if (appointment.date !== selectedDate) continue
-    if (!ACTIVE_STATUSES.has(appointment.status)) continue
-    if (appointment.serviceCategory !== "Pestañas") continue
+  const overlappingAppointments = appointments.filter((appointment) => {
+    if (appointment.date !== date) return false
+    if (appointment.status === "cancelled") return false
+    if (appointment.serviceCategory !== "Pestañas") return false
+    if (!appointment.time) return false
 
     const existingStart = timeToMinutes(appointment.time)
-    const existingDuration = appointment.durationMinutes ?? 120
+    const existingDuration = Number(appointment.durationMinutes ?? 120)
     const existingEnd = existingStart + existingDuration
 
-    if (overlaps(newStart, newEnd, existingStart, existingEnd)) {
-      overlappingCount += 1
-    }
-  }
+    return rangesOverlap(newStart, newEnd, existingStart, existingEnd)
+  })
 
-  return overlappingCount < capacity
+  return overlappingAppointments.length < lashistas
 }
 
 export function getAvailableLashTimeSlots(
-  appointments: AppointmentLike[],
-  selectedDate: string,
-  allSlots: string[],
-  capacity = 2,
-  durationMinutes = 120
-): string[] {
-  return allSlots.filter((slot) =>
+  appointments: AppointmentAvailabilityRow[],
+  date: string,
+  timeSlots: string[],
+  lashistas = 2,
+  serviceDuration = 120
+) {
+  return timeSlots.filter((slot) =>
     hasCapacityForLashes(
       appointments,
-      selectedDate,
+      date,
       slot,
-      capacity,
-      durationMinutes
+      lashistas,
+      serviceDuration
     )
   )
 }
