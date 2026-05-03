@@ -1,42 +1,69 @@
 import { supabase } from "../../../lib/supabase"
 
-export async function fetchLashists() {
+export type LashistRow = {
+  id: string
+  name: string
+  phone: string | null
+  is_active: boolean
+  created_at: string
+}
+
+export type LashistInput = {
+  name: string
+  phone: string
+  isActive: boolean
+}
+
+export async function fetchLashists(): Promise<LashistRow[]> {
   const { data, error } = await supabase
     .from("lashists")
-    .select("*")
-    .order("created_at", { ascending: false })
+    .select("id, name, phone, is_active, created_at")
+    .order("is_active", { ascending: false })
+    .order("name", { ascending: true })
 
-  if (error) throw new Error("Error cargando lashistas")
+  if (error) {
+    throw new Error("No se pudieron cargar las lashistas.")
+  }
 
-  return data
+  return (data ?? []) as LashistRow[]
 }
 
-export async function createLashist(payload: {
-  name: string
-  phone?: string
-}) {
-  const { error } = await supabase.from("lashists").insert([payload])
+export async function createLashist(input: LashistInput) {
+  const { error } = await supabase.from("lashists").insert([
+    {
+      name: input.name.trim(),
+      phone: input.phone.trim() || null,
+      is_active: input.isActive,
+    },
+  ])
 
-  if (error) throw new Error("Error creando lashista")
+  if (error) {
+    throw new Error("No se pudo crear la lashista.")
+  }
 }
 
-export async function updateLashist(
-  id: string,
-  payload: { name: string; phone?: string }
-) {
+export async function updateLashist(id: string, input: LashistInput) {
   const { error } = await supabase
     .from("lashists")
-    .update(payload)
+    .update({
+      name: input.name.trim(),
+      phone: input.phone.trim() || null,
+      is_active: input.isActive,
+    })
     .eq("id", id)
 
-  if (error) throw new Error("Error actualizando lashista")
+  if (error) {
+    throw new Error("No se pudo actualizar la lashista.")
+  }
 }
 
-export async function toggleLashist(id: string, is_active: boolean) {
+export async function toggleLashistStatus(id: string, isActive: boolean) {
   const { error } = await supabase
     .from("lashists")
-    .update({ is_active })
+    .update({ is_active: isActive })
     .eq("id", id)
 
-  if (error) throw new Error("Error actualizando estado")
+  if (error) {
+    throw new Error("No se pudo actualizar el estado de la lashista.")
+  }
 }

@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react"
 import {
-  fetchAdminServices,
   createAdminService,
+  fetchAdminServices,
   updateAdminService,
   updateAdminServiceStatus,
-  type AdminServiceRow,
   type AdminServicePayload,
+  type AdminServiceRow,
 } from "../api/adminServicesService"
 
 type ServiceFormState = {
@@ -15,6 +15,9 @@ type ServiceFormState = {
   duration_minutes: string
   category: string
   is_active: boolean
+  allows_retouch: boolean
+  retouch_price: string
+  retouch_days: string
 }
 
 const initialForm: ServiceFormState = {
@@ -24,6 +27,9 @@ const initialForm: ServiceFormState = {
   duration_minutes: "",
   category: "",
   is_active: true,
+  allows_retouch: false,
+  retouch_price: "",
+  retouch_days: "15",
 }
 
 export function useAdminServices() {
@@ -38,12 +44,17 @@ export function useAdminServices() {
   const [form, setForm] = useState<ServiceFormState>(initialForm)
 
   const activeCount = useMemo(
-    () => services.filter((s) => s.is_active).length,
+    () => services.filter((service) => service.is_active).length,
     [services]
   )
 
   const inactiveCount = useMemo(
-    () => services.filter((s) => !s.is_active).length,
+    () => services.filter((service) => !service.is_active).length,
+    [services]
+  )
+
+  const retouchCount = useMemo(
+    () => services.filter((service) => service.allows_retouch).length,
     [services]
   )
 
@@ -51,6 +62,7 @@ export function useAdminServices() {
     try {
       setLoading(true)
       setError("")
+
       const data = await fetchAdminServices()
       setServices(data)
     } catch (err) {
@@ -74,6 +86,7 @@ export function useAdminServices() {
 
   const openEditModal = (service: AdminServiceRow) => {
     setEditingServiceId(service.id)
+
     setForm({
       name: service.name ?? "",
       description: service.description ?? "",
@@ -81,21 +94,32 @@ export function useAdminServices() {
       duration_minutes: String(service.duration_minutes ?? ""),
       category: service.category ?? "",
       is_active: service.is_active,
+      allows_retouch: Boolean(service.allows_retouch),
+      retouch_price: service.retouch_price != null ? String(service.retouch_price) : "",
+      retouch_days: String(service.retouch_days ?? 15),
     })
+
+    setError("")
+    setSuccess("")
     setIsModalOpen(true)
   }
 
   const closeModal = () => {
     if (saving) return
+
     setIsModalOpen(false)
     setEditingServiceId(null)
     setForm(initialForm)
+    setError("")
+    setSuccess("")
   }
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    const { name, value, type, checked } = e.target as HTMLInputElement
+    const { name, value, type } = event.target
+    const checked =
+      event.target instanceof HTMLInputElement ? event.target.checked : false
 
     setForm((prev) => ({
       ...prev,
@@ -114,11 +138,30 @@ export function useAdminServices() {
 
     if (!form.category.trim()) return "Ingresa categoría."
 
-    const duplicated = services.some((s) => {
-      const same =
-        s.name.toLowerCase().trim() === form.name.toLowerCase().trim()
-      if (!same) return false
-      return editingServiceId ? s.id !== editingServiceId : true
+    if (form.allows_retouch) {
+      const retouchPrice = Number(form.retouch_price)
+      const retouchDays = Number(form.retouch_days)
+
+      if (!retouchPrice || retouchPrice <= 0) {
+        return "Ingresa un precio de retoque válido."
+      }
+
+      if (retouchPrice >= price) {
+        return "El precio de retoque debe ser menor al precio normal."
+      }
+
+      if (!retouchDays || retouchDays <= 0) {
+        return "Ingresa días de retoque válidos."
+      }
+    }
+
+    const duplicated = services.some((service) => {
+      const sameName =
+        service.name.toLowerCase().trim() === form.name.toLowerCase().trim()
+
+      if (!sameName) return false
+
+      return editingServiceId ? service.id !== editingServiceId : true
     })
 
     if (duplicated) return "Servicio duplicado."
@@ -126,12 +169,13 @@ export function useAdminServices() {
     return null
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
     setError("")
     setSuccess("")
 
     const validationError = validateForm()
+
     if (validationError) {
       setError(validationError)
       return
@@ -147,6 +191,9 @@ export function useAdminServices() {
         duration_minutes: Number(form.duration_minutes),
         category: form.category.trim(),
         is_active: form.is_active,
+        allows_retouch: form.allows_retouch,
+        retouch_price: form.allows_retouch ? Number(form.retouch_price) : null,
+        retouch_days: form.allows_retouch ? Number(form.retouch_days) : 15,
       }
 
       if (editingServiceId) {
@@ -188,6 +235,7 @@ export function useAdminServices() {
 
     activeCount,
     inactiveCount,
+    retouchCount,
 
     openCreateModal,
     openEditModal,

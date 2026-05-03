@@ -8,6 +8,9 @@ export type AdminServiceRow = {
   duration_minutes: number | null
   category: string | null
   is_active: boolean
+  allows_retouch: boolean
+  retouch_price: number | null
+  retouch_days: number | null
   created_at?: string | null
 }
 
@@ -18,13 +21,28 @@ export type AdminServicePayload = {
   duration_minutes: number
   category: string
   is_active: boolean
+  allows_retouch: boolean
+  retouch_price: number | null
+  retouch_days: number
 }
 
 export async function fetchAdminServices() {
   const { data, error } = await supabase
     .from("services")
     .select(
-      "id, name, description, price, duration_minutes, category, is_active, created_at"
+      `
+      id,
+      name,
+      description,
+      price,
+      duration_minutes,
+      category,
+      is_active,
+      allows_retouch,
+      retouch_price,
+      retouch_days,
+      created_at
+    `
     )
     .order("name", { ascending: true })
 

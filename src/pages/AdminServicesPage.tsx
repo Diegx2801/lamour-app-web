@@ -19,7 +19,8 @@ function AdminServicesPage() {
           </h1>
 
           <p className="mt-2 text-sm leading-6 text-stone-600">
-            Administra precios, duración, categoría y estado de los servicios.
+            Administra precios, duración, categoría, retoques y estado de los
+            servicios.
           </p>
         </div>
 
@@ -32,10 +33,11 @@ function AdminServicesPage() {
         </button>
       </div>
 
-      <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3 md:mb-6">
+      <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-4 md:mb-6">
         <SummaryCard title="Total servicios" value={services.services.length} />
         <SummaryCard title="Activos" value={services.activeCount} />
         <SummaryCard title="Inactivos" value={services.inactiveCount} />
+        <SummaryCard title="Con retoque" value={services.retouchCount} />
       </div>
 
       {services.error && !services.isModalOpen && (
@@ -55,13 +57,14 @@ function AdminServicesPage() {
           </div>
         ) : (
           <>
-            <div className="hidden overflow-x-auto lg:block">
+            <div className="hidden overflow-x-auto xl:block">
               <table className="min-w-full border-separate border-spacing-y-3">
                 <thead>
                   <tr className="text-left text-sm text-stone-500">
                     <th className="px-3">Servicio</th>
                     <th className="px-3">Categoría</th>
                     <th className="px-3">Precio</th>
+                    <th className="px-3">Retoque</th>
                     <th className="px-3">Duración</th>
                     <th className="px-3">Estado</th>
                     <th className="px-3">Acciones</th>
@@ -92,6 +95,21 @@ function AdminServicesPage() {
                       </td>
 
                       <td className="px-3 py-4 align-top text-sm text-stone-700">
+                        {service.allows_retouch ? (
+                          <div>
+                            <p className="font-medium text-stone-900">
+                              S/ {Number(service.retouch_price ?? 0).toFixed(2)}
+                            </p>
+                            <p className="text-xs text-stone-500">
+                              cada {service.retouch_days ?? 15} días
+                            </p>
+                          </div>
+                        ) : (
+                          <span className="text-stone-400">No aplica</span>
+                        )}
+                      </td>
+
+                      <td className="px-3 py-4 align-top text-sm text-stone-700">
                         {service.duration_minutes ?? 0} min
                       </td>
 
@@ -112,7 +130,7 @@ function AdminServicesPage() {
               </table>
             </div>
 
-            <div className="grid gap-3 lg:hidden">
+            <div className="grid gap-3 xl:hidden">
               {services.services.map((service) => (
                 <article
                   key={service.id}
@@ -140,12 +158,31 @@ function AdminServicesPage() {
 
                   <div className="mt-4 grid grid-cols-2 gap-3">
                     <InfoBox
-                      label="Precio"
+                      label="Precio normal"
                       value={`S/ ${Number(service.price ?? 0).toFixed(2)}`}
                     />
+
                     <InfoBox
                       label="Duración"
                       value={`${service.duration_minutes ?? 0} min`}
+                    />
+
+                    <InfoBox
+                      label="Retoque"
+                      value={
+                        service.allows_retouch
+                          ? `S/ ${Number(service.retouch_price ?? 0).toFixed(2)}`
+                          : "No aplica"
+                      }
+                    />
+
+                    <InfoBox
+                      label="Días retoque"
+                      value={
+                        service.allows_retouch
+                          ? `${service.retouch_days ?? 15} días`
+                          : "-"
+                      }
                     />
                   </div>
 
@@ -175,7 +212,8 @@ function AdminServicesPage() {
                 </h2>
 
                 <p className="mt-1 text-sm text-stone-500">
-                  Completa los datos del servicio.
+                  Completa los datos del servicio y su precio de retoque si
+                  aplica.
                 </p>
               </div>
 
@@ -216,7 +254,7 @@ function AdminServicesPage() {
               </Field>
 
               <div className="grid gap-4 md:grid-cols-2">
-                <Field label="Precio *">
+                <Field label="Precio normal *">
                   <input
                     type="number"
                     min="0"
@@ -253,6 +291,48 @@ function AdminServicesPage() {
                 />
               </Field>
 
+              <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
+                <label className="flex items-center gap-3 text-sm font-medium text-stone-800">
+                  <input
+                    type="checkbox"
+                    name="allows_retouch"
+                    checked={services.form.allows_retouch}
+                    onChange={services.handleChange}
+                  />
+                  Este servicio permite retoque
+                </label>
+
+                {services.form.allows_retouch && (
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    <Field label="Precio de retoque *">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        name="retouch_price"
+                        value={services.form.retouch_price}
+                        onChange={services.handleChange}
+                        placeholder="Ejemplo: 40"
+                        className={inputClass}
+                      />
+                    </Field>
+
+                    <Field label="Días para retoque *">
+                      <input
+                        type="number"
+                        min="1"
+                        step="1"
+                        name="retouch_days"
+                        value={services.form.retouch_days}
+                        onChange={services.handleChange}
+                        placeholder="Ejemplo: 15"
+                        className={inputClass}
+                      />
+                    </Field>
+                  </div>
+                )}
+              </div>
+
               <label className="flex items-center gap-3 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-700">
                 <input
                   type="checkbox"
@@ -281,8 +361,8 @@ function AdminServicesPage() {
                   {services.saving
                     ? "Guardando..."
                     : services.editingServiceId
-                    ? "Guardar cambios"
-                    : "Crear servicio"}
+                      ? "Guardar cambios"
+                      : "Crear servicio"}
                 </button>
               </div>
             </form>

@@ -1,12 +1,17 @@
 import { supabase } from "../../../lib/supabase"
 import type { ScheduleBlockRow } from "../../reservations/utils/reservationAvailability"
 
+export type AppointmentType = "normal" | "retouch"
+
 export type AdminServiceRow = {
   id: string
   name: string
   price: number
   category: string | null
   duration_minutes: number | null
+  allows_retouch: boolean
+  retouch_price: number | null
+  retouch_days: number | null
 }
 
 export type AdminLashistRow = {
@@ -19,11 +24,22 @@ export type AdminLashistRow = {
 export async function fetchAdminServices() {
   const { data, error } = await supabase
     .from("services")
-    .select("id, name, price, category, duration_minutes")
+    .select(`
+      id,
+      name,
+      price,
+      category,
+      duration_minutes,
+      allows_retouch,
+      retouch_price,
+      retouch_days
+    `)
     .eq("is_active", true)
     .order("name", { ascending: true })
 
-  if (error) throw new Error("No se pudieron cargar los servicios.")
+  if (error) {
+    throw new Error("No se pudieron cargar los servicios.")
+  }
 
   return (data ?? []) as AdminServiceRow[]
 }
@@ -35,7 +51,9 @@ export async function fetchAdminLashists() {
     .eq("is_active", true)
     .order("name", { ascending: true })
 
-  if (error) throw new Error("No se pudieron cargar las lashistas.")
+  if (error) {
+    throw new Error("No se pudieron cargar las lashistas.")
+  }
 
   return (data ?? []) as AdminLashistRow[]
 }
@@ -54,6 +72,7 @@ export async function fetchAdminAvailability(date: string) {
         status,
         lashista,
         lashist_id,
+        appointment_type,
         services (
           category,
           duration_minutes
@@ -89,7 +108,9 @@ export async function findOrCreateAdminClient(fullName: string, phone: string) {
     .eq("phone", phone)
     .maybeSingle()
 
-  if (clientError) throw new Error("Error al buscar cliente.")
+  if (clientError) {
+    throw new Error("Error al buscar cliente.")
+  }
 
   if (!clientData?.id) {
     const { data: newClient, error: newClientError } = await supabase
@@ -135,7 +156,10 @@ export async function createAdminReservationWithPayment(payload: {
   lashista: string | null
   totalPrice: number
   deposit: number
+  appointmentType: AppointmentType
 }) {
+  const remainingAmount = Math.max(payload.totalPrice - payload.deposit, 0)
+
   const { data: insertedAppointment, error: appointmentError } = await supabase
     .from("appointments")
     .insert([
@@ -148,9 +172,10 @@ export async function createAdminReservationWithPayment(payload: {
         notes: payload.notes || null,
         lashist_id: payload.lashistId,
         lashista: payload.lashista,
+        appointment_type: payload.appointmentType,
         total_price: payload.totalPrice,
         deposit_amount: payload.deposit,
-        remaining_amount: payload.totalPrice - payload.deposit,
+        remaining_amount: remainingAmount,
       },
     ])
     .select("id")

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { useNavigate } from "react-router"
+import { useNavigate, useSearchParams } from "react-router"
 import { toast } from "sonner"
 import { timeSlots } from "../../../data/timeSlots"
 import {
@@ -23,10 +23,13 @@ import {
   type AdminServiceRow,
 } from "../api/adminCreateReservationService"
 
+type AppointmentType = "normal" | "retouch"
+
 type AdminCreateReservationForm = {
   fullName: string
   phone: string
   service: string
+  appointmentType: AppointmentType
   date: string
   time: string
   notes: string
@@ -39,6 +42,7 @@ const initialForm: AdminCreateReservationForm = {
   fullName: "",
   phone: "",
   service: "",
+  appointmentType: "normal",
   date: "",
   time: "",
   notes: "",
@@ -47,6 +51,7 @@ const initialForm: AdminCreateReservationForm = {
 
 export function useAdminCreateReservation() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
 
   const [form, setForm] = useState<AdminCreateReservationForm>(initialForm)
   const [services, setServices] = useState<AdminServiceRow[]>([])
@@ -60,6 +65,9 @@ export function useAdminCreateReservation() {
   const [loadingLashists, setLoadingLashists] = useState(true)
   const [loadingSlots, setLoadingSlots] = useState(false)
 
+  const preselectedServiceId = searchParams.get("serviceId") ?? ""
+  const preselectedType = searchParams.get("type") === "retouch" ? "retouch" : "normal"
+
   const selectedServiceData = useMemo(() => {
     if (!form.service) return null
     return services.find((service) => service.id === form.service) ?? null
@@ -69,6 +77,21 @@ export function useAdminCreateReservation() {
     if (!form.lashistId) return null
     return lashists.find((lashist) => lashist.id === form.lashistId) ?? null
   }, [form.lashistId, lashists])
+
+  const isRetouch = form.appointmentType === "retouch"
+
+  const servicePrice = useMemo(() => {
+    if (!selectedServiceData) return 0
+
+    if (isRetouch) {
+      return Number(selectedServiceData.retouch_price ?? 0)
+    }
+
+    return Number(selectedServiceData.price ?? 0)
+  }, [selectedServiceData, isRetouch])
+
+  const depositAmount = 10
+  const remainingAmount = Math.max(servicePrice - depositAmount, 0)
 
   const loading = submitStatus === "loading"
 
@@ -86,6 +109,14 @@ export function useAdminCreateReservation() {
 
         setServices(servicesData)
         setLashists(lashistsData)
+
+        if (preselectedServiceId) {
+          setForm((prev) => ({
+            ...prev,
+            service: preselectedServiceId,
+            appointmentType: preselectedType,
+          }))
+        }
       } catch (err) {
         const message =
           err instanceof Error ? err.message : "Error al cargar datos."
@@ -99,7 +130,7 @@ export function useAdminCreateReservation() {
     }
 
     loadInitialData()
-  }, [])
+  }, [preselectedServiceId, preselectedType])
 
   useEffect(() => {
     const loadAvailableSlots = async () => {
@@ -187,6 +218,7 @@ export function useAdminCreateReservation() {
       if (name === "service") {
         next.date = ""
         next.time = ""
+        next.appointmentType = "normal"
         setBlockedReason("")
       }
 
@@ -228,6 +260,20 @@ export function useAdminCreateReservation() {
 
     if (!selectedServiceData) {
       return "Servicio no encontrado."
+    }
+
+    if (form.appointmentType === "retouch") {
+      if (!selectedServiceData.allows_retouch) {
+        return "Este servicio no tiene retoque configurado."
+      }
+
+      if (!selectedServiceData.retouch_price || Number(selectedServiceData.retouch_price) <= 0) {
+        return "Este servicio no tiene precio de retoque válido."
+      }
+    }
+
+    if (servicePrice <= 0) {
+      return "El precio de la reserva no es válido."
     }
 
     return ""
@@ -295,9 +341,6 @@ export function useAdminCreateReservation() {
         normalizedPhone
       )
 
-      const totalPrice = Number(selectedServiceData.price)
-      const deposit = 10
-
       await createAdminReservationWithPayment({
         clientId,
         serviceId: selectedServiceData.id,
@@ -306,13 +349,18 @@ export function useAdminCreateReservation() {
         notes: form.notes,
         lashistId: selectedLashistData?.id ?? null,
         lashista: selectedLashistData?.name ?? null,
-        totalPrice,
-        deposit,
+        totalPrice: servicePrice,
+        deposit: depositAmount,
+        appointmentType: form.appointmentType,
       })
 
       setSubmitStatus("success")
       toast.dismiss(loadingToastId)
-      toast.success("Reserva creada correctamente.")
+      toast.success(
+        form.appointmentType === "retouch"
+          ? "Retoque creado correctamente."
+          : "Reserva creada correctamente."
+      )
 
       navigate("/admin/reservas")
     } catch (err) {
@@ -334,6 +382,11 @@ export function useAdminCreateReservation() {
     selectedLashistData,
     availableSlots,
     blockedReason,
+
+    isRetouch,
+    servicePrice,
+    depositAmount,
+    remainingAmount,
 
     error,
     loading,

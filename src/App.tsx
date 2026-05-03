@@ -19,6 +19,7 @@ import AdminClientHistoryPage from "./pages/AdminClientHistoryPage"
 import AdminServicesPage from "./pages/AdminServicesPage"
 import AdminClientsPage from "./pages/AdminClientsPage"
 import AdminFollowUpPage from "./pages/AdminFollowUpPage"
+import AdminLashistsPage from "./pages/AdminLashistsPage"
 
 function App() {
   return (
@@ -104,19 +105,28 @@ function App() {
           />
 
           <Route
-  path="pagos/:id"
-  element={
-    <ProtectedRoute allowedRoles={["owner", "staff"]}>
-      <AdminPaymentsPage />
-    </ProtectedRoute>
-  }
-/>
+            path="pagos/:id"
+            element={
+              <ProtectedRoute allowedRoles={["owner", "staff"]}>
+                <AdminPaymentsPage />
+              </ProtectedRoute>
+            }
+          />
 
           <Route
             path="services"
             element={
               <ProtectedRoute allowedRoles={["owner"]}>
                 <AdminServicesPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="lashistas"
+            element={
+              <ProtectedRoute allowedRoles={["owner"]}>
+                <AdminLashistsPage />
               </ProtectedRoute>
             }
           />
