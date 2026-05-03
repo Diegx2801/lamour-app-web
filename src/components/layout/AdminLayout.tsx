@@ -1,23 +1,41 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Link, Outlet, useLocation, useNavigate } from "react-router"
 import { supabase } from "../../lib/supabase"
+import type { AdminRole } from "../auth/ProtectedRoute"
 
-const navItems = [
-  { label: "Dashboard", to: "/admin/dashboard" },
-  { label: "Agenda", to: "/admin/agenda" },
-  { label: "Reservas", to: "/admin/reservas" },
-  { label: "Clientes", to: "/admin/clientes" },
-  { label: "Servicios", to: "/admin/services" },
-  { label: "Seguimiento", to: "/admin/seguimiento" },
+type NavItem = {
+  label: string
+  to: string
+  roles: AdminRole[]
+}
+
+const navItems: NavItem[] = [
+  { label: "Dashboard", to: "/admin/dashboard", roles: ["owner"] },
+  { label: "Agenda", to: "/admin/agenda", roles: ["owner", "staff"] },
+  { label: "Reservas", to: "/admin/reservas", roles: ["owner", "staff"] },
+  { label: "Crear", to: "/admin/crear", roles: ["owner", "staff"] },
+  { label: "Clientes", to: "/admin/clientes", roles: ["owner"] },
+  { label: "Servicios", to: "/admin/services", roles: ["owner"] },
+  { label: "Seguimiento", to: "/admin/seguimiento", roles: ["owner", "staff"] },
 ]
+
+function normalizeRole(role: string | null | undefined): AdminRole | null {
+  if (role === "admin") return "owner"
+  if (role === "owner") return "owner"
+  if (role === "staff") return "staff"
+
+  return null
+}
 
 function AdminLayout() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
-  const [checkingAdmin, setCheckingAdmin] = useState(true)
+
+  const [checkingAccess, setCheckingAccess] = useState(true)
+  const [role, setRole] = useState<AdminRole | null>(null)
 
   useEffect(() => {
-    const checkAdminRole = async () => {
+    const checkAccess = async () => {
       const { data: userData } = await supabase.auth.getUser()
 
       if (!userData.user) {
@@ -31,24 +49,39 @@ function AdminLayout() {
         .eq("id", userData.user.id)
         .single()
 
-      if (error || profile?.role !== "admin") {
+      if (error) {
         await supabase.auth.signOut()
         navigate("/admin/login", { replace: true })
         return
       }
 
-      setCheckingAdmin(false)
+      const normalizedRole = normalizeRole(profile?.role)
+
+      if (!normalizedRole) {
+        await supabase.auth.signOut()
+        navigate("/admin/login", { replace: true })
+        return
+      }
+
+      setRole(normalizedRole)
+      setCheckingAccess(false)
     }
 
-    checkAdminRole()
+    checkAccess()
   }, [navigate])
+
+  const visibleNavItems = useMemo(() => {
+    if (!role) return []
+
+    return navItems.filter((item) => item.roles.includes(role))
+  }, [role])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
     navigate("/admin/login")
   }
 
-  if (checkingAdmin) {
+  if (checkingAccess) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f6f1e9] px-4">
         <div className="rounded-[2rem] bg-white p-6 text-sm text-stone-600 shadow-sm">
@@ -66,7 +99,16 @@ function AdminLayout() {
             <p className="text-[10px] uppercase tracking-[0.3em] text-stone-500">
               Panel admin
             </p>
-            <h1 className="text-lg font-semibold text-stone-950">L’AMOUR</h1>
+
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-semibold text-stone-950">
+                L’AMOUR
+              </h1>
+
+              <span className="rounded-full bg-stone-100 px-2 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-stone-500">
+                {role === "owner" ? "Owner" : "Staff"}
+              </span>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
@@ -91,7 +133,7 @@ function AdminLayout() {
       <div className="mx-auto flex max-w-7xl gap-6 px-4 py-6">
         <aside className="hidden w-56 shrink-0 md:block">
           <nav className="sticky top-24 space-y-2">
-            {navItems.map((item) => {
+            {visibleNavItems.map((item) => {
               const isActive = pathname === item.to
 
               return (
@@ -117,7 +159,7 @@ function AdminLayout() {
       </div>
 
       <nav className="fixed bottom-0 left-0 right-0 z-50 flex gap-2 overflow-x-auto border-t border-stone-200 bg-white px-3 py-2 md:hidden">
-        {navItems.map((item) => {
+        {visibleNavItems.map((item) => {
           const isActive = pathname === item.to
 
           return (

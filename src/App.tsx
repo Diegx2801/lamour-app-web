@@ -33,25 +33,102 @@ function App() {
         <Route
           path="/admin"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["owner", "staff"]}>
               <AdminLayout />
             </ProtectedRoute>
           }
         >
-          <Route index element={<Navigate to="/admin/dashboard" replace />} />
-          <Route path="dashboard" element={<AdminDashboardPage />} />
-          <Route path="agenda" element={<AdminAgendaPage />} />
-          <Route path="reservas" element={<AdminReservationsPage />} />
-          <Route path="reservas/:id" element={<AdminEditReservationPage />} />
-          <Route path="crear" element={<AdminCreateReservationPage />} />
-          <Route path="clientes" element={<AdminClientsPage />} />
+          <Route index element={<Navigate to="/admin/agenda" replace />} />
+
+          <Route
+            path="dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["owner"]}>
+                <AdminDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="agenda"
+            element={
+              <ProtectedRoute allowedRoles={["owner", "staff"]}>
+                <AdminAgendaPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="reservas"
+            element={
+              <ProtectedRoute allowedRoles={["owner", "staff"]}>
+                <AdminReservationsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="reservas/:id"
+            element={
+              <ProtectedRoute allowedRoles={["owner", "staff"]}>
+                <AdminEditReservationPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="crear"
+            element={
+              <ProtectedRoute allowedRoles={["owner", "staff"]}>
+                <AdminCreateReservationPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="clientes"
+            element={
+              <ProtectedRoute allowedRoles={["owner"]}>
+                <AdminClientsPage />
+              </ProtectedRoute>
+            }
+          />
+
           <Route
             path="clientes/:clientId/historial"
-            element={<AdminClientHistoryPage />}
+            element={
+              <ProtectedRoute allowedRoles={["owner"]}>
+                <AdminClientHistoryPage />
+              </ProtectedRoute>
+            }
           />
-          <Route path="pagos/:id" element={<AdminPaymentsPage />} />
-          <Route path="services" element={<AdminServicesPage />} />
-          <Route path="seguimiento" element={<AdminFollowUpPage />} />
+
+          <Route
+  path="pagos/:id"
+  element={
+    <ProtectedRoute allowedRoles={["owner", "staff"]}>
+      <AdminPaymentsPage />
+    </ProtectedRoute>
+  }
+/>
+
+          <Route
+            path="services"
+            element={
+              <ProtectedRoute allowedRoles={["owner"]}>
+                <AdminServicesPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="seguimiento"
+            element={
+              <ProtectedRoute allowedRoles={["owner", "staff"]}>
+                <AdminFollowUpPage />
+              </ProtectedRoute>
+            }
+          />
         </Route>
       </Routes>
 

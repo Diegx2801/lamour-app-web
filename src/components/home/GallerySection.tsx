@@ -16,8 +16,8 @@ function GallerySection() {
       >
         <SectionTitle
           eyebrow="Galería"
-          title="Resultados reales"
-          description="Una muestra breve de nuestros trabajos."
+          title="Más resultados de L’AMOUR"
+          description="Una muestra breve de nuestros trabajos en pestañas, cejas y faciales."
         />
       </motion.div>
 

@@ -18,22 +18,26 @@ function Navbar() {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-8 text-sm font-medium text-stone-800 md:flex">
+        <nav className="hidden items-center gap-7 text-sm font-medium text-stone-800 md:flex">
           <Link to="/" className="transition hover:text-stone-500">
             Inicio
           </Link>
+
           <Link to="/servicios" className="transition hover:text-stone-500">
             Servicios
           </Link>
+
           <Link to="/reservar" className="transition hover:text-stone-500">
             Reservas
           </Link>
+
           <a href="#contacto" className="transition hover:text-stone-500">
             Contacto
           </a>
+
           <Link
             to="/admin/login"
-            className="text-stone-500 transition hover:text-stone-900"
+            className="rounded-full border border-stone-400 bg-white px-4 py-2 text-sm font-semibold text-stone-800 shadow-sm transition hover:bg-stone-100"
           >
             Admin
           </Link>
@@ -86,13 +90,13 @@ function Navbar() {
               Reservas
             </Link>
 
-            <Link
-              to="/admin/login"
+            <a
+              href="#contacto"
               onClick={closeMenu}
-              className="rounded-2xl px-4 py-3 text-stone-500 transition hover:bg-white hover:text-stone-900"
+              className="rounded-2xl px-4 py-3 transition hover:bg-white"
             >
-              Admin
-            </Link>
+              Contacto
+            </a>
 
             <Link
               to="/reservar"
@@ -100,6 +104,14 @@ function Navbar() {
               className="mt-3 rounded-full bg-stone-950 px-5 py-3 text-center text-sm font-medium text-white"
             >
               Reservar cita
+            </Link>
+
+            <Link
+              to="/admin/login"
+              onClick={closeMenu}
+              className="mt-2 rounded-full border border-stone-300 bg-white px-5 py-3 text-center text-sm font-semibold text-stone-800 shadow-sm"
+            >
+              Admin
             </Link>
           </nav>
         </div>
