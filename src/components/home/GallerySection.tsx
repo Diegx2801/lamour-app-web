@@ -1,54 +1,63 @@
 import { motion } from "framer-motion"
+import { Link } from "react-router"
 import SectionTitle from "../common/SectionTitle"
 import { galleryItems, type GalleryItem } from "../../data/gallery"
 
 function GallerySection() {
+  const featuredItems = galleryItems.slice(0, 4)
+
   return (
-    <section className="mx-auto max-w-7xl px-6 py-20">
+    <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 md:py-20">
       <motion.div
-        initial={{ opacity: 0, y: 30 }}
+        initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
+        transition={{ duration: 0.5 }}
         viewport={{ once: true }}
       >
         <SectionTitle
           eyebrow="Galería"
-          title="Resultados reales de L’AMOUR"
-          description="Trabajos, resultados y estilo que definen nuestra identidad."
+          title="Resultados reales"
+          description="Una muestra breve de nuestros trabajos."
         />
       </motion.div>
 
-      <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {galleryItems.map((item: GalleryItem, index: number) => (
+      <div className="mt-8 grid grid-cols-2 gap-3 md:mt-10 md:gap-5 lg:grid-cols-4">
+        {featuredItems.map((item: GalleryItem, index: number) => (
           <motion.article
             key={item.id}
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: index * 0.08 }}
+            transition={{ duration: 0.45, delay: index * 0.06 }}
             viewport={{ once: true }}
-            className={`group relative overflow-hidden rounded-[2rem] ${
-              index === 0 ? "lg:col-span-2 lg:row-span-2" : ""
-            }`}
+            className="group relative aspect-square overflow-hidden rounded-3xl bg-stone-200 md:rounded-[2rem]"
           >
             <img
               src={item.image}
               alt={item.title}
-              className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+              loading="lazy"
+              className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
             />
 
-            <div className="absolute inset-0 bg-black/40 opacity-0 transition duration-300 group-hover:opacity-100" />
-
-            <div className="absolute bottom-0 left-0 right-0 translate-y-10 p-6 text-white transition duration-300 group-hover:translate-y-0">
-              <p className="text-xs uppercase tracking-[0.3em] text-white/70">
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 to-transparent p-4 text-white">
+              <p className="text-[10px] uppercase tracking-[0.22em] text-white/75">
                 {item.category}
               </p>
 
-              <h3 className="mt-2 text-lg font-semibold">
+              <h3 className="mt-1 line-clamp-1 text-sm font-semibold">
                 {item.title}
               </h3>
             </div>
           </motion.article>
         ))}
+      </div>
+
+      <div className="mt-8 flex justify-center">
+        <Link
+          to="/servicios"
+          className="rounded-full border border-stone-300 bg-white/60 px-6 py-3 text-sm font-medium text-stone-900 transition hover:bg-white"
+        >
+          Ver servicios
+        </Link>
       </div>
     </section>
   )

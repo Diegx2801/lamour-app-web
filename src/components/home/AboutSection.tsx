@@ -1,72 +1,37 @@
 function AboutSection() {
   return (
-    <section className="mx-auto max-w-7xl px-6 py-16">
-      <div className="grid gap-10 md:grid-cols-2 md:items-center">
-        
-        {/* TEXTO */}
-        <div>
-          <p className="text-xs uppercase tracking-[0.35em] text-stone-500">
-            Sobre L’AMOUR
-          </p>
+    <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 md:py-14">
+      <div className="rounded-[2rem] bg-white/60 p-6 shadow-sm md:p-8">
+        <p className="text-xs uppercase tracking-[0.32em] text-stone-500">
+          Sobre L’AMOUR
+        </p>
 
-          <h2 className="mt-3 text-3xl md:text-4xl font-semibold text-stone-950">
-            Más que un servicio, una experiencia de cuidado personal.
-          </h2>
+        <div className="mt-4 grid gap-6 md:grid-cols-[1.2fr_0.8fr] md:items-end">
+          <div>
+            <h2 className="text-2xl font-semibold leading-tight text-stone-950 md:text-4xl">
+              Cuidado estético personalizado en Trujillo.
+            </h2>
 
-          <p className="mt-6 text-stone-600 leading-7">
-            En L’AMOUR Beauty Studio nos enfocamos en resaltar la belleza natural 
-            de cada clienta a través de técnicas modernas en pestañas, cejas, 
-            faciales y depilación. Cada atención está pensada para brindar un 
-            resultado limpio, elegante y personalizado.
-          </p>
-
-          <p className="mt-4 text-stone-600 leading-7">
-            Nuestro enfoque combina estética, precisión y una experiencia cómoda, 
-            donde cada detalle está cuidado para que te sientas segura y satisfecha 
-            con el resultado.
-          </p>
-
-          <div className="mt-8 flex gap-4">
-            <a
-              href="https://wa.me/51957230015"
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-full bg-stone-950 px-6 py-3 text-sm font-medium text-white"
-            >
-              Reservar cita
-            </a>
-
-            <a
-              href="#servicios"
-              className="rounded-full border border-stone-300 px-6 py-3 text-sm font-medium text-stone-800"
-            >
-              Ver servicios
-            </a>
-          </div>
-        </div>
-
-        {/* VISUAL */}
-        <div className="grid gap-4">
-          <div className="rounded-[2rem] bg-[#e7ddd1] p-10 flex items-end">
-            <p className="text-xl font-medium text-stone-800">
-              Estética minimalista, moderna y femenina.
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-stone-600 md:text-base">
+              En L’AMOUR Beauty Studio realizamos servicios de pestañas, cejas y
+              faciales con acabados naturales, atención ordenada y reserva online.
             </p>
           </div>
 
-          <div className="rounded-[2rem] bg-white p-6 shadow-sm">
-            <p className="text-sm uppercase tracking-[0.3em] text-stone-500">
-              Valores
-            </p>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 md:grid-cols-1">
+            <div className="rounded-2xl bg-[#e7ddd1] px-4 py-3 text-sm font-medium text-stone-800">
+              Atención personalizada
+            </div>
 
-            <ul className="mt-4 space-y-3 text-sm text-stone-700">
-              <li>• Atención personalizada</li>
-              <li>• Resultados naturales y elegantes</li>
-              <li>• Técnicas modernas</li>
-              <li>• Experiencia cómoda y profesional</li>
-            </ul>
+            <div className="rounded-2xl bg-[#e7ddd1] px-4 py-3 text-sm font-medium text-stone-800">
+              Resultados naturales
+            </div>
+
+            <div className="rounded-2xl bg-[#e7ddd1] px-4 py-3 text-sm font-medium text-stone-800">
+              Reserva online
+            </div>
           </div>
         </div>
-
       </div>
     </section>
   )

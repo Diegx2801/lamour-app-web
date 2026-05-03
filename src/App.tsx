@@ -1,20 +1,25 @@
-import { Route, Routes } from "react-router"
+import { Navigate, Route, Routes } from "react-router"
 import { Toaster } from "sonner"
-import AdminFollowUpPage from "./pages/AdminFollowUpPage"
+
 import HomePage from "./pages/HomePage"
 import ReservePage from "./pages/ReservePage"
 import ServicesPage from "./pages/ServicesPage"
-import AdminPaymentsPage from "./pages/AdminPaymentsPage"
+
+import AdminLayout from "./components/layout/AdminLayout"
+import ProtectedRoute from "./components/auth/ProtectedRoute"
+
 import AdminLoginPage from "./pages/AdminLoginPage"
 import AdminDashboardPage from "./pages/AdminDashboardPage"
 import AdminReservationsPage from "./pages/AdminReservationsPage"
 import AdminCreateReservationPage from "./pages/AdminCreateReservationPage"
-import AdminAgendaPage from "./pages/AdminAgendaPage"
 import AdminEditReservationPage from "./pages/AdminEditReservationPage"
+import AdminAgendaPage from "./pages/AdminAgendaPage"
+import AdminPaymentsPage from "./pages/AdminPaymentsPage"
 import AdminClientHistoryPage from "./pages/AdminClientHistoryPage"
 import AdminServicesPage from "./pages/AdminServicesPage"
-import ProtectedRoute from "./components/auth/ProtectedRoute"
 import AdminClientsPage from "./pages/AdminClientsPage"
+import AdminFollowUpPage from "./pages/AdminFollowUpPage"
+
 function App() {
   return (
     <>
@@ -26,93 +31,28 @@ function App() {
         <Route path="/admin/login" element={<AdminLoginPage />} />
 
         <Route
-          path="/admin/dashboard"
+          path="/admin"
           element={
             <ProtectedRoute>
-              <AdminDashboardPage />
+              <AdminLayout />
             </ProtectedRoute>
           }
-        />
-
-        <Route
-          path="/admin/reservas"
-          element={
-            <ProtectedRoute>
-              <AdminReservationsPage />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/admin/reservas/:id"
-          element={
-            <ProtectedRoute>
-              <AdminEditReservationPage />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/admin/clientes/:clientId/historial"
-          element={
-            <ProtectedRoute>
-              <AdminClientHistoryPage />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/admin/crear"
-          element={
-            <ProtectedRoute>
-              <AdminCreateReservationPage />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/admin/pagos/:id"
-          element={
-            <ProtectedRoute>
-              <AdminPaymentsPage />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/admin/agenda"
-          element={
-            <ProtectedRoute>
-              <AdminAgendaPage />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/admin/services"
-          element={
-            <ProtectedRoute>
-              <AdminServicesPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/clientes"
-          element={
-            <ProtectedRoute>
-              <AdminClientsPage />
-            </ProtectedRoute>
-  }
-  
-/>
-<Route
-  path="/admin/seguimiento"
-  element={
-    <ProtectedRoute>
-      <AdminFollowUpPage />
-    </ProtectedRoute>
-  }
-/>
+        >
+          <Route index element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="dashboard" element={<AdminDashboardPage />} />
+          <Route path="agenda" element={<AdminAgendaPage />} />
+          <Route path="reservas" element={<AdminReservationsPage />} />
+          <Route path="reservas/:id" element={<AdminEditReservationPage />} />
+          <Route path="crear" element={<AdminCreateReservationPage />} />
+          <Route path="clientes" element={<AdminClientsPage />} />
+          <Route
+            path="clientes/:clientId/historial"
+            element={<AdminClientHistoryPage />}
+          />
+          <Route path="pagos/:id" element={<AdminPaymentsPage />} />
+          <Route path="services" element={<AdminServicesPage />} />
+          <Route path="seguimiento" element={<AdminFollowUpPage />} />
+        </Route>
       </Routes>
 
       <Toaster position="top-right" richColors closeButton />

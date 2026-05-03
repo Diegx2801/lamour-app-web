@@ -181,4 +181,17 @@
     right: 0;
     border-right-color: var(--border);
   }
+
+  .input-admin {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid rgb(214 211 209);
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  outline: none;
+}
+
+.input-admin:focus {
+  border-color: rgb(120 113 108);
+}
 }

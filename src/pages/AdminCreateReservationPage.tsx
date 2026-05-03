@@ -2,45 +2,61 @@ import { Link } from "react-router"
 import { isSunday } from "../features/reservations/utils/reservationUtils"
 import { useAdminCreateReservation } from "../features/admin-reservations/hooks/useAdminCreateReservation"
 
+const inputClass =
+  "w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-900 outline-none transition focus:border-stone-900 focus:ring-2 focus:ring-stone-200 disabled:bg-stone-100 disabled:text-stone-500"
+
 function AdminCreateReservationPage() {
   const reservation = useAdminCreateReservation()
 
   return (
-    <div className="min-h-screen bg-[#f6f1e9] px-6 py-12">
-      <div className="mx-auto max-w-xl">
-        <Link to="/admin/reservas" className="text-sm text-stone-600">
+    <div>
+      <div className="mb-6">
+        <Link
+          to="/admin/reservas"
+          className="text-sm font-medium text-stone-600 hover:text-stone-950"
+        >
           ← Volver a reservas
         </Link>
 
-        <h1 className="mb-6 mt-4 text-3xl font-semibold">
-          Nueva reserva manual
+        <h1 className="mt-3 text-2xl font-semibold text-stone-950 md:text-4xl">
+          Nueva reserva
         </h1>
 
-        <form
-          onSubmit={reservation.handleSubmit}
-          className="space-y-4 rounded-2xl bg-white p-6 shadow-sm"
-        >
+        <p className="mt-2 text-sm leading-6 text-stone-600">
+          Registra una cita manualmente desde el panel administrativo.
+        </p>
+      </div>
+
+      <form
+        onSubmit={reservation.handleSubmit}
+        className="mx-auto max-w-2xl space-y-4 rounded-[2rem] border border-stone-200 bg-white p-5 shadow-[0_10px_40px_rgba(0,0,0,0.08)] md:p-6"
+      >
+        <Field label="Nombre completo">
           <input
             name="fullName"
-            placeholder="Nombre"
+            placeholder="Ejemplo: María Pérez"
             value={reservation.form.fullName}
             onChange={reservation.handleChange}
-            className="w-full rounded-xl border px-4 py-3"
+            className={inputClass}
           />
+        </Field>
 
+        <Field label="Teléfono">
           <input
             name="phone"
-            placeholder="Teléfono"
+            placeholder="Ejemplo: 957230015"
             value={reservation.form.phone}
             onChange={reservation.handleChange}
-            className="w-full rounded-xl border px-4 py-3"
+            className={inputClass}
           />
+        </Field>
 
+        <Field label="Servicio">
           <select
             name="service"
             value={reservation.form.service}
             onChange={reservation.handleChange}
-            className="w-full rounded-xl border px-4 py-3"
+            className={inputClass}
             disabled={reservation.loadingServices}
           >
             <option value="">
@@ -55,12 +71,14 @@ function AdminCreateReservationPage() {
               </option>
             ))}
           </select>
+        </Field>
 
+        <Field label="Lashista">
           <select
             name="lashistId"
             value={reservation.form.lashistId}
             onChange={reservation.handleChange}
-            className="w-full rounded-xl border px-4 py-3"
+            className={inputClass}
             disabled={reservation.loadingLashists}
           >
             <option value="">
@@ -75,83 +93,113 @@ function AdminCreateReservationPage() {
               </option>
             ))}
           </select>
+        </Field>
 
-          <input
-            type="date"
-            name="date"
-            value={reservation.form.date}
-            onChange={reservation.handleChange}
-            className="w-full rounded-xl border px-4 py-3"
-          />
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Fecha">
+            <input
+              type="date"
+              name="date"
+              value={reservation.form.date}
+              onChange={reservation.handleChange}
+              className={inputClass}
+            />
+          </Field>
 
-          {reservation.form.date && isSunday(reservation.form.date) && (
-            <p className="text-sm text-red-500">No se atiende domingos.</p>
-          )}
-
-          {reservation.blockedReason && !isSunday(reservation.form.date) && (
-            <p className="text-sm text-red-500">
-              {reservation.blockedReason}
-            </p>
-          )}
-
-          <select
-            name="time"
-            value={reservation.form.time}
-            onChange={reservation.handleChange}
-            disabled={
-              !reservation.form.date ||
-              !reservation.form.service ||
-              reservation.loadingSlots ||
-              isSunday(reservation.form.date) ||
-              !!reservation.blockedReason
-            }
-            className="w-full rounded-xl border px-4 py-3 disabled:bg-stone-100"
-          >
-            <option value="">
-              {!reservation.form.service
-                ? "Primero selecciona un servicio"
-                : !reservation.form.date
-                ? "Primero selecciona una fecha"
-                : isSunday(reservation.form.date)
-                ? "Domingo no disponible"
-                : reservation.blockedReason
-                ? "Día bloqueado"
-                : reservation.loadingSlots
-                ? "Cargando horarios..."
-                : reservation.availableSlots.length === 0
-                ? "No hay horarios disponibles"
-                : "Selecciona una hora"}
-            </option>
-
-            {reservation.availableSlots.map((slot) => (
-              <option key={slot} value={slot}>
-                {slot}
+          <Field label="Hora">
+            <select
+              name="time"
+              value={reservation.form.time}
+              onChange={reservation.handleChange}
+              disabled={
+                !reservation.form.date ||
+                !reservation.form.service ||
+                reservation.loadingSlots ||
+                isSunday(reservation.form.date) ||
+                !!reservation.blockedReason
+              }
+              className={inputClass}
+            >
+              <option value="">
+                {!reservation.form.service
+                  ? "Primero selecciona servicio"
+                  : !reservation.form.date
+                    ? "Primero selecciona fecha"
+                    : isSunday(reservation.form.date)
+                      ? "Domingo no disponible"
+                      : reservation.blockedReason
+                        ? "Día bloqueado"
+                        : reservation.loadingSlots
+                          ? "Cargando horarios..."
+                          : reservation.availableSlots.length === 0
+                            ? "No hay horarios"
+                            : "Selecciona hora"}
               </option>
-            ))}
-          </select>
 
+              {reservation.availableSlots.map((slot) => (
+                <option key={slot} value={slot}>
+                  {slot}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </div>
+
+        {reservation.form.date && isSunday(reservation.form.date) && (
+          <AlertMessage message="No se atiende domingos." />
+        )}
+
+        {reservation.blockedReason && !isSunday(reservation.form.date) && (
+          <AlertMessage message={reservation.blockedReason} />
+        )}
+
+        <Field label="Observaciones">
           <textarea
             rows={4}
             name="notes"
             value={reservation.form.notes}
             onChange={reservation.handleChange}
-            placeholder="Observaciones"
-            className="w-full rounded-xl border px-4 py-3"
+            placeholder="Notas internas de la reserva"
+            className={`${inputClass} resize-none`}
           />
+        </Field>
 
-          {reservation.error && (
-            <p className="text-sm text-red-500">{reservation.error}</p>
-          )}
+        {reservation.error && <AlertMessage message={reservation.error} />}
 
-          <button
-            disabled={reservation.loading}
-            className="w-full rounded-xl bg-black py-3 text-white disabled:opacity-60"
-          >
-            {reservation.loading ? "Guardando..." : "Crear reserva"}
-          </button>
-        </form>
-      </div>
+        <button
+          type="submit"
+          disabled={reservation.loading}
+          className="w-full rounded-xl bg-stone-950 px-5 py-3 text-sm font-medium text-white transition hover:bg-stone-800 disabled:opacity-60"
+        >
+          {reservation.loading ? "Guardando..." : "Crear reserva"}
+        </button>
+      </form>
     </div>
+  )
+}
+
+function Field({
+  label,
+  children,
+}: {
+  label: string
+  children: React.ReactNode
+}) {
+  return (
+    <label className="block">
+      <span className="mb-2 block text-sm font-medium text-stone-800">
+        {label}
+      </span>
+      {children}
+    </label>
+  )
+}
+
+function AlertMessage({ message }: { message: string }) {
+  return (
+    <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+      {message}
+    </p>
   )
 }
 

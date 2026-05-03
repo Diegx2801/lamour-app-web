@@ -47,137 +47,191 @@ function AdminClientsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f6f1e9] px-6 py-10">
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-3xl font-semibold">Clientes</h1>
+    <div>
+      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-stone-500">
+            Panel administrativo
+          </p>
 
-          <Link
-            to="/admin/reservas"
-            className="text-sm text-stone-600 hover:text-stone-900"
-          >
-            ← Volver
-          </Link>
+          <h1 className="mt-2 text-2xl font-semibold text-stone-950 md:text-4xl">
+            Clientes
+          </h1>
+
+          <p className="mt-2 text-sm leading-6 text-stone-600">
+            Busca, edita y revisa el historial de clientes registrados.
+          </p>
         </div>
+
+        <Link
+          to="/admin/reservas"
+          className="w-full rounded-xl border border-stone-300 bg-white px-5 py-3 text-center text-sm font-medium text-stone-700 md:w-auto"
+        >
+          Ver reservas
+        </Link>
+      </div>
+
+      <div className="mb-5 rounded-[1.5rem] bg-white p-4 shadow-sm md:mb-6 md:rounded-[2rem] md:p-5">
+        <label className="mb-2 block text-sm font-medium text-stone-800">
+          Buscar cliente o teléfono
+        </label>
 
         <input
-          placeholder="Buscar cliente o teléfono"
+          placeholder="Ejemplo: María o 957230015"
           value={clientState.search}
           onChange={(e) => clientState.setSearch(e.target.value)}
-          className="mb-6 w-full rounded-xl border p-3"
+          className="w-full rounded-xl border border-stone-300 px-4 py-3 text-sm outline-none focus:border-stone-500"
         />
-
-        {clientState.loading && <p>Cargando...</p>}
-        {clientState.error && <p>{clientState.error}</p>}
-
-        <div className="space-y-4">
-          {clientState.clients.map((c) => (
-            <div
-              key={c.id}
-              className={`flex items-center justify-between rounded-2xl border p-5 ${
-                c.is_active ? "bg-white" : "bg-stone-100 opacity-60"
-              }`}
-            >
-              <div className="w-full">
-                {editingId === c.id ? (
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <input
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      className="rounded-xl border p-3"
-                      placeholder="Nombre y apellido"
-                    />
-
-                    <input
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className="rounded-xl border p-3"
-                      placeholder="Celular"
-                    />
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold">{c.full_name}</p>
-
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-medium ${
-                          c.is_active
-                            ? "bg-green-100 text-green-700"
-                            : "bg-red-100 text-red-700"
-                        }`}
-                      >
-                        {c.is_active ? "Activo" : "Inactivo"}
-                      </span>
-                    </div>
-
-                    <p className="text-sm text-gray-500">{c.phone}</p>
-                  </>
-                )}
-              </div>
-
-              <div className="ml-4 flex shrink-0 gap-2">
-                {editingId === c.id ? (
-                  <>
-                    <button
-                      onClick={() => saveEdit(c.id)}
-                      className="rounded-full bg-stone-950 px-3 py-1 text-sm text-white"
-                    >
-                      Guardar
-                    </button>
-
-                    <button
-                      onClick={cancelEdit}
-                      className="rounded-full border px-3 py-1 text-sm"
-                    >
-                      Cancelar
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => startEdit(c)}
-                      className="rounded-full border px-3 py-1 text-sm"
-                    >
-                      Editar
-                    </button>
-
-                    <Link
-                      to={`/admin/clientes/${c.id}/historial`}
-                      className="rounded-full border px-3 py-1 text-sm"
-                    >
-                      Historial
-                    </Link>
-
-                    {c.is_active ? (
-                      <button
-                        onClick={async () => {
-                          await clientState.deactivateClient(c.id)
-                          await clientState.reload()
-                        }}
-                        className="rounded-full bg-red-500 px-3 py-1 text-sm text-white"
-                      >
-                        Desactivar
-                      </button>
-                    ) : (
-                      <button
-                        onClick={async () => {
-                          await clientState.activateClient(c.id)
-                          await clientState.reload()
-                        }}
-                        className="rounded-full bg-green-600 px-3 py-1 text-sm text-white"
-                      >
-                        Reactivar
-                      </button>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
       </div>
+
+      {clientState.loading && (
+        <div className="rounded-[1.5rem] bg-white p-5 text-sm text-stone-600 shadow-sm">
+          Cargando clientes...
+        </div>
+      )}
+
+      {clientState.error && (
+        <div className="rounded-[1.5rem] border border-red-200 bg-red-50 p-5 text-sm text-red-700">
+          {clientState.error}
+        </div>
+      )}
+
+      {!clientState.loading && !clientState.error && (
+        <div className="grid gap-3">
+          {clientState.clients.map((client) => {
+            const isEditing = editingId === client.id
+
+            return (
+              <article
+                key={client.id}
+                className={`rounded-[1.5rem] border p-4 shadow-sm md:rounded-[2rem] md:p-5 ${
+                  client.is_active
+                    ? "border-stone-200 bg-white"
+                    : "border-stone-200 bg-stone-100 opacity-70"
+                }`}
+              >
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="min-w-0 flex-1">
+                    {isEditing ? (
+                      <div className="grid gap-3 md:grid-cols-2">
+                        <input
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          className="w-full rounded-xl border border-stone-300 px-4 py-3 text-sm outline-none focus:border-stone-500"
+                          placeholder="Nombre y apellido"
+                        />
+
+                        <input
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                          className="w-full rounded-xl border border-stone-300 px-4 py-3 text-sm outline-none focus:border-stone-500"
+                          placeholder="Celular"
+                        />
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h2 className="font-semibold text-stone-950">
+                            {client.full_name ?? "Sin nombre"}
+                          </h2>
+
+                          <StatusBadge active={Boolean(client.is_active)} />
+                        </div>
+
+                        <p className="mt-1 text-sm text-stone-500">
+                          {client.phone ?? "Sin teléfono"}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {isEditing ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => saveEdit(client.id)}
+                          className="rounded-lg bg-stone-950 px-4 py-2 text-sm font-medium text-white"
+                        >
+                          Guardar
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={cancelEdit}
+                          className="rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-700"
+                        >
+                          Cancelar
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => startEdit(client)}
+                          className="rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-700"
+                        >
+                          Editar
+                        </button>
+
+                        <Link
+                          to={`/admin/clientes/${client.id}/historial`}
+                          className="rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-700"
+                        >
+                          Historial
+                        </Link>
+
+                        {client.is_active ? (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              await clientState.deactivateClient(client.id)
+                              await clientState.reload()
+                            }}
+                            className="rounded-lg bg-red-100 px-4 py-2 text-sm font-medium text-red-700"
+                          >
+                            Desactivar
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              await clientState.activateClient(client.id)
+                              await clientState.reload()
+                            }}
+                            className="rounded-lg bg-green-100 px-4 py-2 text-sm font-medium text-green-700"
+                          >
+                            Reactivar
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+              </article>
+            )
+          })}
+
+          {clientState.clients.length === 0 && (
+            <div className="rounded-[1.5rem] bg-white p-5 text-sm text-stone-500 shadow-sm">
+              No hay clientes para esta búsqueda.
+            </div>
+          )}
+        </div>
+      )}
     </div>
+  )
+}
+
+function StatusBadge({ active }: { active: boolean }) {
+  return (
+    <span
+      className={`rounded-full px-3 py-1 text-xs font-medium ${
+        active ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+      }`}
+    >
+      {active ? "Activo" : "Inactivo"}
+    </span>
   )
 }
 

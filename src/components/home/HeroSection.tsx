@@ -5,40 +5,41 @@ function HeroSection() {
   return (
     <motion.section
       id="inicio"
-      initial={{ opacity: 0, y: 40 }}
+      initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.7 }}
-      className="mx-auto grid max-w-7xl gap-10 px-6 py-20 md:grid-cols-2"
+      transition={{ duration: 0.6 }}
+      className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-2 md:items-center md:py-20"
     >
       <motion.div
-        initial={{ opacity: 0, x: -30 }}
+        initial={{ opacity: 0, x: -24 }}
         animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.7, delay: 0.1 }}
+        transition={{ duration: 0.6, delay: 0.1 }}
+        className="max-w-xl"
       >
-        <p className="text-sm uppercase tracking-[0.3em] text-stone-500">
+        <p className="text-xs uppercase tracking-[0.28em] text-stone-500 md:text-sm">
           Cejas · Pestañas · Faciales
         </p>
 
-        <h1 className="mt-5 text-5xl font-semibold leading-tight md:text-6xl">
-          Belleza simple, elegante y lista para reservar.
+        <h1 className="mt-4 text-4xl font-semibold leading-tight text-stone-950 sm:text-5xl md:text-6xl">
+          Belleza elegante, lista para reservar.
         </h1>
 
-        <p className="mt-6 text-stone-600">
-          L’AMOUR Beauty Studio ofrece una experiencia visual limpia y moderna
-          para descubrir servicios, reservar fácilmente y vivir una atención premium.
+        <p className="mt-4 max-w-md text-base leading-7 text-stone-600 md:mt-6">
+          Agenda tu cita en L’AMOUR Beauty Studio y elige el servicio ideal para
+          realzar tu imagen con una atención personalizada.
         </p>
 
-        <div className="mt-8 flex flex-wrap gap-4">
+        <div className="mt-7 grid gap-3 sm:flex sm:flex-wrap">
           <Link
             to="/reservar"
-            className="rounded-full bg-black px-6 py-3 text-white transition hover:opacity-90"
+            className="rounded-full bg-stone-950 px-6 py-3 text-center text-sm font-medium text-white transition hover:opacity-90"
           >
-            Reservar ahora
+            Reservar cita
           </Link>
 
           <Link
             to="/servicios"
-            className="rounded-full border border-stone-300 px-6 py-3 text-stone-900 transition hover:bg-white"
+            className="rounded-full border border-stone-300 bg-white/50 px-6 py-3 text-center text-sm font-medium text-stone-900 transition hover:bg-white"
           >
             Ver servicios
           </Link>
@@ -46,50 +47,41 @@ function HeroSection() {
       </motion.div>
 
       <motion.div
-        initial={{ opacity: 0, x: 30 }}
+        initial={{ opacity: 0, x: 24 }}
         animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.7, delay: 0.2 }}
-        className="relative"
+        transition={{ duration: 0.6, delay: 0.2 }}
+        className="relative overflow-hidden rounded-[1.75rem] bg-[#e7ddd1] p-5 md:rounded-[2rem] md:p-8"
       >
-        <div className="absolute inset-0 rounded-[2rem] bg-[#e7ddd1]" />
+        <div className="absolute right-4 top-4 h-32 w-32 rounded-full bg-white/40 blur-3xl md:right-10 md:top-10 md:h-40 md:w-40" />
 
-        <div className="absolute right-10 top-10 h-40 w-40 rounded-full bg-white/40 blur-3xl" />
+        <div className="relative z-10">
+          <p className="text-[11px] uppercase tracking-[0.28em] text-stone-600">
+            Experiencia
+          </p>
 
-        <div className="relative z-10 flex h-full flex-col justify-between rounded-[2rem] p-8">
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-stone-600">
-              Experiencia
-            </p>
+          <h2 className="mt-3 text-2xl font-semibold leading-snug text-stone-950 md:text-3xl">
+            Resultados naturales y atención cuidada.
+          </h2>
 
-            <h3 className="mt-3 text-2xl font-semibold text-stone-950">
-              Resultados que elevan tu imagen
-            </h3>
+          <p className="mt-3 max-w-md text-sm leading-6 text-stone-600">
+            Servicios de belleza pensados para que reserves rápido, confirmes tu
+            cita y recibas una atención ordenada.
+          </p>
 
-            <p className="mt-3 text-sm text-stone-600">
-              Técnicas modernas, acabados naturales y atención personalizada en cada sesión.
-            </p>
-          </div>
+          <div className="mt-8 grid grid-cols-2 gap-3 md:gap-4">
+            <div className="rounded-2xl bg-white p-4 shadow-sm">
+              <p className="text-xs text-stone-500">Reserva</p>
+              <p className="mt-1 text-lg font-semibold text-stone-950">
+                Online
+              </p>
+            </div>
 
-          <div className="mt-10 grid grid-cols-2 gap-4">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.35 }}
-              className="rounded-xl bg-white p-4 shadow-sm"
-            >
-              <p className="text-xs text-stone-500">Clientes felices</p>
-              <p className="mt-1 text-xl font-semibold">+500</p>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.45 }}
-              className="rounded-xl bg-white p-4 shadow-sm"
-            >
-              <p className="text-xs text-stone-500">Servicios</p>
-              <p className="mt-1 text-xl font-semibold">Premium</p>
-            </motion.div>
+            <div className="rounded-2xl bg-white p-4 shadow-sm">
+              <p className="text-xs text-stone-500">Atención</p>
+              <p className="mt-1 text-lg font-semibold text-stone-950">
+                Personalizada
+              </p>
+            </div>
           </div>
         </div>
       </motion.div>

@@ -13,37 +13,38 @@ type ServiceCardProps = {
 
 function ServiceCard({ service }: ServiceCardProps) {
   return (
-    <article className="flex h-full flex-col justify-between rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl">
-      <div>
-        <div className="flex items-start justify-between gap-4">
-          <h4 className="text-2xl font-semibold text-stone-950">
+    <article className="rounded-3xl border border-stone-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md md:p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h4 className="text-lg font-semibold leading-snug text-stone-950 md:text-xl">
             {service.name}
           </h4>
 
-          <span className="shrink-0 rounded-full bg-stone-950 px-4 py-2 text-sm font-medium text-white">
-            {service.price}
-          </span>
+          {service.retouch && (
+            <p className="mt-1 text-xs text-stone-500">
+              Retoque:{" "}
+              <span className="font-medium text-stone-800">
+                {service.retouch}
+              </span>
+            </p>
+          )}
         </div>
 
-        <p className="mt-4 min-h-[72px] text-sm leading-7 text-stone-600">
-          {service.description}
-        </p>
-
-        {service.retouch && (
-          <p className="mt-4 text-sm text-stone-600">
-            Retoque: <span className="font-medium text-stone-900">{service.retouch}</span>
-          </p>
-        )}
+        <span className="shrink-0 rounded-full bg-stone-950 px-3 py-1.5 text-xs font-medium text-white">
+          {service.price}
+        </span>
       </div>
 
-      <div className="mt-6">
-        <Link
-          to="/reservar"
-          className="inline-flex rounded-full border border-stone-300 px-5 py-3 text-sm font-medium text-stone-900 transition hover:bg-stone-50"
-        >
-          Reservar este servicio
-        </Link>
-      </div>
+      <p className="mt-3 line-clamp-2 text-sm leading-6 text-stone-600">
+        {service.description}
+      </p>
+
+      <Link
+        to="/reservar"
+        className="mt-4 inline-flex text-sm font-medium text-stone-900 transition hover:text-stone-500"
+      >
+        Reservar →
+      </Link>
     </article>
   )
 }
