@@ -6,6 +6,9 @@ export type FollowUpAppointmentRow = {
   date: string
   time: string
   status: string
+  follow_up_contacted_at: string | null
+  follow_up_contacted_channel: string | null
+  follow_up_notes: string | null
   clients:
     | {
         full_name: string | null
@@ -37,6 +40,9 @@ export async function fetchCompletedAppointmentsForFollowUp() {
       date,
       time,
       status,
+      follow_up_contacted_at,
+      follow_up_contacted_channel,
+      follow_up_notes,
       clients (
         full_name,
         phone
@@ -55,4 +61,33 @@ export async function fetchCompletedAppointmentsForFollowUp() {
   }
 
   return (data ?? []) as FollowUpAppointmentRow[]
+}
+
+export async function markFollowUpAsContacted(appointmentId: string) {
+  const { error } = await supabase
+    .from("appointments")
+    .update({
+      follow_up_contacted_at: new Date().toISOString(),
+      follow_up_contacted_channel: "whatsapp",
+    })
+    .eq("id", appointmentId)
+
+  if (error) {
+    throw new Error("No se pudo marcar el seguimiento como contactado.")
+  }
+}
+
+export async function clearFollowUpContacted(appointmentId: string) {
+  const { error } = await supabase
+    .from("appointments")
+    .update({
+      follow_up_contacted_at: null,
+      follow_up_contacted_channel: null,
+      follow_up_notes: null,
+    })
+    .eq("id", appointmentId)
+
+  if (error) {
+    throw new Error("No se pudo revertir el seguimiento.")
+  }
 }

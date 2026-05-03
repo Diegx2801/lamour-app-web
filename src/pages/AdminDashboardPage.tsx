@@ -20,23 +20,37 @@ function getStatusClasses(status: string) {
   }
 }
 
+function formatCurrency(value: number) {
+  return `S/ ${value.toFixed(2)}`
+}
+
 function AdminDashboardPage() {
   const dashboard = useAdminDashboard()
 
   return (
-    <div>
-      <div className="mb-5 md:mb-6">
-        <p className="text-xs uppercase tracking-[0.3em] text-stone-500">
-          Panel administrativo
-        </p>
+    <div className="pb-6">
+      <div className="mb-5 flex flex-col gap-3 md:mb-6 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-stone-500">
+            Panel administrativo
+          </p>
 
-        <h1 className="mt-2 text-2xl font-semibold text-stone-950 md:mt-3 md:text-4xl">
-          Dashboard
-        </h1>
+          <h1 className="mt-2 text-2xl font-semibold text-stone-950 md:mt-3 md:text-4xl">
+            Dashboard
+          </h1>
 
-        <p className="mt-2 text-sm leading-6 text-stone-600">
-          Métricas operativas, ingresos y resumen diario del spa.
-        </p>
+          <p className="mt-2 text-sm leading-6 text-stone-600">
+            Métricas operativas, ingresos y resumen diario del spa.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={dashboard.refresh}
+          className="rounded-xl border border-stone-300 bg-white px-4 py-3 text-sm font-medium text-stone-700 shadow-sm transition hover:bg-stone-50"
+        >
+          Actualizar
+        </button>
       </div>
 
       <div className="mb-5 rounded-[1.5rem] bg-white p-4 shadow-sm md:mb-6 md:rounded-[2rem] md:p-5">
@@ -53,11 +67,17 @@ function AdminDashboardPage() {
             onChange={dashboard.setRangeEnd}
           />
 
-          <ActionButton onClick={() => dashboard.setLastDaysRange(7)} variant="secondary">
+          <ActionButton
+            onClick={() => dashboard.setLastDaysRange(7)}
+            variant="secondary"
+          >
             Últimos 7 días
           </ActionButton>
 
-          <ActionButton onClick={() => dashboard.setLastDaysRange(30)} variant="secondary">
+          <ActionButton
+            onClick={() => dashboard.setLastDaysRange(30)}
+            variant="secondary"
+          >
             Últimos 30 días
           </ActionButton>
 
@@ -81,25 +101,78 @@ function AdminDashboardPage() {
 
       {!dashboard.loading && !dashboard.error && (
         <div className="space-y-5 md:space-y-6">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <MetricCard title="Reservas totales" value={dashboard.stats.totalReservations} />
-            <MetricCard title="Reservas hoy" value={dashboard.stats.todayReservations} />
-            <MetricCard title="Ingresos hoy" value={`S/ ${dashboard.stats.todayIncome.toFixed(2)}`} />
-            <MetricCard title="Ingresos del mes" value={`S/ ${dashboard.stats.monthIncome.toFixed(2)}`} />
-          </div>
+          <section>
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-stone-500">
+              Resumen principal
+            </h2>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <MetricCard title="Pendientes hoy" value={dashboard.stats.todayPending} />
-            <MetricCard title="Confirmadas hoy" value={dashboard.stats.todayConfirmed} />
-            <MetricCard title="Completadas hoy" value={dashboard.stats.todayCompleted} />
-            <MetricCard title="Canceladas del mes" value={dashboard.stats.monthCancelled} />
-          </div>
+            <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+              <MetricCard
+                title="Ingresos hoy"
+                value={formatCurrency(dashboard.stats.todayIncome)}
+                highlight
+              />
+              <MetricCard
+                title="Ingresos del mes"
+                value={formatCurrency(dashboard.stats.monthIncome)}
+              />
+              <MetricCard
+                title="Reservas hoy"
+                value={dashboard.stats.todayReservations}
+              />
+              <MetricCard
+                title="Saldo pendiente"
+                value={formatCurrency(dashboard.stats.totalPendingAmount)}
+                danger={dashboard.stats.totalPendingAmount > 0}
+              />
+            </div>
+          </section>
+
+          <section>
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-stone-500">
+              Indicadores del rango
+            </h2>
+
+            <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+              <MetricCard
+                title="Reservas del rango"
+                value={dashboard.stats.rangeReservations}
+              />
+              <MetricCard
+                title="Ingresos del rango"
+                value={formatCurrency(dashboard.stats.rangeIncome)}
+              />
+              <MetricCard
+                title="Ticket promedio"
+                value={formatCurrency(dashboard.stats.averageTicket)}
+              />
+              <MetricCard
+                title="No show"
+                value={`${dashboard.stats.noShowRate}%`}
+                danger={dashboard.stats.noShowRate > 0}
+              />
+            </div>
+          </section>
+
+          <section>
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-stone-500">
+              Estado de hoy
+            </h2>
+
+            <div className="grid grid-cols-2 gap-3 xl:grid-cols-5">
+              <SmallMetricCard title="Pendientes" value={dashboard.stats.todayPending} />
+              <SmallMetricCard title="Confirmadas" value={dashboard.stats.todayConfirmed} />
+              <SmallMetricCard title="Completadas" value={dashboard.stats.todayCompleted} />
+              <SmallMetricCard title="No show hoy" value={dashboard.stats.todayNoShow} />
+              <SmallMetricCard title="Canceladas mes" value={dashboard.stats.monthCancelled} />
+            </div>
+          </section>
 
           <div className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr] xl:gap-6">
             <section className="rounded-[1.5rem] bg-white p-4 shadow-sm md:rounded-[2rem] md:p-6">
               <div className="mb-5 md:mb-6">
                 <h2 className="text-lg font-semibold text-stone-950 md:text-xl">
-                  Ingresos por día
+                  Ingresos por periodo
                 </h2>
                 <p className="mt-1 text-sm leading-6 text-stone-500">
                   Cobros completados dentro del rango seleccionado.
@@ -110,21 +183,24 @@ function AdminDashboardPage() {
                 {dashboard.dailyIncome.map((item) => {
                   const height =
                     dashboard.maxDailyIncome > 0
-                      ? Math.max((item.amount / dashboard.maxDailyIncome) * 160, 8)
+                      ? Math.max(
+                          (item.amount / dashboard.maxDailyIncome) * 160,
+                          8
+                        )
                       : 8
 
                   return (
                     <div
                       key={item.date}
-                      className="flex min-w-[48px] flex-col items-center gap-2 md:min-w-[54px]"
+                      className="flex min-w-[52px] flex-col items-center gap-2"
                     >
                       <span className="text-[11px] text-stone-500">
                         S/ {item.amount.toFixed(0)}
                       </span>
 
-                      <div className="flex h-[160px] items-end md:h-[180px]">
+                      <div className="flex h-[160px] items-end">
                         <div
-                          className="w-8 rounded-t-xl bg-stone-950 md:w-10"
+                          className="w-8 rounded-t-xl bg-stone-950"
                           style={{ height: `${height}px` }}
                         />
                       </div>
@@ -170,11 +246,20 @@ function AdminDashboardPage() {
                 })}
               </div>
 
-              <div className="mt-5 rounded-2xl bg-stone-50 p-4 md:mt-6">
-                <p className="text-sm text-stone-500">Saldo pendiente global</p>
-                <p className="mt-2 text-2xl font-semibold text-stone-950 md:text-3xl">
-                  S/ {dashboard.stats.totalPendingAmount.toFixed(2)}
-                </p>
+              <div className="mt-5 grid grid-cols-2 gap-3 md:mt-6">
+                <div className="rounded-2xl bg-stone-50 p-4">
+                  <p className="text-sm text-stone-500">Completadas</p>
+                  <p className="mt-2 text-2xl font-semibold text-stone-950">
+                    {dashboard.stats.completionRate}%
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-stone-50 p-4">
+                  <p className="text-sm text-stone-500">No show mes</p>
+                  <p className="mt-2 text-2xl font-semibold text-stone-950">
+                    {dashboard.stats.monthNoShow}
+                  </p>
+                </div>
               </div>
             </section>
           </div>
@@ -243,7 +328,7 @@ function AdminDashboardPage() {
                   ))
                 ) : (
                   <p className="text-sm text-stone-400">
-                    No hay reservas registradas para hoy.
+                    No hay próximas reservas para hoy.
                   </p>
                 )}
               </div>
@@ -304,16 +389,54 @@ function ActionButton({
 function MetricCard({
   title,
   value,
+  highlight = false,
+  danger = false,
+}: {
+  title: string
+  value: string | number
+  highlight?: boolean
+  danger?: boolean
+}) {
+  return (
+    <div
+      className={`rounded-[1.35rem] p-4 shadow-sm md:rounded-[2rem] md:p-6 ${
+        highlight
+          ? "bg-stone-950 text-white"
+          : danger
+          ? "border border-red-100 bg-red-50"
+          : "bg-white"
+      }`}
+    >
+      <p
+        className={`text-xs md:text-sm ${
+          highlight ? "text-stone-300" : danger ? "text-red-600" : "text-stone-500"
+        }`}
+      >
+        {title}
+      </p>
+
+      <h2
+        className={`mt-2 text-xl font-semibold md:mt-3 md:text-3xl ${
+          highlight ? "text-white" : danger ? "text-red-800" : "text-stone-950"
+        }`}
+      >
+        {value}
+      </h2>
+    </div>
+  )
+}
+
+function SmallMetricCard({
+  title,
+  value,
 }: {
   title: string
   value: string | number
 }) {
   return (
-    <div className="rounded-[1.5rem] bg-white p-4 shadow-sm md:rounded-[2rem] md:p-6">
-      <p className="text-sm text-stone-500">{title}</p>
-      <h2 className="mt-2 text-2xl font-semibold text-stone-950 md:mt-3 md:text-3xl">
-        {value}
-      </h2>
+    <div className="rounded-[1.25rem] border border-stone-200 bg-white p-4 shadow-sm">
+      <p className="text-xs text-stone-500">{title}</p>
+      <p className="mt-2 text-xl font-semibold text-stone-950">{value}</p>
     </div>
   )
 }

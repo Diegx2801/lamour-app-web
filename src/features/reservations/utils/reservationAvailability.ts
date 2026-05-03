@@ -67,6 +67,16 @@ type ValidateSlotInput = {
   removePastSlots?: boolean
 }
 
+type ComputeAvailabilityInput = {
+  appointments: AppointmentAvailabilityRow[]
+  blocks: ScheduleBlockRow[]
+  selectedService: BasicServiceForAvailability
+  date: string
+  timeSlots: string[]
+  lashistas?: number
+  removePastSlots?: boolean
+}
+
 function normalizeTime(time: string | null | undefined) {
   return String(time ?? "").slice(0, 5)
 }
@@ -120,7 +130,9 @@ export function mapAppointmentsForAvailability(
           ? item.serviceCategory
           : relatedService?.category ?? null,
       durationMinutes:
-        relatedService?.category === "Pestañas"
+        "durationMinutes" in item
+          ? item.durationMinutes
+          : relatedService?.category === "Pestañas"
           ? 120
           : relatedService?.duration_minutes ?? null,
     }
@@ -248,5 +260,42 @@ export function validateSlotAvailability({
 
   if (hasConflict) {
     throw new Error("Ese horario ya está ocupado.")
+  }
+}
+
+export function computeAvailability({
+  appointments,
+  blocks,
+  selectedService,
+  date,
+  timeSlots,
+  lashistas = 2,
+  removePastSlots = true,
+}: ComputeAvailabilityInput) {
+  const fullDayBlock = getFullDayBlock(blocks)
+
+  if (fullDayBlock) {
+    return {
+      slots: [],
+      blockedReason: fullDayBlock.reason || "Día bloqueado.",
+    }
+  }
+
+  const blockedTimes = getBlockedTimes(blocks)
+  const mappedAppointments = mapAppointmentsForAvailability(appointments)
+
+  const slots = getAvailableSlotsForService({
+    appointments: mappedAppointments,
+    selectedService,
+    date,
+    timeSlots,
+    blockedTimes,
+    lashistas,
+    removePastSlots,
+  })
+
+  return {
+    slots,
+    blockedReason: "",
   }
 }

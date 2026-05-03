@@ -1,6 +1,11 @@
 import { Link } from "react-router"
 import { timeSlots } from "../data/timeSlots"
 import {
+  buildWhatsappPhone,
+  isNoShowCandidate,
+  isReminderCandidate,
+} from "../features/reservations/utils/appointmentStatus"
+import {
   type AgendaClientRelation,
   type AgendaReservation,
   type AgendaServiceRelation,
@@ -156,6 +161,7 @@ function AdminAgendaPage() {
             <StatusLegend label="Confirmada" className="bg-green-100 text-green-700" />
             <StatusLegend label="Completada" className="bg-blue-100 text-blue-700" />
             <StatusLegend label="Cancelada" className="bg-red-100 text-red-700" />
+            <StatusLegend label="No show" className="bg-stone-200 text-stone-700" />
           </div>
         </div>
 
@@ -252,6 +258,18 @@ function AdminAgendaPage() {
                           const client = getClientData(reservation.clients)
                           const service = getServiceData(reservation.services)
 
+                          const showNoShowButton = isNoShowCandidate(
+                            reservation.date,
+                            reservation.time,
+                            reservation.status
+                          )
+
+                          const showReminderButton = isReminderCandidate(
+                            reservation.date,
+                            reservation.time,
+                            reservation.status
+                          )
+
                           return (
                             <div
                               key={reservation.id}
@@ -321,6 +339,42 @@ function AdminAgendaPage() {
                                   />
                                 )}
 
+                                {showNoShowButton && (
+                                  <AgendaActionButton
+                                    label="No asistió"
+                                    onClick={() =>
+                                      agenda.updateStatus(
+                                        reservation.id,
+                                        "no_show"
+                                      )
+                                    }
+                                    className="text-stone-700"
+                                  />
+                                )}
+
+                                {showReminderButton && client?.phone && (
+                                  <AgendaActionButton
+                                    label="Recordar"
+                                    onClick={() => {
+                                      const message = `Hola ${client?.full_name ?? ""}, te recordamos tu cita en L'AMOUR Beauty Studio.
+
+Servicio: ${service?.name ?? "Servicio reservado"}
+Fecha: ${reservation.date}
+Hora: ${normalizeTime(reservation.time)}
+
+Por favor confirma tu asistencia.`
+
+                                   const phone = buildWhatsappPhone(client.phone!)
+                                      const url = `https://wa.me/${phone}?text=${encodeURIComponent(
+                                        message
+                                      )}`
+
+                                      window.open(url, "_blank")
+                                    }}
+                                    className="text-purple-700"
+                                  />
+                                )}
+
                                 {reservation.status !== "cancelled" && (
                                   <AgendaActionButton
                                     label="Cancelar"
@@ -379,9 +433,7 @@ function StatusLegend({
   className: string
 }) {
   return (
-    <span
-      className={`min-w-fit rounded-full px-3 py-1 font-medium ${className}`}
-    >
+    <span className={`min-w-fit rounded-full px-3 py-1 font-medium ${className}`}>
       {label}
     </span>
   )

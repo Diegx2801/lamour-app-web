@@ -42,8 +42,13 @@ export async function fetchDashboardAppointments() {
     status,
     total_price,
     remaining_amount,
-    clients (full_name),
-    services (name, category)
+    clients (
+      full_name
+    ),
+    services (
+      name,
+      category
+    )
   `)
 
   if (error) {

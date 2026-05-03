@@ -3,20 +3,39 @@ import {
   createClient,
   findClientByPhone,
   updateClient,
+  type ServiceRow,
 } from "../api/reservationService"
 import { normalizePeruvianPhone } from "../utils/reservationUtils"
 
-export async function submitPublicReservation(params: {
-  formData: any
-  selectedServiceData: any
+export type PublicReservationForm = {
+  serviceId: string
+  fullName: string
+  phone: string
+  date: string
+  time: string
+  notes: string
+}
+
+type SubmitPublicReservationParams = {
+  formData: PublicReservationForm
+  selectedServiceData: ServiceRow
   servicePrice: number
   depositAmount: number
   remainingAmount: number
-}) {
-  const { formData, selectedServiceData, servicePrice, depositAmount, remainingAmount } = params
+}
 
+export async function submitPublicReservation({
+  formData,
+  selectedServiceData,
+  servicePrice,
+  depositAmount,
+  remainingAmount,
+}: SubmitPublicReservationParams) {
   const phone = normalizePeruvianPhone(formData.phone)
-  if (!phone) throw new Error("Celular inválido")
+
+  if (!phone) {
+    throw new Error("Celular inválido.")
+  }
 
   const existingClient = await findClientByPhone(phone)
   let clientId = existingClient?.id

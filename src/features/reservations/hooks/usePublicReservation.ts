@@ -3,13 +3,12 @@ import { toast } from "sonner"
 import { timeSlots } from "../../../data/timeSlots"
 import { categories } from "../../../data/services"
 import {
-  getAvailableSlotsForService,
-  getBlockedTimes,
-  getFullDayBlock,
-  mapAppointmentsForAvailability,
-  validateSlotAvailability,
+  computeAvailability,
 } from "../utils/reservationAvailability"
-import { submitPublicReservation } from "../use-cases/submitPublicReservation"
+import {
+  submitPublicReservation,
+  type PublicReservationForm,
+} from "../use-cases/submitPublicReservation"
 import { reservationSchema } from "../validators/reservationSchema"
 import {
   formatDateForMessage,
@@ -22,14 +21,7 @@ import {
   type ServiceRow,
 } from "../api/reservationService"
 
-type ReservationForm = {
-  serviceId: string
-  fullName: string
-  phone: string
-  date: string
-  time: string
-  notes: string
-}
+type ReservationForm = PublicReservationForm
 
 type SubmittedReservation = ReservationForm & {
   serviceName: string
@@ -51,6 +43,7 @@ const initialForm: ReservationForm = {
 }
 
 const WHATSAPP_NUMBER = "51957230015"
+const STORAGE_KEY = "lamour_public_reservation"
 
 export function usePublicReservation() {
   const [step, setStep] = useState(1)
@@ -68,6 +61,31 @@ export function usePublicReservation() {
   const [availableSlots, setAvailableSlots] = useState<string[]>([])
 
   const today = new Date().toISOString().split("T")[0]
+
+  useEffect(() => {
+    const savedForm = localStorage.getItem(STORAGE_KEY)
+
+    if (!savedForm) return
+
+    try {
+      const parsed = JSON.parse(savedForm) as ReservationForm
+
+      setFormData({
+        serviceId: parsed.serviceId ?? "",
+        fullName: parsed.fullName ?? "",
+        phone: parsed.phone ?? "",
+        date: parsed.date ?? "",
+        time: parsed.time ?? "",
+        notes: parsed.notes ?? "",
+      })
+    } catch {
+      localStorage.removeItem(STORAGE_KEY)
+    }
+  }, [])
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(formData))
+  }, [formData])
 
   useEffect(() => {
     const loadServices = async () => {
@@ -125,12 +143,24 @@ export function usePublicReservation() {
     return services.find((service) => service.id === formData.serviceId) ?? null
   }, [formData.serviceId, services])
 
+  const normalizedSelectedService = useMemo(() => {
+    if (!selectedServiceData) return null
+
+    return {
+      category: selectedServiceData.category,
+      duration_minutes:
+        selectedServiceData.category === "Pestañas"
+          ? 120
+          : selectedServiceData.duration_minutes,
+    }
+  }, [selectedServiceData])
+
   useEffect(() => {
     const loadSlots = async () => {
       setBlockedReason("")
       setError("")
 
-      if (!formData.date || !selectedServiceData) {
+      if (!formData.date || !normalizedSelectedService) {
         setAvailableSlots([])
         return
       }
@@ -148,39 +178,20 @@ export function usePublicReservation() {
           formData.date
         )
 
-        const fullDayBlock = getFullDayBlock(blocks)
-
-        if (fullDayBlock) {
-          setAvailableSlots([])
-          setBlockedReason(fullDayBlock.reason || "Día bloqueado.")
-          return
-        }
-
-        const blockedTimes = getBlockedTimes(blocks)
-
-        const mappedAppointments = mapAppointmentsForAvailability(
-          appointments as any[]
-        )
-
-        const slots = getAvailableSlotsForService({
-          appointments: mappedAppointments,
-          selectedService: {
-            category: selectedServiceData.category,
-            duration_minutes:
-              selectedServiceData.category === "Pestañas"
-                ? 120
-                : selectedServiceData.duration_minutes,
-          },
+        const result = computeAvailability({
+          appointments,
+          blocks,
+          selectedService: normalizedSelectedService,
           date: formData.date,
           timeSlots,
-          blockedTimes,
           lashistas: 2,
           removePastSlots: true,
         })
 
-        setAvailableSlots(slots)
+        setAvailableSlots(result.slots)
+        setBlockedReason(result.blockedReason)
 
-        if (formData.time && !slots.includes(formData.time)) {
+        if (formData.time && !result.slots.includes(formData.time)) {
           setFormData((prev) => ({ ...prev, time: "" }))
         }
       } catch {
@@ -194,7 +205,7 @@ export function usePublicReservation() {
     }
 
     loadSlots()
-  }, [formData.date, selectedServiceData])
+  }, [formData.date, formData.time, normalizedSelectedService])
 
   const servicePrice = Number(selectedServiceData?.price ?? 0)
   const depositAmount = 10
@@ -263,6 +274,7 @@ Hora: ${submittedReservation.time}`
   }
 
   const handleNewReservation = () => {
+    localStorage.removeItem(STORAGE_KEY)
     setSubmittedReservation(null)
     setFormData(initialForm)
     setStep(1)
@@ -353,87 +365,37 @@ Hora: ${submittedReservation.time}`
         return
       }
 
-      if (!selectedServiceData) {
-        const message = "Selecciona un servicio válido."
-        setError(message)
-        setSubmitStatus("error")
-        toast.dismiss(loadingToastId)
-        toast.error(message)
-        return
+      if (!selectedServiceData || !normalizedSelectedService) {
+        throw new Error("Selecciona un servicio válido.")
       }
 
       if (isSunday(formData.date)) {
-        const message = "No atendemos los domingos."
-        setError(message)
-        setSubmitStatus("error")
-        toast.dismiss(loadingToastId)
-        toast.error(message)
-        return
+        throw new Error("No atendemos los domingos.")
       }
 
       const { appointments, blocks } = await fetchPublicAvailability(
         formData.date
       )
 
-      const fullDayBlock = getFullDayBlock(blocks)
-
-      if (fullDayBlock) {
-        const message = fullDayBlock.reason || "Ese día está bloqueado."
-        setError(message)
-        setSubmitStatus("error")
-        toast.dismiss(loadingToastId)
-        toast.error(message)
-        return
-      }
-
-      const blockedTimes = getBlockedTimes(blocks)
-
-      const mappedAppointments = mapAppointmentsForAvailability(
-        appointments as any[]
-      )
-
-      validateSlotAvailability({
-        appointments: mappedAppointments,
-        selectedService: {
-          category: selectedServiceData.category,
-          duration_minutes:
-            selectedServiceData.category === "Pestañas"
-              ? 120
-              : selectedServiceData.duration_minutes,
-        },
-        date: formData.date,
-        time: formData.time,
-        blockedTimes,
-        lashistas: 2,
-        removePastSlots: true,
-      })
-
-      const latestSlots = getAvailableSlotsForService({
-        appointments: mappedAppointments,
-        selectedService: {
-          category: selectedServiceData.category,
-          duration_minutes:
-            selectedServiceData.category === "Pestañas"
-              ? 120
-              : selectedServiceData.duration_minutes,
-        },
+      const result = computeAvailability({
+        appointments,
+        blocks,
+        selectedService: normalizedSelectedService,
         date: formData.date,
         timeSlots,
-        blockedTimes,
         lashistas: 2,
         removePastSlots: true,
       })
 
-      if (!latestSlots.includes(formData.time)) {
-        const message = "Ese horario ya no está disponible."
-        setError(message)
-        setSubmitStatus("error")
-        toast.dismiss(loadingToastId)
-        toast.error(message)
-        return
+      if (result.blockedReason) {
+        throw new Error(result.blockedReason)
       }
 
-      const result = await submitPublicReservation({
+      if (!result.slots.includes(formData.time)) {
+        throw new Error("Ese horario ya no está disponible.")
+      }
+
+      const reservation = await submitPublicReservation({
         formData,
         selectedServiceData,
         servicePrice,
@@ -441,8 +403,9 @@ Hora: ${submittedReservation.time}`
         remainingAmount,
       })
 
-      setSubmittedReservation(result)
+      setSubmittedReservation(reservation)
       setSubmitStatus("success")
+      localStorage.removeItem(STORAGE_KEY)
 
       toast.dismiss(loadingToastId)
       toast.success("Reserva registrada correctamente.")
