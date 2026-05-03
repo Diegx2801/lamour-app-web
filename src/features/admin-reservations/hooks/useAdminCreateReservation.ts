@@ -66,7 +66,10 @@ export function useAdminCreateReservation() {
   const [loadingSlots, setLoadingSlots] = useState(false)
 
   const preselectedServiceId = searchParams.get("serviceId") ?? ""
-  const preselectedType = searchParams.get("type") === "retouch" ? "retouch" : "normal"
+  const preselectedType =
+    searchParams.get("type") === "retouch" ? "retouch" : "normal"
+  const preselectedFullName = searchParams.get("fullName") ?? ""
+  const preselectedPhone = searchParams.get("phone") ?? ""
 
   const selectedServiceData = useMemo(() => {
     if (!form.service) return null
@@ -110,13 +113,13 @@ export function useAdminCreateReservation() {
         setServices(servicesData)
         setLashists(lashistsData)
 
-        if (preselectedServiceId) {
-          setForm((prev) => ({
-            ...prev,
-            service: preselectedServiceId,
-            appointmentType: preselectedType,
-          }))
-        }
+        setForm((prev) => ({
+          ...prev,
+          fullName: preselectedFullName || prev.fullName,
+          phone: preselectedPhone || prev.phone,
+          service: preselectedServiceId || prev.service,
+          appointmentType: preselectedType,
+        }))
       } catch (err) {
         const message =
           err instanceof Error ? err.message : "Error al cargar datos."
@@ -130,7 +133,12 @@ export function useAdminCreateReservation() {
     }
 
     loadInitialData()
-  }, [preselectedServiceId, preselectedType])
+  }, [
+    preselectedServiceId,
+    preselectedType,
+    preselectedFullName,
+    preselectedPhone,
+  ])
 
   useEffect(() => {
     const loadAvailableSlots = async () => {
@@ -267,7 +275,10 @@ export function useAdminCreateReservation() {
         return "Este servicio no tiene retoque configurado."
       }
 
-      if (!selectedServiceData.retouch_price || Number(selectedServiceData.retouch_price) <= 0) {
+      if (
+        !selectedServiceData.retouch_price ||
+        Number(selectedServiceData.retouch_price) <= 0
+      ) {
         return "Este servicio no tiene precio de retoque válido."
       }
     }

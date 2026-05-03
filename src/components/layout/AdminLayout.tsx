@@ -7,17 +7,46 @@ type NavItem = {
   label: string
   to: string
   roles: AdminRole[]
+  match?: string
 }
 
 const navItems: NavItem[] = [
-  { label: "Dashboard", to: "/admin/dashboard", roles: ["owner"] },
-  { label: "Agenda", to: "/admin/agenda", roles: ["owner", "staff"] },
-  { label: "Reservas", to: "/admin/reservas", roles: ["owner", "staff"] },
-  { label: "Crear", to: "/admin/crear", roles: ["owner", "staff"] },
-  { label: "Clientes", to: "/admin/clientes", roles: ["owner"] },
-  { label: "Servicios", to: "/admin/services", roles: ["owner"] },
-  { label: "Lashistas", to: "/admin/lashistas", roles: ["owner"] },
-  { label: "Seguimiento", to: "/admin/seguimiento", roles: ["owner", "staff"] },
+  {
+    label: "Dashboard",
+    to: "/admin/dashboard",
+    roles: ["owner"],
+  },
+  {
+    label: "Agenda",
+    to: "/admin/agenda",
+    roles: ["owner", "staff"],
+  },
+  {
+    label: "Reservas",
+    to: "/admin/reservas",
+    roles: ["owner", "staff"],
+    match: "/admin/reservas",
+  },
+  {
+    label: "Clientes",
+    to: "/admin/clientes",
+    roles: ["owner"],
+  },
+  {
+    label: "Servicios",
+    to: "/admin/services",
+    roles: ["owner"],
+  },
+  {
+    label: "Lashistas",
+    to: "/admin/lashistas",
+    roles: ["owner"],
+  },
+  {
+    label: "Seguimiento",
+    to: "/admin/seguimiento",
+    roles: ["owner", "staff"],
+  },
 ]
 
 function normalizeRole(role: string | null | undefined): AdminRole | null {
@@ -26,6 +55,18 @@ function normalizeRole(role: string | null | undefined): AdminRole | null {
   if (role === "staff") return "staff"
 
   return null
+}
+
+function isActiveRoute(pathname: string, item: NavItem) {
+  if (item.to === "/admin/reservas") {
+    return pathname.startsWith("/admin/reservas") || pathname === "/admin/crear"
+  }
+
+  if (item.match) {
+    return pathname.startsWith(item.match)
+  }
+
+  return pathname === item.to
 }
 
 function AdminLayout() {
@@ -135,7 +176,7 @@ function AdminLayout() {
         <aside className="hidden w-56 shrink-0 md:block">
           <nav className="sticky top-24 space-y-2">
             {visibleNavItems.map((item) => {
-              const isActive = pathname === item.to
+              const isActive = isActiveRoute(pathname, item)
 
               return (
                 <Link
@@ -161,7 +202,7 @@ function AdminLayout() {
 
       <nav className="fixed bottom-0 left-0 right-0 z-50 flex gap-2 overflow-x-auto border-t border-stone-200 bg-white px-3 py-2 md:hidden">
         {visibleNavItems.map((item) => {
-          const isActive = pathname === item.to
+          const isActive = isActiveRoute(pathname, item)
 
           return (
             <Link

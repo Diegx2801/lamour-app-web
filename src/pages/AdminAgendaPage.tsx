@@ -26,6 +26,10 @@ function getServiceData(services: AgendaServiceRelation) {
   return Array.isArray(services) ? services[0] ?? null : services
 }
 
+function formatMoney(value: number | null | undefined) {
+  return `S/ ${Number(value ?? 0).toFixed(2)}`
+}
+
 function getStatusClasses(status: string) {
   switch (status) {
     case "confirmed":
@@ -64,6 +68,22 @@ function getOccupancyBadgeClasses(occupied: number, capacity: number) {
   if (occupied >= capacity) return "bg-red-100 text-red-700"
   if (occupied > 0) return "bg-amber-100 text-amber-700"
   return "bg-green-100 text-green-700"
+}
+
+function getPaymentBadge(reservation: AgendaReservation) {
+  const remaining = Number(reservation.remaining_amount ?? 0)
+
+  if (remaining <= 0) {
+    return {
+      label: "Pagado",
+      className: "bg-green-100 text-green-700",
+    }
+  }
+
+  return {
+    label: `Saldo ${formatMoney(remaining)}`,
+    className: "bg-red-100 text-red-700",
+  }
 }
 
 function getDisplayDuration(reservation: AgendaReservation) {
@@ -157,11 +177,26 @@ function AdminAgendaPage() {
           </div>
 
           <div className="flex gap-2 overflow-x-auto pb-1 text-xs md:flex-wrap md:overflow-visible md:pb-0">
-            <StatusLegend label="Pendiente" className="bg-amber-100 text-amber-700" />
-            <StatusLegend label="Confirmada" className="bg-green-100 text-green-700" />
-            <StatusLegend label="Completada" className="bg-blue-100 text-blue-700" />
-            <StatusLegend label="Cancelada" className="bg-red-100 text-red-700" />
-            <StatusLegend label="No show" className="bg-stone-200 text-stone-700" />
+            <StatusLegend
+              label="Pendiente"
+              className="bg-amber-100 text-amber-700"
+            />
+            <StatusLegend
+              label="Confirmada"
+              className="bg-green-100 text-green-700"
+            />
+            <StatusLegend
+              label="Completada"
+              className="bg-blue-100 text-blue-700"
+            />
+            <StatusLegend
+              label="Cancelada"
+              className="bg-red-100 text-red-700"
+            />
+            <StatusLegend
+              label="No show"
+              className="bg-stone-200 text-stone-700"
+            />
           </div>
         </div>
 
@@ -300,11 +335,16 @@ function AdminAgendaPage() {
 
                               <div className="mt-3 grid gap-1 text-xs opacity-80 sm:grid-cols-2">
                                 <p>Tel: {client?.phone ?? "Sin teléfono"}</p>
+
                                 <p>
-                                  Lashista: {reservation.lashista ?? "Sin asignar"}
+                                  Lashista:{" "}
+                                  {reservation.lashista ?? "Sin asignar"}
                                 </p>
+
                                 <p>Hora: {normalizeTime(reservation.time)}</p>
                               </div>
+
+                              <PaymentSummary reservation={reservation} />
 
                               {reservation.notes ? (
                                 <p className="mt-3 text-xs opacity-80">
@@ -352,11 +392,11 @@ function AdminAgendaPage() {
                                   />
                                 )}
 
-                                {showReminderButton && client?.phone && (
-                                  <AgendaActionButton
-                                    label="Recordar"
-                                    onClick={() => {
-                                      const message = `Hola ${client?.full_name ?? ""}, te recordamos tu cita en L'AMOUR Beauty Studio.
+                                {showReminderButton && client?.phone ? (
+  <AgendaActionButton
+    label="Recordar"
+    onClick={() => {
+      const message = `Hola ${client.full_name ?? ""}, te recordamos tu cita en L'AMOUR Beauty Studio.
 
 Servicio: ${service?.name ?? "Servicio reservado"}
 Fecha: ${reservation.date}
@@ -364,16 +404,14 @@ Hora: ${normalizeTime(reservation.time)}
 
 Por favor confirma tu asistencia.`
 
-                                   const phone = buildWhatsappPhone(client.phone!)
-                                      const url = `https://wa.me/${phone}?text=${encodeURIComponent(
-                                        message
-                                      )}`
+      const phone = buildWhatsappPhone(client.phone ?? "")
+      const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
 
-                                      window.open(url, "_blank")
-                                    }}
-                                    className="text-purple-700"
-                                  />
-                                )}
+      window.open(url, "_blank")
+    }}
+    className="text-purple-700"
+  />
+) : null}
 
                                 {reservation.status !== "cancelled" && (
                                   <AgendaActionButton
@@ -387,6 +425,13 @@ Por favor confirma tu asistencia.`
                                     className="text-red-700"
                                   />
                                 )}
+
+                                <Link
+                                  to={`/admin/pagos/${reservation.id}`}
+                                  className="rounded-lg bg-white/80 px-3 py-2 text-center text-xs font-medium text-stone-700"
+                                >
+                                  Pago
+                                </Link>
 
                                 <Link
                                   to={`/admin/reservas/${reservation.id}`}
@@ -420,6 +465,55 @@ Por favor confirma tu asistencia.`
             })}
           </div>
         </div>
+      )}
+    </div>
+  )
+}
+
+function PaymentSummary({ reservation }: { reservation: AgendaReservation }) {
+  const badge = getPaymentBadge(reservation)
+
+  return (
+    <div className="mt-3 rounded-2xl bg-white/60 p-3">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] opacity-70">
+          Pago
+        </p>
+
+        <span
+          className={`rounded-full px-2 py-1 text-[11px] font-semibold ${badge.className}`}
+        >
+          {badge.label}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2 text-xs">
+        <div>
+          <p className="opacity-60">Total</p>
+          <p className="mt-0.5 font-semibold">
+            {formatMoney(reservation.total_price)}
+          </p>
+        </div>
+
+        <div>
+          <p className="opacity-60">Abono</p>
+          <p className="mt-0.5 font-semibold">
+            {formatMoney(reservation.deposit_amount)}
+          </p>
+        </div>
+
+        <div>
+          <p className="opacity-60">Saldo</p>
+          <p className="mt-0.5 font-semibold">
+            {formatMoney(reservation.remaining_amount)}
+          </p>
+        </div>
+      </div>
+
+      {reservation.appointment_type === "retouch" && (
+        <p className="mt-2 w-fit rounded-full bg-purple-100 px-2 py-1 text-[11px] font-semibold text-purple-700">
+          Retoque
+        </p>
       )}
     </div>
   )

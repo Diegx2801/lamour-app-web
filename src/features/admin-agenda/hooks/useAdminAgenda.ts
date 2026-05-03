@@ -38,6 +38,10 @@ export type AgendaReservation = {
   notes: string | null
   lashista: string | null
   lashist_id: string | null
+  appointment_type: "normal" | "retouch" | null
+  total_price: number | null
+  deposit_amount: number | null
+  remaining_amount: number | null
   clients: AgendaClientRelation
   services: AgendaServiceRelation
 }

@@ -21,7 +21,7 @@ export type AdminLashistRow = {
   is_active: boolean
 }
 
-export async function fetchAdminServices() {
+export async function fetchAdminServices(): Promise<AdminServiceRow[]> {
   const { data, error } = await supabase
     .from("services")
     .select(`
@@ -44,7 +44,7 @@ export async function fetchAdminServices() {
   return (data ?? []) as AdminServiceRow[]
 }
 
-export async function fetchAdminLashists() {
+export async function fetchAdminLashists(): Promise<AdminLashistRow[]> {
   const { data, error } = await supabase
     .from("lashists")
     .select("id, name, phone, is_active")
@@ -182,7 +182,11 @@ export async function createAdminReservationWithPayment(payload: {
     .single()
 
   if (appointmentError || !insertedAppointment) {
-    throw new Error("No se pudo crear la reserva.")
+    console.error("Error creando reserva admin:", appointmentError)
+
+    throw new Error(
+      appointmentError?.message ?? "No se pudo crear la reserva."
+    )
   }
 
   const { error: paymentError } = await supabase.from("payments").insert([
@@ -196,7 +200,12 @@ export async function createAdminReservationWithPayment(payload: {
   ])
 
   if (paymentError) {
-    throw new Error("Se creó la reserva, pero no se pudo registrar el abono.")
+    console.error("Error creando pago admin:", paymentError)
+
+    throw new Error(
+      paymentError.message ??
+        "Se creó la reserva, pero no se pudo registrar el abono."
+    )
   }
 
   return insertedAppointment.id

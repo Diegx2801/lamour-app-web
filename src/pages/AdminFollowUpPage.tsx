@@ -5,6 +5,18 @@ import {
   useAdminFollowUp,
 } from "../features/admin-follow-up/hooks/useAdminFollowUp"
 
+function buildRetouchUrl(item: FollowUpItem) {
+  const params = new URLSearchParams({
+    type: "retouch",
+    clientId: item.clientId,
+    serviceId: item.serviceId,
+    fullName: item.clientName,
+    phone: item.phone,
+  })
+
+  return `/admin/crear?${params.toString()}`
+}
+
 function AdminFollowUpPage() {
   const followUp = useAdminFollowUp()
 
@@ -37,7 +49,10 @@ function AdminFollowUpPage() {
 
       {!followUp.loading && !followUp.error && (
         <div className="mb-5 grid gap-3 sm:grid-cols-3">
-          <SummaryCard label="Pendientes" value={followUp.pendingFollowUps.length} />
+          <SummaryCard
+            label="Pendientes"
+            value={followUp.pendingFollowUps.length}
+          />
           <SummaryCard label="Vencidos" value={followUp.overdueCount} />
           <SummaryCard label="Para hoy" value={followUp.todayCount} />
         </div>
@@ -206,7 +221,7 @@ function FollowUpCard({
           )}
 
           <Link
-            to="/admin/crear"
+            to={buildRetouchUrl(item)}
             className="rounded-xl bg-stone-950 px-4 py-2.5 text-center text-sm font-medium text-white"
           >
             Agendar retoque

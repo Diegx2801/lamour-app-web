@@ -19,7 +19,7 @@ function AdminCreateReservationPage() {
         </Link>
 
         <h1 className="mt-3 text-2xl font-semibold text-stone-950 md:text-4xl">
-          Nueva reserva
+          {reservation.isRetouch ? "Nuevo retoque" : "Nueva reserva"}
         </h1>
 
         <p className="mt-2 text-sm leading-6 text-stone-600">
@@ -68,10 +68,51 @@ function AdminCreateReservationPage() {
             {reservation.services.map((service) => (
               <option key={service.id} value={service.id}>
                 {service.name} — S/ {Number(service.price).toFixed(2)}
+                {service.allows_retouch && service.retouch_price
+                  ? ` · Retoque S/ ${Number(service.retouch_price).toFixed(2)}`
+                  : ""}
               </option>
             ))}
           </select>
         </Field>
+
+        {reservation.selectedServiceData?.allows_retouch && (
+          <Field label="Tipo de cita">
+            <select
+              name="appointmentType"
+              value={reservation.form.appointmentType}
+              onChange={reservation.handleChange}
+              className={inputClass}
+            >
+              <option value="normal">Servicio normal</option>
+              <option value="retouch">Retoque</option>
+            </select>
+          </Field>
+        )}
+
+        {reservation.form.service &&
+          !reservation.selectedServiceData?.allows_retouch && (
+            <div className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-600">
+              Este servicio no tiene retoque configurado.
+            </div>
+          )}
+
+        <div className="grid gap-3 sm:grid-cols-3">
+          <PriceBox
+            label={reservation.isRetouch ? "Precio retoque" : "Precio servicio"}
+            value={`S/ ${reservation.servicePrice.toFixed(2)}`}
+          />
+
+          <PriceBox
+            label="Abono"
+            value={`S/ ${reservation.depositAmount.toFixed(2)}`}
+          />
+
+          <PriceBox
+            label="Saldo"
+            value={`S/ ${reservation.remainingAmount.toFixed(2)}`}
+          />
+        </div>
 
         <Field label="Lashista">
           <select
@@ -171,7 +212,11 @@ function AdminCreateReservationPage() {
           disabled={reservation.loading}
           className="w-full rounded-xl bg-stone-950 px-5 py-3 text-sm font-medium text-white transition hover:bg-stone-800 disabled:opacity-60"
         >
-          {reservation.loading ? "Guardando..." : "Crear reserva"}
+          {reservation.loading
+            ? "Guardando..."
+            : reservation.isRetouch
+              ? "Crear retoque"
+              : "Crear reserva"}
         </button>
       </form>
     </div>
@@ -192,6 +237,17 @@ function Field({
       </span>
       {children}
     </label>
+  )
+}
+
+function PriceBox({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl bg-stone-50 p-4">
+      <p className="text-xs uppercase tracking-[0.18em] text-stone-500">
+        {label}
+      </p>
+      <p className="mt-2 text-lg font-semibold text-stone-950">{value}</p>
+    </div>
   )
 }
 

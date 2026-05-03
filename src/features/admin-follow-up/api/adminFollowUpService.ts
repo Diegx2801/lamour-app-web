@@ -3,6 +3,7 @@ import { supabase } from "../../../lib/supabase"
 export type FollowUpAppointmentRow = {
   id: string
   client_id: string
+  service_id: string
   date: string
   time: string
   status: string
@@ -37,6 +38,7 @@ export async function fetchCompletedAppointmentsForFollowUp() {
     .select(`
       id,
       client_id,
+      service_id,
       date,
       time,
       status,

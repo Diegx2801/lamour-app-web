@@ -71,6 +71,7 @@ export type FollowUpStatus = "upcoming" | "today" | "overdue"
 export type FollowUpItem = {
   id: string
   clientId: string
+  serviceId: string
   clientName: string
   phone: string
   serviceName: string
@@ -151,6 +152,7 @@ export function useAdminFollowUp() {
         return {
           id: appointment.id,
           clientId: appointment.client_id,
+          serviceId: appointment.service_id,
           clientName,
           phone,
           serviceName,
@@ -175,9 +177,11 @@ export function useAdminFollowUp() {
 
   const pendingFollowUps = followUps.filter((item) => !item.contacted)
   const contactedFollowUps = followUps.filter((item) => item.contacted)
+
   const overdueCount = followUps.filter(
     (item) => item.status === "overdue" && !item.contacted
   ).length
+
   const todayCount = followUps.filter(
     (item) => item.status === "today" && !item.contacted
   ).length

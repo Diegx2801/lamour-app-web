@@ -14,7 +14,9 @@ export async function fetchAgendaLashists() {
     .eq("is_active", true)
     .order("name", { ascending: true })
 
-  if (error) throw new Error("Error cargando lashistas")
+  if (error) {
+    throw new Error("Error cargando lashistas")
+  }
 
   return (data ?? []) as AgendaLashistRow[]
 }
@@ -31,8 +33,19 @@ export async function fetchAgendaByDate(date: string) {
         notes,
         lashista,
         lashist_id,
-        clients (full_name, phone),
-        services (name, category, duration_minutes)
+        appointment_type,
+        total_price,
+        deposit_amount,
+        remaining_amount,
+        clients (
+          full_name,
+          phone
+        ),
+        services (
+          name,
+          category,
+          duration_minutes
+        )
       `)
       .eq("date", date)
       .order("time", { ascending: true }),
@@ -44,6 +57,11 @@ export async function fetchAgendaByDate(date: string) {
   ])
 
   if (reservationsRes.error || blocksRes.error) {
+    console.error("Error cargando agenda:", {
+      reservationsError: reservationsRes.error,
+      blocksError: blocksRes.error,
+    })
+
     throw new Error("Error cargando agenda")
   }
 
@@ -63,7 +81,9 @@ export async function blockTime(date: string, time: string, reason?: string) {
     },
   ])
 
-  if (error) throw new Error("Error bloqueando horario")
+  if (error) {
+    throw new Error("Error bloqueando horario")
+  }
 }
 
 export async function unblockTime(blockId: string) {
@@ -72,7 +92,9 @@ export async function unblockTime(blockId: string) {
     .delete()
     .eq("id", blockId)
 
-  if (error) throw new Error("Error desbloqueando horario")
+  if (error) {
+    throw new Error("Error desbloqueando horario")
+  }
 }
 
 export async function blockFullDay(date: string, reason?: string) {
@@ -85,7 +107,9 @@ export async function blockFullDay(date: string, reason?: string) {
     },
   ])
 
-  if (error) throw new Error("Error bloqueando día")
+  if (error) {
+    throw new Error("Error bloqueando día")
+  }
 }
 
 export async function unblockFullDay(blockId: string) {
@@ -94,7 +118,9 @@ export async function unblockFullDay(blockId: string) {
     .delete()
     .eq("id", blockId)
 
-  if (error) throw new Error("Error desbloqueando día")
+  if (error) {
+    throw new Error("Error desbloqueando día")
+  }
 }
 
 export async function updateAppointmentStatus(id: string, status: string) {
@@ -103,5 +129,7 @@ export async function updateAppointmentStatus(id: string, status: string) {
     .update({ status })
     .eq("id", id)
 
-  if (error) throw new Error("Error actualizando estado")
+  if (error) {
+    throw new Error("Error actualizando estado")
+  }
 }
