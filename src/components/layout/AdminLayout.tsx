@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react"
 import { Link, Outlet, useLocation, useNavigate } from "react-router"
 import { supabase } from "../../lib/supabase"
 
@@ -13,10 +14,48 @@ const navItems = [
 function AdminLayout() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
+  const [checkingAdmin, setCheckingAdmin] = useState(true)
+
+  useEffect(() => {
+    const checkAdminRole = async () => {
+      const { data: userData } = await supabase.auth.getUser()
+
+      if (!userData.user) {
+        navigate("/admin/login", { replace: true })
+        return
+      }
+
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", userData.user.id)
+        .single()
+
+      if (error || profile?.role !== "admin") {
+        await supabase.auth.signOut()
+        navigate("/admin/login", { replace: true })
+        return
+      }
+
+      setCheckingAdmin(false)
+    }
+
+    checkAdminRole()
+  }, [navigate])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
     navigate("/admin/login")
+  }
+
+  if (checkingAdmin) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f6f1e9] px-4">
+        <div className="rounded-[2rem] bg-white p-6 text-sm text-stone-600 shadow-sm">
+          Verificando acceso administrativo...
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -27,9 +66,7 @@ function AdminLayout() {
             <p className="text-[10px] uppercase tracking-[0.3em] text-stone-500">
               Panel admin
             </p>
-            <h1 className="text-lg font-semibold text-stone-950">
-              L’AMOUR
-            </h1>
+            <h1 className="text-lg font-semibold text-stone-950">L’AMOUR</h1>
           </div>
 
           <div className="flex items-center gap-2">
