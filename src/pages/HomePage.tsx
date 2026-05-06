@@ -1,7 +1,6 @@
 import Navbar from "../components/layout/Navbar"
 import Footer from "../components/layout/Footer"
 import HeroSection from "../components/home/HeroSection"
-import AboutSection from "../components/home/AboutSection"
 import GallerySection from "../components/home/GallerySection"
 import PromosSection from "../components/home/PromosSection"
 import ReviewsSection from "../components/home/ReviewsSection"
@@ -15,10 +14,9 @@ function HomePage() {
     <div className="min-h-screen bg-[#f6f1e9]">
       <Navbar />
       <HeroSection />
-      <AboutSection />
-      <ServicesPreviewSection />
-      <GallerySection />
-      <PromosSection />
+<PromosSection />
+<ServicesPreviewSection />
+<GallerySection />
       <ReviewsSection />
       <HoursSection />
       <ContactSection />

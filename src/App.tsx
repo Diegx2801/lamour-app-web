@@ -7,7 +7,7 @@ import ServicesPage from "./pages/ServicesPage"
 
 import AdminLayout from "./components/layout/AdminLayout"
 import ProtectedRoute from "./components/auth/ProtectedRoute"
-
+import AdminPromosPage from "./pages/admin/AdminPromosPage"
 import AdminLoginPage from "./pages/AdminLoginPage"
 import AdminDashboardPage from "./pages/AdminDashboardPage"
 import AdminReservationsPage from "./pages/AdminReservationsPage"
@@ -131,6 +131,14 @@ function App() {
             }
           />
 
+<Route
+  path="promos"
+  element={
+    <ProtectedRoute allowedRoles={["owner"]}>
+      <AdminPromosPage />
+    </ProtectedRoute>
+  }
+/>
           <Route
             path="seguimiento"
             element={

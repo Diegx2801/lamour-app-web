@@ -47,6 +47,11 @@ const navItems: NavItem[] = [
     to: "/admin/seguimiento",
     roles: ["owner", "staff"],
   },
+  {
+    label: "Promos",
+    to: "/admin/promos",
+    roles: ["owner"],
+  }
 ]
 
 function normalizeRole(role: string | null | undefined): AdminRole | null {
