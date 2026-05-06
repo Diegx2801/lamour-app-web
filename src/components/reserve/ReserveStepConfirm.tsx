@@ -55,6 +55,14 @@ function ReserveStepConfirm({
         Al finalizar, podrás tocar un botón para ir a WhatsApp y enviar tu
         comprobante de abono.
       </div>
+
+      <div className="mt-3 rounded-2xl border border-stone-200 bg-white p-4 text-xs leading-6 text-stone-600">
+        <p className="font-semibold text-stone-800">Política de reserva</p>
+        <p className="mt-1">
+          El horario se confirma al recibir el comprobante del abono. Si
+          necesitas reprogramar, avísanos por WhatsApp con anticipación.
+        </p>
+      </div>
     </div>
   )
 }
