@@ -26,6 +26,7 @@ function ReserveSuccessView({
   onNewReservation,
   formatDateForMessage,
 }: ReserveSuccessViewProps) {
+  const confirmationDeadlineMinutes = 10
   return (
     <div className="min-h-screen bg-[#f6f1e9] px-6 py-16">
       <div className="mx-auto max-w-3xl">
@@ -119,6 +120,16 @@ function ReserveSuccessView({
                 <p>2. Realiza el abono de S/ 10.00.</p>
                 <p>3. Envía tu comprobante por WhatsApp.</p>
                 <p>4. Espera la confirmación final de tu cita.</p>
+              </div>
+
+              <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                <p className="font-semibold">Importante para confirmar tu cita</p>
+                <p className="mt-1 leading-6">
+                  Tu solicitud quedará en estado <strong>pendiente</strong> hasta
+                  recibir el comprobante. Te recomendamos enviarlo dentro de{" "}
+                  <strong>{confirmationDeadlineMinutes} minutos </strong> para asegurar
+                  el horario elegido.
+                </p>
               </div>
             </div>
 

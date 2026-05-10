@@ -1,4 +1,4 @@
-export function isPastAppointment(date: string, time: string) {
+function isPastAppointment(date: string, time: string) {
   const now = new Date()
   const appointmentDate = new Date(`${date}T${String(time).slice(0, 5)}`)
 

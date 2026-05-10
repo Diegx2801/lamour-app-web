@@ -46,7 +46,7 @@ export type AgendaReservation = {
   services: AgendaServiceRelation
 }
 
-export type ScheduleBlock = {
+type ScheduleBlock = {
   id: string
   date: string
   time: string | null

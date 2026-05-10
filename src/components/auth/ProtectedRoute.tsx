@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useReducer } from "react"
 import { Navigate, useLocation } from "react-router"
 import { supabase } from "../../lib/supabase"
 
@@ -17,11 +17,52 @@ function normalizeRole(role: string | null | undefined): AdminRole | null {
   return null
 }
 
+type AccessState = {
+  loading: boolean
+  isAuthenticated: boolean
+  role: AdminRole | null
+}
+
+type AccessAction =
+  | { type: "authenticated"; role: AdminRole | null }
+  | { type: "unauthenticated" }
+
+const initialAccessState: AccessState = {
+  loading: true,
+  isAuthenticated: false,
+  role: null,
+}
+
+function accessReducer(
+  state: AccessState,
+  action: AccessAction
+): AccessState {
+  switch (action.type) {
+    case "authenticated":
+      return {
+        ...state,
+        loading: false,
+        isAuthenticated: true,
+        role: action.role,
+      }
+    case "unauthenticated":
+      return {
+        ...state,
+        loading: false,
+        isAuthenticated: false,
+        role: null,
+      }
+    default:
+      return state
+  }
+}
+
 function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const location = useLocation()
-  const [loading, setLoading] = useState(true)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [role, setRole] = useState<AdminRole | null>(null)
+  const [{ loading, isAuthenticated, role }, dispatch] = useReducer(
+    accessReducer,
+    initialAccessState
+  )
 
   useEffect(() => {
     let isMounted = true
@@ -32,9 +73,7 @@ function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
       if (!isMounted) return
 
       if (!sessionData.session?.user) {
-        setIsAuthenticated(false)
-        setRole(null)
-        setLoading(false)
+        dispatch({ type: "unauthenticated" })
         return
       }
 
@@ -46,9 +85,7 @@ function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
 
       if (!isMounted) return
 
-      setIsAuthenticated(true)
-      setRole(normalizeRole(profile?.role))
-      setLoading(false)
+      dispatch({ type: "authenticated", role: normalizeRole(profile?.role) })
     }
 
     loadAccess()

@@ -1,4 +1,4 @@
-import { motion } from "framer-motion"
+import { m } from "framer-motion"
 import { useState } from "react"
 import SectionTitle from "../common/SectionTitle"
 import ServiceCard from "../common/ServiceCard"
@@ -22,7 +22,7 @@ function ServicesSection() {
       id="servicios"
       className="mx-auto max-w-7xl px-4 py-10 sm:px-6 md:py-16"
     >
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -33,10 +33,14 @@ function ServicesSection() {
           title="Catálogo"
           description="Elige el servicio ideal según el resultado que buscas."
         />
-      </motion.div>
+      </m.div>
 
-      <div className="mt-6 rounded-[2rem] border border-stone-200 bg-white/60 p-2 shadow-sm">
-        <div className="flex gap-2 overflow-x-auto md:grid md:grid-cols-5 md:gap-3 md:overflow-visible">
+      <div className="sticky top-16 z-40 mt-6 rounded-2xl border border-stone-300 bg-[#f6f1e9]/95 p-2 shadow-md backdrop-blur md:top-20 md:rounded-[2rem] md:bg-white/80 md:shadow-sm">
+        <p className="px-2 pb-2 text-xs font-semibold uppercase tracking-[0.18em] text-stone-700 md:hidden">
+          Categorías
+        </p>
+
+        <div className="flex gap-2 overflow-x-auto pb-1 md:grid md:grid-cols-5 md:gap-3 md:overflow-visible md:pb-0">
           {categories.map((category, index) => {
             const isActive = activeCategory === index
 
@@ -45,10 +49,10 @@ function ServicesSection() {
                 key={category.title}
                 type="button"
                 onClick={() => handleCategoryClick(index)}
-                className={`flex min-w-fit items-center justify-center rounded-full px-5 py-2.5 text-center text-xs font-medium transition md:min-w-0 ${
+                className={`flex min-w-[72%] items-center justify-center rounded-xl px-5 py-3 text-center text-sm font-semibold transition sm:min-w-[44%] md:min-w-0 md:rounded-full md:py-2.5 md:text-xs ${
                   isActive
-                    ? "bg-[#e7ddd1] text-stone-950 shadow-sm"
-                    : "bg-white text-stone-700 hover:bg-[#f3ece4] hover:text-stone-950"
+                    ? "bg-stone-950 text-white shadow-sm"
+                    : "border border-stone-200 bg-white text-stone-800 hover:bg-[#f3ece4] hover:text-stone-950"
                 }`}
               >
                 {category.title}
@@ -83,7 +87,7 @@ function ServicesSection() {
 
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               {category.services.map((service, serviceIndex) => (
-                <motion.div
+                <m.div
                   key={service.name}
                   initial={{ opacity: 0, y: 16 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -91,7 +95,7 @@ function ServicesSection() {
                   viewport={{ once: true }}
                 >
                   <ServiceCard service={service} />
-                </motion.div>
+                </m.div>
               ))}
             </div>
        </div>

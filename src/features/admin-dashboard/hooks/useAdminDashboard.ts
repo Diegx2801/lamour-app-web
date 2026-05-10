@@ -123,7 +123,7 @@ export function getStatusLabel(status: string) {
   }
 }
 
-export function getLastNDates(days: number) {
+function getLastNDates(days: number) {
   const dates: string[] = []
   const base = new Date()
 
@@ -136,7 +136,7 @@ export function getLastNDates(days: number) {
   return dates
 }
 
-export function formatShortDate(date: string) {
+function formatShortDate(date: string) {
   const [, month, day] = date.split("-")
   return `${day}/${month}`
 }

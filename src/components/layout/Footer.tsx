@@ -21,22 +21,22 @@ function Footer() {
             <p className="text-sm font-semibold text-stone-900">Enlaces</p>
             <ul className="mt-4 space-y-3 text-sm text-stone-600">
               <li>
-                <a href="#inicio" className="transition hover:text-stone-950">
+                <a href="/#inicio" className="transition hover:text-stone-950">
                   Inicio
                 </a>
               </li>
               <li>
-                <a href="#servicios" className="transition hover:text-stone-950">
+                <a href="/servicios" className="transition hover:text-stone-950">
                   Servicios
                 </a>
               </li>
               <li>
-                <a href="#promos" className="transition hover:text-stone-950">
+                <a href="/#promos" className="transition hover:text-stone-950">
                   Promociones
                 </a>
               </li>
               <li>
-                <a href="#contacto" className="transition hover:text-stone-950">
+                <a href="/#contacto" className="transition hover:text-stone-950">
                   Contacto
                 </a>
               </li>

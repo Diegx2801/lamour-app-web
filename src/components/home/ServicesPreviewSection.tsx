@@ -1,4 +1,4 @@
-import { motion } from "framer-motion"
+import { m } from "framer-motion"
 import { Link } from "react-router"
 
 const featuredServices = [
@@ -11,7 +11,7 @@ const featuredServices = [
 function ServicesPreviewSection() {
   return (
     <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 md:py-16">
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -38,11 +38,11 @@ function ServicesPreviewSection() {
         >
           Ver catálogo
         </Link>
-      </motion.div>
+      </m.div>
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {featuredServices.map((service, index) => (
-          <motion.article
+          <m.article
             key={service.title}
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -72,7 +72,7 @@ function ServicesPreviewSection() {
             >
               Reservar →
             </Link>
-          </motion.article>
+          </m.article>
         ))}
       </div>
     </section>

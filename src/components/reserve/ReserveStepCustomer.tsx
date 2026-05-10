@@ -18,30 +18,41 @@ function ReserveStepCustomer({
   return (
     <>
       <div>
-        <label className="mb-2 block text-sm font-medium text-stone-800">
+        <label
+          htmlFor="reserve-full-name"
+          className="mb-2 block text-sm font-medium text-stone-800"
+        >
           Nombre completo *
         </label>
         <input
+          id="reserve-full-name"
           type="text"
           name="fullName"
+          autoComplete="name"
           value={formData.fullName}
           onChange={onChange}
           placeholder="Ingresa tu nombre"
-          className="w-full rounded-2xl border border-stone-300 px-4 py-3 outline-none"
+          className="w-full rounded-2xl border border-stone-300 px-4 py-4 text-base outline-none focus:border-stone-600"
         />
       </div>
 
       <div>
-        <label className="mb-2 block text-sm font-medium text-stone-800">
+        <label
+          htmlFor="reserve-phone"
+          className="mb-2 block text-sm font-medium text-stone-800"
+        >
           Teléfono *
         </label>
         <input
-          type="text"
+          id="reserve-phone"
+          type="tel"
           name="phone"
+          inputMode="tel"
+          autoComplete="tel"
           value={formData.phone}
           onChange={onChange}
           placeholder="Ejemplo: 957230015 o +51957230015"
-          className="w-full rounded-2xl border border-stone-300 px-4 py-3 outline-none"
+          className="w-full rounded-2xl border border-stone-300 px-4 py-4 text-base outline-none focus:border-stone-600"
         />
         <p className="mt-2 text-xs text-stone-500">
           Aceptamos números peruanos móviles de 9 dígitos.
@@ -49,16 +60,20 @@ function ReserveStepCustomer({
       </div>
 
       <div>
-        <label className="mb-2 block text-sm font-medium text-stone-800">
+        <label
+          htmlFor="reserve-notes"
+          className="mb-2 block text-sm font-medium text-stone-800"
+        >
           Observaciones
         </label>
         <textarea
+          id="reserve-notes"
           rows={4}
           name="notes"
           value={formData.notes}
           onChange={onChange}
           placeholder="Escribe algún detalle adicional"
-          className="w-full rounded-2xl border border-stone-300 px-4 py-3 outline-none"
+          className="w-full rounded-2xl border border-stone-300 px-4 py-4 text-base outline-none focus:border-stone-600"
         />
       </div>
     </>

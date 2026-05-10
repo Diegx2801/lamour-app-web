@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { motion } from "framer-motion"
+import { m } from "framer-motion"
 import { Link } from "react-router"
 import {
   fetchActivePromos,
@@ -29,7 +29,7 @@ function PromosSection() {
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 md:py-20">
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
@@ -48,7 +48,7 @@ function PromosSection() {
           Packs y campañas especiales disponibles por temporada en L’AMOUR
           Beauty Studio.
         </p>
-      </motion.div>
+      </m.div>
 
       {loading ? (
         <div className="grid gap-6 md:grid-cols-3">
@@ -62,7 +62,7 @@ function PromosSection() {
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {promos.map((promo, index) => (
-            <motion.article
+            <m.article
               key={promo.id}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -118,7 +118,7 @@ function PromosSection() {
                   </Link>
                 </div>
               </div>
-            </motion.article>
+            </m.article>
           ))}
         </div>
       )}

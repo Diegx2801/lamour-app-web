@@ -23,12 +23,12 @@ function ReserveSummaryCard({
   formatDateForMessage,
 }: ReserveSummaryCardProps) {
   return (
-    <aside className="h-fit rounded-[2rem] bg-white p-6 shadow-sm">
+    <aside className="h-fit rounded-[1.5rem] bg-white p-4 shadow-sm md:rounded-[2rem] md:p-6 lg:sticky lg:top-6">
       <p className="text-sm font-semibold text-stone-950">
         Resumen de reserva
       </p>
 
-      <div className="mt-4 space-y-3 text-sm text-stone-600">
+      <div className="mt-4 grid grid-cols-2 gap-3 text-sm text-stone-600 lg:block lg:space-y-3">
         <div>
           <p className="font-medium text-stone-900">Servicio</p>
           <p>{service?.name ?? "Aún no seleccionado"}</p>
@@ -65,7 +65,7 @@ function ReserveSummaryCard({
         </div>
       </div>
 
-      <div className="mt-6 rounded-2xl bg-stone-50 p-4 text-sm text-stone-600">
+      <div className="mt-5 rounded-2xl bg-stone-50 p-4 text-sm leading-6 text-stone-600 md:mt-6">
         Tu cita queda registrada como solicitud. Luego podrás enviar tu
         comprobante por WhatsApp para terminar la confirmación.
       </div>

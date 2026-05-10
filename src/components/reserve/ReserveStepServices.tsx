@@ -42,7 +42,7 @@ function ReserveStepServices({
 
       {!loadingServices && categoryCards.length > 0 && (
         <>
-          <div className="flex flex-wrap gap-2">
+          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:flex-wrap sm:overflow-visible">
             {categoryCards.map((category) => {
               const isActive = activeCategory === category.title
 
@@ -51,7 +51,7 @@ function ReserveStepServices({
                   key={category.title}
                   type="button"
                   onClick={() => onCategoryChange(category.title)}
-                  className={`rounded-full border px-4 py-2 text-xs font-medium transition ${
+                  className={`min-w-fit rounded-full border px-4 py-3 text-sm font-semibold transition sm:py-2 sm:text-xs ${
                     isActive
                       ? "border-stone-950 bg-stone-950 text-white"
                       : "border-stone-300 text-stone-700 hover:border-stone-500"
@@ -62,6 +62,20 @@ function ReserveStepServices({
               )
             })}
           </div>
+
+          {selectedServiceData && (
+            <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4 text-sm text-stone-700">
+              <p className="font-semibold text-stone-950">
+                Servicio seleccionado
+              </p>
+              <div className="mt-2 grid gap-1 sm:grid-cols-2">
+                <p>{selectedServiceData.name}</p>
+                <p>S/ {Number(selectedServiceData.price).toFixed(2)}</p>
+                <p>{selectedServiceData.category ?? "Sin categoría"}</p>
+                <p>{selectedServiceData.duration_minutes ?? 0} min</p>
+              </div>
+            </div>
+          )}
 
           {categoryCards
             .filter((category) => category.title === activeCategory)
@@ -83,14 +97,14 @@ function ReserveStepServices({
                         key={service.id}
                         type="button"
                         onClick={() => onSelectService(service.id)}
-                        className={`rounded-xl border px-3 py-3 text-left transition ${
+                        className={`min-h-24 rounded-2xl border px-4 py-4 text-left transition ${
                           isSelected
                             ? "border-stone-950 bg-stone-950 text-white"
                             : "border-stone-200 bg-white hover:border-stone-400"
                         }`}
                       >
                         <div className="flex items-center justify-between gap-2">
-                          <p className="text-sm font-semibold leading-tight">
+                          <p className="text-base font-semibold leading-tight sm:text-sm">
                             {service.name}
                           </p>
 
@@ -129,26 +143,6 @@ function ReserveStepServices({
               </div>
             ))}
 
-          {selectedServiceData && (
-            <div className="rounded-xl bg-stone-50 p-3 text-xs text-stone-700">
-              <p>
-                <span className="font-semibold">Servicio:</span>{" "}
-                {selectedServiceData.name}
-              </p>
-              <p>
-                <span className="font-semibold">Precio:</span> S/{" "}
-                {Number(selectedServiceData.price).toFixed(2)}
-              </p>
-              <p>
-                <span className="font-semibold">Categoría:</span>{" "}
-                {selectedServiceData.category ?? "Sin categoría"}
-              </p>
-              <p>
-                <span className="font-semibold">Duración:</span>{" "}
-                {selectedServiceData.duration_minutes ?? 0} min
-              </p>
-            </div>
-          )}
         </>
       )}
 

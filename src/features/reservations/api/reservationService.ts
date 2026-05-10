@@ -11,7 +11,7 @@ export type ServiceRow = {
   is_active?: boolean
 }
 
-export type AppointmentAvailabilityRow = {
+type AppointmentAvailabilityRow = {
   date: string
   time: string
   status: string
@@ -33,7 +33,7 @@ export async function fetchActiveServices(): Promise<ServiceRow[]> {
   return (data ?? []) as ServiceRow[]
 }
 
-export async function fetchAppointmentsByDate(
+async function fetchAppointmentsByDate(
   date: string
 ): Promise<AppointmentAvailabilityRow[]> {
   const { data, error } = await supabase

@@ -1,4 +1,4 @@
-export type AppointmentAvailabilityRow = {
+type AppointmentAvailabilityRow = {
   date: string
   time: string
   status: string

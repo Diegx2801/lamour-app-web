@@ -3,7 +3,7 @@ import {
   hasCapacityForLashes,
 } from "../../../lib/availability"
 
-export type RelatedAvailabilityService =
+type RelatedAvailabilityService =
   | {
       category: string | null
       duration_minutes: number | null

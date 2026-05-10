@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { motion } from "framer-motion"
+import { m } from "framer-motion"
 import { Link } from "react-router"
 import { galleryItems } from "../../data/gallery"
 
@@ -30,7 +30,7 @@ function HeroSection() {
   }
 
   return (
-    <motion.section
+    <m.section
       id="inicio"
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
@@ -38,7 +38,7 @@ function HeroSection() {
       className="mx-auto max-w-7xl px-4 pb-12 pt-6 sm:px-6 md:pb-20 md:pt-10"
     >
       <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:gap-10">
-        <motion.div
+        <m.div
           initial={{ opacity: 0, x: -18 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.55, delay: 0.12 }}
@@ -73,9 +73,9 @@ function HeroSection() {
             </Link>
           </div>
 
-        </motion.div>
+        </m.div>
 
-        <motion.div
+        <m.div
           initial={{ opacity: 0, x: 18 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.55, delay: 0.18 }}
@@ -91,7 +91,7 @@ function HeroSection() {
                   className="absolute inset-0 h-full w-full scale-110 object-cover blur-2xl"
                 />
 
-                <div className="absolute inset-0 bg-black/25" />
+                <div className="absolute inset-0 bg-stone-950/25" />
 
                 <img
                   src={activeItem.image}
@@ -156,9 +156,9 @@ function HeroSection() {
               </div>
             )}
           </div>
-        </motion.div>
+        </m.div>
       </div>
-    </motion.section>
+    </m.section>
   )
 }
 

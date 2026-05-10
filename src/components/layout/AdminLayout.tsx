@@ -205,7 +205,7 @@ function AdminLayout() {
         </main>
       </div>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-50 flex gap-2 overflow-x-auto border-t border-stone-200 bg-white px-3 py-2 md:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 flex gap-2 overflow-x-auto border-t border-stone-200 bg-white px-3 py-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] md:hidden">
         {visibleNavItems.map((item) => {
           const isActive = isActiveRoute(pathname, item)
 

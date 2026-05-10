@@ -1,4 +1,4 @@
-import { motion } from "framer-motion"
+import { m } from "framer-motion"
 import Navbar from "../components/layout/Navbar"
 import Footer from "../components/layout/Footer"
 import ServicesSection from "../components/home/ServicesSection"
@@ -8,7 +8,7 @@ function ServicesPage() {
     <div className="min-h-screen bg-[#f6f1e9]">
       <Navbar />
 
-      <motion.section
+      <m.section
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
@@ -34,7 +34,7 @@ function ServicesPage() {
             </p>
           </div>
         </div>
-      </motion.section>
+      </m.section>
 
       <ServicesSection />
       <Footer />

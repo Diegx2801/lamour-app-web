@@ -49,11 +49,15 @@ function AdminLashistsPage() {
 
           <form onSubmit={lashists.handleSubmit} className="mt-5 space-y-4">
             <div>
-              <label className="text-sm font-medium text-stone-700">
+              <label
+                htmlFor="lashist-name"
+                className="text-sm font-medium text-stone-700"
+              >
                 Nombre
               </label>
 
               <input
+                id="lashist-name"
                 name="name"
                 value={lashists.formData.name}
                 onChange={lashists.handleChange}
@@ -63,11 +67,15 @@ function AdminLashistsPage() {
             </div>
 
             <div>
-              <label className="text-sm font-medium text-stone-700">
+              <label
+                htmlFor="lashist-phone"
+                className="text-sm font-medium text-stone-700"
+              >
                 Celular
               </label>
 
               <input
+                id="lashist-phone"
                 name="phone"
                 value={lashists.formData.phone}
                 onChange={lashists.handleChange}

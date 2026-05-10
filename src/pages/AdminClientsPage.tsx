@@ -72,11 +72,15 @@ function AdminClientsPage() {
       </div>
 
       <div className="mb-5 rounded-[1.5rem] bg-white p-4 shadow-sm md:mb-6 md:rounded-[2rem] md:p-5">
-        <label className="mb-2 block text-sm font-medium text-stone-800">
+        <label
+          htmlFor="client-search"
+          className="mb-2 block text-sm font-medium text-stone-800"
+        >
           Buscar cliente o teléfono
         </label>
 
         <input
+          id="client-search"
           placeholder="Ejemplo: María o 957230015"
           value={clientState.search}
           onChange={(e) => clientState.setSearch(e.target.value)}

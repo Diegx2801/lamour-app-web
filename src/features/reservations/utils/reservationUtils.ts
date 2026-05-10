@@ -1,4 +1,4 @@
-export type RelatedServiceRow =
+type RelatedServiceRow =
   | {
       category: string | null
       duration_minutes: number | null

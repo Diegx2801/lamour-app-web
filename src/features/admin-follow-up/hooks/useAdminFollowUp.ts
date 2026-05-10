@@ -37,7 +37,7 @@ export function formatDate(dateString: string) {
   return `${day}/${month}/${year}`
 }
 
-export function buildWhatsappPhone(phone: string) {
+function buildWhatsappPhone(phone: string) {
   let cleanPhone = String(phone).replace(/\D/g, "")
 
   if (!cleanPhone.startsWith("51")) {
@@ -47,7 +47,7 @@ export function buildWhatsappPhone(phone: string) {
   return cleanPhone
 }
 
-export function buildWhatsAppLink(
+function buildWhatsAppLink(
   phone: string,
   clientName: string,
   serviceName: string,

@@ -83,6 +83,7 @@ function ContactSection() {
         <div className="overflow-hidden rounded-[2rem] border border-stone-200 bg-white shadow-sm">
           <iframe
             src="https://www.google.com/maps?q=Av.+Los+Ángeles+329+Trujillo&output=embed"
+            title="Mapa de ubicación de L'AMOUR Beauty Studio"
             width="100%"
             height="100%"
             className="min-h-[380px] w-full border-0"

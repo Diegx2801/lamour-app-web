@@ -1,4 +1,4 @@
-import { motion } from "framer-motion"
+import { m } from "framer-motion"
 import { Link } from "react-router"
 
 const reviews = [
@@ -19,7 +19,7 @@ const reviews = [
 function ReviewsSection() {
   return (
     <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 md:py-20">
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -37,11 +37,11 @@ function ReviewsSection() {
         <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-stone-600">
           Opiniones breves sobre la experiencia en L’AMOUR.
         </p>
-      </motion.div>
+      </m.div>
 
       <div className="flex gap-4 overflow-x-auto pb-2 md:grid md:grid-cols-3 md:overflow-visible md:pb-0">
         {reviews.map((review, index) => (
-          <motion.article
+          <m.article
             key={review.name}
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -56,7 +56,7 @@ function ReviewsSection() {
             </p>
 
             <p className="mt-5 font-medium text-stone-900">{review.name}</p>
-          </motion.article>
+          </m.article>
         ))}
       </div>
 

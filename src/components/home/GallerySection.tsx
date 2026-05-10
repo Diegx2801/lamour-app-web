@@ -1,4 +1,4 @@
-import { motion } from "framer-motion"
+import { m } from "framer-motion"
 import { Link } from "react-router"
 import SectionTitle from "../common/SectionTitle"
 import { galleryItems, type GalleryItem } from "../../data/gallery"
@@ -8,7 +8,7 @@ function GallerySection() {
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 md:py-20">
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -19,11 +19,11 @@ function GallerySection() {
           title="Más resultados de L’AMOUR"
           description="Una muestra breve de nuestros trabajos en pestañas, cejas y faciales."
         />
-      </motion.div>
+      </m.div>
 
       <div className="mt-8 grid grid-cols-2 gap-3 md:mt-10 md:gap-5 lg:grid-cols-4">
         {featuredItems.map((item: GalleryItem, index: number) => (
-          <motion.article
+          <m.article
             key={item.id}
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -47,7 +47,7 @@ function GallerySection() {
                 {item.title}
               </h3>
             </div>
-          </motion.article>
+          </m.article>
         ))}
       </div>
 

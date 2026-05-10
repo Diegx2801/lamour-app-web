@@ -7,7 +7,7 @@ import {
   type ServiceRelation,
 } from "../api/adminClientHistoryService"
 
-export function getClientData(clients: ClientRelation) {
+function getClientData(clients: ClientRelation) {
   if (!clients) return null
   return Array.isArray(clients) ? clients[0] ?? null : clients
 }
