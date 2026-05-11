@@ -12,6 +12,7 @@ import {
   getAvailableSlotsForService,
   mapAppointmentsForAvailability,
   validateSlotAvailability,
+  type RawAppointmentForAvailability,
 } from "../../reservations/utils/reservationAvailability"
 import {
   createAdminReservationWithPayment,
@@ -97,6 +98,7 @@ export function useAdminCreateReservation() {
   const remainingAmount = Math.max(servicePrice - depositAmount, 0)
 
   const loading = submitStatus === "loading"
+  const lashCapacity = lashists.length
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -174,7 +176,7 @@ export function useAdminCreateReservation() {
         const blockedTimes = getBlockedTimes(blocks)
 
         const appointments = mapAppointmentsForAvailability(
-          appointmentsData as any[]
+          appointmentsData as RawAppointmentForAvailability[]
         )
 
         const filteredSlots = getAvailableSlotsForService({
@@ -183,6 +185,7 @@ export function useAdminCreateReservation() {
           date: form.date,
           timeSlots,
           blockedTimes,
+          lashistas: lashCapacity,
         })
 
         setAvailableSlots(filteredSlots)
@@ -206,7 +209,7 @@ export function useAdminCreateReservation() {
     }
 
     loadAvailableSlots()
-  }, [form.date, form.time, selectedServiceData])
+  }, [form.date, form.time, lashCapacity, selectedServiceData])
 
   const handleChange = (
     event: React.ChangeEvent<
@@ -270,7 +273,7 @@ export function useAdminCreateReservation() {
       return "Servicio no encontrado."
     }
 
-    if (form.appointmentType === "retouch") {
+      if (form.appointmentType === "retouch") {
       if (!selectedServiceData.allows_retouch) {
         return "Este servicio no tiene retoque configurado."
       }
@@ -337,7 +340,7 @@ export function useAdminCreateReservation() {
       }
 
       const appointments = mapAppointmentsForAvailability(
-        appointmentsData as any[]
+        appointmentsData as RawAppointmentForAvailability[]
       )
 
       validateSlotAvailability({
@@ -345,6 +348,7 @@ export function useAdminCreateReservation() {
         selectedService: selectedServiceData,
         date: form.date,
         time: form.time,
+        lashistas: lashCapacity,
       })
 
       const clientId = await findOrCreateAdminClient(

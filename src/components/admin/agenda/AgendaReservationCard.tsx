@@ -40,20 +40,33 @@ function AgendaReservationCard({
     reservation.time,
     reservation.status
   )
+  const hasPendingBalance = Number(reservation.remaining_amount ?? 0) > 0
+
+  const openWhatsapp = (message: string) => {
+    const phone = buildWhatsappPhone(client?.phone ?? "")
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
+
+    window.open(url, "_blank")
+  }
 
   const openReminder = () => {
-    const message = `Hola ${client?.full_name ?? ""}, te recordamos tu cita en L'AMOUR Beauty Studio.
+    openWhatsapp(`Hola ${client?.full_name ?? ""}, te recordamos tu cita en L'AMOUR Beauty Studio.
 
 Servicio: ${service?.name ?? "Servicio reservado"}
 Fecha: ${reservation.date}
 Hora: ${normalizeTime(reservation.time)}
 
-Por favor confirma tu asistencia.`
+Por favor confirma tu asistencia.`)
+  }
 
-    const phone = buildWhatsappPhone(client?.phone ?? "")
-    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
+  const openConfirmation = () => {
+    openWhatsapp(`Hola ${client?.full_name ?? ""}, tu cita en L'AMOUR Beauty Studio queda confirmada.
 
-    window.open(url, "_blank")
+Servicio: ${service?.name ?? "Servicio reservado"}
+Fecha: ${reservation.date}
+Hora: ${normalizeTime(reservation.time)}
+
+Te esperamos.`)
   }
 
   return (
@@ -103,11 +116,20 @@ Por favor confirma tu asistencia.`
         )}
 
         {reservation.status !== "completed" && (
-          <AgendaActionButton
-            label="Completar"
-            onClick={() => onUpdateStatus(reservation.id, "completed")}
-            className="text-blue-700"
-          />
+          hasPendingBalance ? (
+            <Link
+              to={`/admin/pagos/${reservation.id}`}
+              className="rounded-lg bg-white/80 px-3 py-2 text-center text-xs font-medium text-red-700"
+            >
+              Pagar saldo
+            </Link>
+          ) : (
+            <AgendaActionButton
+              label="Completar"
+              onClick={() => onUpdateStatus(reservation.id, "completed")}
+              className="text-blue-700"
+            />
+          )
         )}
 
         {showNoShowButton && (
@@ -123,6 +145,14 @@ Por favor confirma tu asistencia.`
             label="Recordar"
             onClick={openReminder}
             className="text-purple-700"
+          />
+        ) : null}
+
+        {client?.phone ? (
+          <AgendaActionButton
+            label="WhatsApp"
+            onClick={openConfirmation}
+            className="text-green-800"
           />
         ) : null}
 

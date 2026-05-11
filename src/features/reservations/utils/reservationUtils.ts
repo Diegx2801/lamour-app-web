@@ -2,10 +2,12 @@ type RelatedServiceRow =
   | {
       category: string | null
       duration_minutes: number | null
+      package_includes_lashes?: boolean | null
     }
   | {
       category: string | null
       duration_minutes: number | null
+      package_includes_lashes?: boolean | null
     }[]
   | null
 

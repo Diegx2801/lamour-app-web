@@ -83,13 +83,14 @@ export async function createAppointmentPayment(payload: {
   appointmentId: string
   amount: number
   paymentMethod: string
+  paymentType: string
 }) {
   const { error } = await supabase.from("payments").insert([
     {
       appointment_id: payload.appointmentId,
       amount: payload.amount,
       payment_method: payload.paymentMethod,
-      payment_type: "deposit",
+      payment_type: payload.paymentType,
       status: "completed",
     },
   ])

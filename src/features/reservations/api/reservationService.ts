@@ -1,6 +1,9 @@
 import { supabase } from "../../../lib/supabase"
 import { getRelatedService } from "../utils/reservationUtils"
-import type { ScheduleBlockRow } from "../utils/reservationAvailability"
+import type {
+  RawAppointmentForAvailability,
+  ScheduleBlockRow,
+} from "../utils/reservationAvailability"
 
 export type ServiceRow = {
   id: string
@@ -9,6 +12,23 @@ export type ServiceRow = {
   category: string | null
   duration_minutes: number | null
   is_active?: boolean
+  is_package?: boolean
+  package_includes_lashes?: boolean
+  package_items?: PackageItemDetail[]
+}
+
+export type PackageItemDetail = {
+  id: string
+  name: string
+  price: number
+  category: string | null
+  duration_minutes: number | null
+}
+
+type PackageItemRow = {
+  package_service_id: string
+  included_service_id: string
+  sort_order: number | null
 }
 
 type AppointmentAvailabilityRow = {
@@ -17,20 +37,93 @@ type AppointmentAvailabilityRow = {
   status: string
   serviceCategory: string | null
   durationMinutes: number | null
+  requiresLash?: boolean | null
 }
 
 export async function fetchActiveServices(): Promise<ServiceRow[]> {
   const { data, error } = await supabase
     .from("services")
+    .select(
+      "id, name, price, category, duration_minutes, is_active, is_package, package_includes_lashes"
+    )
+    .eq("is_active", true)
+    .order("name", { ascending: true })
+
+  if (!error) {
+    return withPackageDetails((data ?? []) as ServiceRow[])
+  }
+
+  const { data: fallbackData, error: fallbackError } = await supabase
+    .from("services")
     .select("id, name, price, category, duration_minutes, is_active")
     .eq("is_active", true)
     .order("name", { ascending: true })
 
-  if (error) {
+  if (fallbackError) {
     throw new Error("No se pudieron cargar los servicios.")
   }
 
-  return (data ?? []) as ServiceRow[]
+  return (fallbackData ?? []) as ServiceRow[]
+}
+
+async function withPackageDetails(services: ServiceRow[]) {
+  const packageIds = services
+    .filter((service) => service.is_package)
+    .map((service) => service.id)
+
+  if (packageIds.length === 0) return services
+
+  const { data, error } = await supabase
+    .from("service_package_items")
+    .select("package_service_id, included_service_id, sort_order")
+    .in("package_service_id", packageIds)
+    .order("sort_order", { ascending: true })
+
+  if (error) return services
+
+  const packageItems = (data ?? []) as PackageItemRow[]
+
+  return services.map((service) => {
+    if (!service.is_package) return service
+
+    const items = packageItems
+      .filter((item) => item.package_service_id === service.id)
+      .sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0))
+      .map((item) => {
+        const includedService = services.find(
+          (candidate) => candidate.id === item.included_service_id
+        )
+
+        if (!includedService) return null
+
+        return {
+          id: includedService.id,
+          name: includedService.name,
+          price: includedService.price,
+          category: includedService.category,
+          duration_minutes: includedService.duration_minutes,
+        }
+      })
+      .filter((item): item is PackageItemDetail => Boolean(item))
+
+    return {
+      ...service,
+      package_items: items,
+    }
+  })
+}
+
+export async function fetchActiveLashistCount() {
+  const { count, error } = await supabase
+    .from("lashists")
+    .select("id", { count: "exact", head: true })
+    .eq("is_active", true)
+
+  if (error) {
+    throw new Error("No se pudo cargar la capacidad de lashistas.")
+  }
+
+  return count ?? 0
 }
 
 async function fetchAppointmentsByDate(
@@ -44,18 +137,40 @@ async function fetchAppointmentsByDate(
       status,
       services (
         category,
-        duration_minutes
+        duration_minutes,
+        package_includes_lashes
       )
     `)
     .eq("date", date)
     .neq("status", "cancelled")
 
+  let appointmentRows: RawAppointmentForAvailability[] =
+    (data ?? []) as RawAppointmentForAvailability[]
+
   if (error) {
-    throw new Error("Error al verificar disponibilidad del horario.")
+    const { data: fallbackData, error: fallbackError } = await supabase
+      .from("appointments")
+      .select(`
+        date,
+        time,
+        status,
+        services (
+          category,
+          duration_minutes
+        )
+      `)
+      .eq("date", date)
+      .neq("status", "cancelled")
+
+    if (fallbackError) {
+      throw new Error("Error al verificar disponibilidad del horario.")
+    }
+
+    appointmentRows = (fallbackData ?? []) as RawAppointmentForAvailability[]
   }
 
-  return ((data ?? []) as any[]).map((item) => {
-    const relatedService = getRelatedService(item.services)
+  return appointmentRows.map((item) => {
+    const relatedService = getRelatedService(item.services ?? null)
 
     return {
       date: item.date,
@@ -66,6 +181,9 @@ async function fetchAppointmentsByDate(
         relatedService?.category === "Pestañas"
           ? 120
           : relatedService?.duration_minutes ?? null,
+      requiresLash:
+        relatedService?.category === "Pestañas" ||
+        Boolean(relatedService?.package_includes_lashes),
     }
   })
 }

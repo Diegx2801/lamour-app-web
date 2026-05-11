@@ -4,6 +4,7 @@ type AppointmentAvailabilityRow = {
   status: string
   serviceCategory: string | null
   durationMinutes: number | null
+  requiresLash?: boolean | null
 }
 
 function timeToMinutes(time: string) {
@@ -33,7 +34,12 @@ export function hasCapacityForLashes(
   const overlappingAppointments = appointments.filter((appointment) => {
     if (appointment.date !== date) return false
     if (appointment.status === "cancelled") return false
-    if (appointment.serviceCategory !== "Pestañas") return false
+    if (
+      appointment.serviceCategory !== "Pestañas" &&
+      !appointment.requiresLash
+    ) {
+      return false
+    }
     if (!appointment.time) return false
 
     const existingStart = timeToMinutes(appointment.time)

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
+import { useSearchParams } from "react-router"
 import { toast } from "sonner"
 import { timeSlots } from "../../../data/timeSlots"
 import { categories } from "../../../data/services"
@@ -16,6 +17,7 @@ import {
   normalizePeruvianPhone,
 } from "../utils/reservationUtils"
 import {
+  fetchActiveLashistCount,
   fetchActiveServices,
   fetchPublicAvailability,
   type ServiceRow,
@@ -46,9 +48,13 @@ const WHATSAPP_NUMBER = "51957230015"
 const STORAGE_KEY = "lamour_public_reservation"
 
 export function usePublicReservation() {
+  const [searchParams] = useSearchParams()
+  const promoTitle = searchParams.get("promo")
+  const promoServiceId = searchParams.get("serviceId") ?? ""
   const [step, setStep] = useState(1)
   const [formData, setFormData] = useState<ReservationForm>(initialForm)
   const [services, setServices] = useState<ServiceRow[]>([])
+  const [lashCapacity, setLashCapacity] = useState(0)
   const [submittedReservation, setSubmittedReservation] =
     useState<SubmittedReservation | null>(null)
 
@@ -65,23 +71,32 @@ export function usePublicReservation() {
   useEffect(() => {
     const savedForm = localStorage.getItem(STORAGE_KEY)
 
-    if (!savedForm) return
+    if (!savedForm) {
+      if (promoTitle) {
+        setFormData((prev) => ({
+          ...prev,
+          serviceId: promoServiceId,
+          notes: `Promo: ${promoTitle}`,
+        }))
+      }
+      return
+    }
 
     try {
       const parsed = JSON.parse(savedForm) as ReservationForm
 
       setFormData({
-        serviceId: parsed.serviceId ?? "",
+        serviceId: promoServiceId || parsed.serviceId || "",
         fullName: parsed.fullName ?? "",
         phone: parsed.phone ?? "",
         date: parsed.date ?? "",
         time: parsed.time ?? "",
-        notes: parsed.notes ?? "",
+        notes: promoTitle ? `Promo: ${promoTitle}` : parsed.notes ?? "",
       })
     } catch {
       localStorage.removeItem(STORAGE_KEY)
     }
-  }, [])
+  }, [promoTitle, promoServiceId])
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(formData))
@@ -93,8 +108,13 @@ export function usePublicReservation() {
         setLoadingServices(true)
         setError("")
 
-        const data = await fetchActiveServices()
-        setServices(data)
+        const [servicesData, activeLashistCount] = await Promise.all([
+          fetchActiveServices(),
+          fetchActiveLashistCount(),
+        ])
+
+        setServices(servicesData)
+        setLashCapacity(activeLashistCount)
       } catch {
         const message = "Error cargando servicios."
         setError(message)
@@ -143,11 +163,18 @@ export function usePublicReservation() {
     return services.find((service) => service.id === formData.serviceId) ?? null
   }, [formData.serviceId, services])
 
+  useEffect(() => {
+    if (selectedServiceData?.category) {
+      setActiveCategory(selectedServiceData.category)
+    }
+  }, [selectedServiceData?.category])
+
   const normalizedSelectedService = useMemo(() => {
     if (!selectedServiceData) return null
 
     return {
       category: selectedServiceData.category,
+      package_includes_lashes: selectedServiceData.package_includes_lashes,
       duration_minutes:
         selectedServiceData.category === "Pestañas"
           ? 120
@@ -174,6 +201,16 @@ export function usePublicReservation() {
       try {
         setLoadingSlots(true)
 
+        if (
+          (normalizedSelectedService.category === "Pestañas" ||
+            normalizedSelectedService.package_includes_lashes) &&
+          lashCapacity <= 0
+        ) {
+          setAvailableSlots([])
+          setBlockedReason("No hay lashistas activas para este servicio.")
+          return
+        }
+
         const { appointments, blocks } = await fetchPublicAvailability(
           formData.date
         )
@@ -184,7 +221,7 @@ export function usePublicReservation() {
           selectedService: normalizedSelectedService,
           date: formData.date,
           timeSlots,
-          lashistas: 2,
+          lashistas: lashCapacity,
           removePastSlots: true,
         })
 
@@ -205,7 +242,7 @@ export function usePublicReservation() {
     }
 
     loadSlots()
-  }, [formData.date, formData.time, normalizedSelectedService])
+  }, [formData.date, formData.time, lashCapacity, normalizedSelectedService])
 
   const servicePrice = Number(selectedServiceData?.price ?? 0)
   const depositAmount = 10
@@ -377,13 +414,21 @@ Hora: ${submittedReservation.time}`
         formData.date
       )
 
+      if (
+        (normalizedSelectedService.category === "Pestañas" ||
+          normalizedSelectedService.package_includes_lashes) &&
+        lashCapacity <= 0
+      ) {
+        throw new Error("No hay lashistas activas para este servicio.")
+      }
+
       const result = computeAvailability({
         appointments,
         blocks,
         selectedService: normalizedSelectedService,
         date: formData.date,
         timeSlots,
-        lashistas: 2,
+        lashistas: lashCapacity,
         removePastSlots: true,
       })
 

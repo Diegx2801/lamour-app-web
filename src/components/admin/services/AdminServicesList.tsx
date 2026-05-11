@@ -72,7 +72,19 @@ function ServicesTable({
           {services.map((service) => (
             <tr key={service.id} className="rounded-2xl bg-stone-50">
               <td className="rounded-l-2xl px-3 py-4 align-top">
-                <p className="font-medium text-stone-950">{service.name}</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-medium text-stone-950">{service.name}</p>
+                  {service.is_package && (
+                    <span className="rounded-full bg-stone-900 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                      Paquete
+                    </span>
+                  )}
+                  {service.package_includes_lashes && (
+                    <span className="rounded-full bg-pink-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-pink-700">
+                      Usa lashista
+                    </span>
+                  )}
+                </div>
 
                 <p className="mt-1 max-w-md text-sm leading-6 text-stone-500">
                   {service.description?.trim()
@@ -146,6 +158,11 @@ function ServicesCards({
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="font-semibold text-stone-950">{service.name}</h2>
+              {service.is_package && (
+                <span className="mt-2 inline-flex rounded-full bg-stone-900 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                  Paquete
+                </span>
+              )}
 
               <p className="mt-1 text-sm text-stone-500">
                 {service.category ?? "Sin categoría"}

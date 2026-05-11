@@ -1,12 +1,13 @@
 import AgendaFilters from "../components/admin/agenda/AgendaFilters"
 import AgendaHeader from "../components/admin/agenda/AgendaHeader"
 import AgendaScheduleGrid from "../components/admin/agenda/AgendaScheduleGrid"
+import AgendaSummary from "../components/admin/agenda/AgendaSummary"
+import AgendaWeekSummary from "../components/admin/agenda/AgendaWeekSummary"
 import FullDayBlockedAlert from "../components/admin/agenda/FullDayBlockedAlert"
 import { useAdminAgenda } from "../features/admin-agenda/hooks/useAdminAgenda"
 
 function AdminAgendaPage() {
   const agenda = useAdminAgenda()
-  const lashCapacity = 2
 
   return (
     <div>
@@ -24,6 +25,15 @@ function AdminAgendaPage() {
         loadingLashists={agenda.loadingLashists}
         onDateChange={agenda.setSelectedDate}
         onLashistChange={agenda.setSelectedLashistId}
+      />
+
+      <AgendaSummary reservations={agenda.filteredReservations} />
+
+      <AgendaWeekSummary
+        selectedDate={agenda.selectedDate}
+        weekReservations={agenda.weekReservations}
+        weekStart={agenda.weekRange.start}
+        onDateChange={agenda.setSelectedDate}
       />
 
       {agenda.isFullDayBlocked && (
@@ -47,7 +57,7 @@ function AdminAgendaPage() {
           reservationsByTime={agenda.reservationsByTime}
           blockedTimes={agenda.blockedTimes}
           isFullDayBlocked={agenda.isFullDayBlocked}
-          lashCapacity={lashCapacity}
+          lashCapacity={agenda.lashCapacity}
           getLashOccupancy={agenda.getLashOccupancy}
           onBlock={agenda.handleBlock}
           onUnblock={agenda.handleUnblock}

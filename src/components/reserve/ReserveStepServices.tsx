@@ -11,6 +11,9 @@ type SelectedServiceData = {
   price: number
   category: string | null
   duration_minutes: number | null
+  is_package?: boolean
+  package_includes_lashes?: boolean
+  package_items?: ServiceRow["package_items"]
 } | null
 
 type ReserveStepServicesProps = {
@@ -73,7 +76,36 @@ function ReserveStepServices({
                 <p>S/ {Number(selectedServiceData.price).toFixed(2)}</p>
                 <p>{selectedServiceData.category ?? "Sin categoría"}</p>
                 <p>{selectedServiceData.duration_minutes ?? 0} min</p>
+                {selectedServiceData.is_package && <p>Paquete promo</p>}
+                {selectedServiceData.package_includes_lashes && (
+                  <p>Usa lashista</p>
+                )}
               </div>
+              {selectedServiceData.is_package &&
+                selectedServiceData.package_items &&
+                selectedServiceData.package_items.length > 0 && (
+                  <div className="mt-4 rounded-xl bg-white p-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">
+                      Incluye
+                    </p>
+                    <ul className="mt-2 grid gap-2">
+                      {selectedServiceData.package_items.map((item) => (
+                        <li
+                          key={item.id}
+                          className="flex flex-wrap items-center justify-between gap-2 text-xs text-stone-600"
+                        >
+                          <span className="font-medium text-stone-900">
+                            {item.name}
+                          </span>
+                          <span>
+                            {item.category ?? "Servicio"} -{" "}
+                            {item.duration_minutes ?? 0} min
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
             </div>
           )}
 
@@ -125,6 +157,7 @@ function ReserveStepServices({
   }`}
 >
   {service.category ?? "Servicio disponible"}
+  {service.is_package ? " - Paquete" : ""}
 </p>
 
 <div
@@ -135,7 +168,26 @@ function ReserveStepServices({
   {service.duration_minutes ? (
     <span>{service.duration_minutes} min</span>
   ) : null}
+  {service.package_includes_lashes ? <span>Usa lashista</span> : null}
 </div>
+{service.is_package &&
+  service.package_items &&
+  service.package_items.length > 0 && (
+    <div
+      className={`mt-3 border-t pt-3 text-[10px] leading-4 ${
+        isSelected
+          ? "border-white/20 text-stone-200"
+          : "border-stone-100 text-stone-500"
+      }`}
+    >
+      {service.package_items.slice(0, 3).map((item) => (
+        <p key={item.id}>{item.name}</p>
+      ))}
+      {service.package_items.length > 3 && (
+        <p>+{service.package_items.length - 3} servicios más</p>
+      )}
+    </div>
+  )}
                       </button>
                     )
                   })}

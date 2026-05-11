@@ -2,6 +2,11 @@ import { useEffect, useMemo, useState } from "react"
 import { useNavigate, useParams } from "react-router"
 import { toast } from "sonner"
 import { timeSlots } from "../../../data/timeSlots"
+import {
+  createAppointmentAuditLog,
+  fetchAppointmentAuditLogs,
+  type AppointmentAuditLog,
+} from "../../appointment-audit/api/appointmentAuditService"
 import { isSunday } from "../../reservations/utils/reservationUtils"
 import {
   getAvailableSlotsForService,
@@ -9,6 +14,7 @@ import {
   getFullDayBlock,
   mapAppointmentsForAvailability,
   validateSlotAvailability,
+  type RawAppointmentForAvailability,
 } from "../../reservations/utils/reservationAvailability"
 import {
   fetchEditAvailability,
@@ -54,6 +60,10 @@ export function useAdminEditReservation() {
   const [selectedServiceData, setSelectedServiceData] = useState<
     ReturnType<typeof getRelatedService>
   >(null)
+  const [remainingAmount, setRemainingAmount] = useState(0)
+  const [auditLogs, setAuditLogs] = useState<AppointmentAuditLog[]>([])
+  const [initialSnapshot, setInitialSnapshot] =
+    useState<EditReservationForm | null>(null)
   const [blockedReason, setBlockedReason] = useState("")
 
   const currentReservationId = useMemo(() => id ?? "", [id])
@@ -62,6 +72,7 @@ export function useAdminEditReservation() {
     if (!form.lashistId) return null
     return lashists.find((lashist) => lashist.id === form.lashistId) ?? null
   }, [form.lashistId, lashists])
+  const lashCapacity = lashists.length
 
   useEffect(() => {
     const loadReservation = async () => {
@@ -81,18 +92,21 @@ export function useAdminEditReservation() {
         ])
 
         const service = getRelatedService(reservation.services)
-
-        setLashists(lashistsData)
-
-        setForm({
+        const nextForm = {
           date: reservation.date ?? "",
           time: String(reservation.time).slice(0, 5),
           status: reservation.status ?? "pending",
           notes: reservation.notes ?? "",
           lashistId: reservation.lashist_id ?? "",
-        })
+        }
 
+        setLashists(lashistsData)
+        setForm(nextForm)
+        setInitialSnapshot(nextForm)
+
+        setRemainingAmount(Number(reservation.remaining_amount ?? 0))
         setSelectedServiceData(service)
+        setAuditLogs(await fetchAppointmentAuditLogs(currentReservationId))
       } catch (err) {
         const message =
           err instanceof Error ? err.message : "Ocurrió un error inesperado."
@@ -141,7 +155,7 @@ export function useAdminEditReservation() {
         const blockedTimes = getBlockedTimes(blocks)
 
         const appointments = mapAppointmentsForAvailability(
-          appointmentsData as any[]
+          appointmentsData as RawAppointmentForAvailability[]
         )
 
         const slots = getAvailableSlotsForService({
@@ -149,6 +163,8 @@ export function useAdminEditReservation() {
           selectedService: selectedServiceData
             ? {
                 category: selectedServiceData.category,
+                package_includes_lashes:
+                  selectedServiceData.package_includes_lashes,
                 duration_minutes:
                   selectedServiceData.category === "Pestañas"
                     ? 120
@@ -159,7 +175,7 @@ export function useAdminEditReservation() {
           timeSlots,
           blockedTimes,
           excludeAppointmentId: currentReservationId,
-          lashistas: 2,
+          lashistas: lashCapacity,
         })
 
         const currentTime = form.time
@@ -190,7 +206,7 @@ export function useAdminEditReservation() {
     }
 
     loadAvailableSlots()
-  }, [form.date, form.time, currentReservationId, selectedServiceData])
+  }, [form.date, form.time, currentReservationId, lashCapacity, selectedServiceData])
 
   const handleChange = (
     event: React.ChangeEvent<
@@ -229,6 +245,10 @@ export function useAdminEditReservation() {
       return blockedReason
     }
 
+    if (form.status === "completed" && remainingAmount > 0) {
+      return "Primero registra el pago completo antes de marcar como completada."
+    }
+
     return ""
   }
 
@@ -258,6 +278,19 @@ export function useAdminEditReservation() {
         throw new Error("Servicio no encontrado.")
       }
 
+      if (
+        (form.status === "cancelled" || form.status === "no_show") &&
+        initialSnapshot?.status !== form.status &&
+        !window.confirm(
+          form.status === "cancelled"
+            ? "¿Seguro que quieres cancelar esta cita?"
+            : "¿Seguro que quieres marcar esta cita como No show?"
+        )
+      ) {
+        toast.dismiss(loadingToastId)
+        return
+      }
+
       const { appointmentsData, blocks } = await fetchEditAvailability(form.date)
 
       const fullDayBlock = getFullDayBlock(blocks)
@@ -272,13 +305,14 @@ export function useAdminEditReservation() {
       }
 
       const appointments = mapAppointmentsForAvailability(
-        appointmentsData as any[]
+        appointmentsData as RawAppointmentForAvailability[]
       )
 
       validateSlotAvailability({
         appointments,
         selectedService: {
           category: selectedServiceData.category,
+          package_includes_lashes: selectedServiceData.package_includes_lashes,
           duration_minutes:
             selectedServiceData.category === "Pestañas"
               ? 120
@@ -287,7 +321,7 @@ export function useAdminEditReservation() {
         date: form.date,
         time: form.time,
         excludeAppointmentId: currentReservationId,
-        lashistas: 2,
+        lashistas: lashCapacity,
       })
 
       await updateReservationById(currentReservationId, {
@@ -297,6 +331,16 @@ export function useAdminEditReservation() {
         notes: form.notes,
         lashistId: selectedLashistData?.id ?? null,
         lashista: selectedLashistData?.name ?? null,
+      })
+
+      await createAppointmentAuditLog({
+        appointmentId: currentReservationId,
+        action: "reservation_updated",
+        details: {
+          previous: initialSnapshot,
+          next: form,
+          source: "edit_reservation",
+        },
       })
 
       toast.dismiss(loadingToastId)
@@ -324,6 +368,8 @@ export function useAdminEditReservation() {
     error,
     availableSlots,
     selectedServiceData,
+    remainingAmount,
+    auditLogs,
     blockedReason,
 
     handleChange,

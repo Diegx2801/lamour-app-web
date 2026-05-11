@@ -29,14 +29,16 @@ function PromoList({
         </p>
       ) : (
         <div className="mt-5 overflow-x-auto">
-          <table className="w-full min-w-[760px] border-collapse text-left text-sm">
+          <table className="w-full min-w-[860px] border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-stone-200 text-stone-500">
                 <th className="py-3 pr-4 font-medium">Orden</th>
                 <th className="py-3 pr-4 font-medium">Promo</th>
                 <th className="py-3 pr-4 font-medium">Precio</th>
-                <th className="py-3 pr-4 font-medium">Estado</th>
-                <th className="py-3 pr-4 font-medium">Acciones</th>
+                  <th className="py-3 pr-4 font-medium">Servicio</th>
+                  <th className="py-3 pr-4 font-medium">Estado</th>
+                  <th className="py-3 pr-4 font-medium">Vigencia</th>
+                  <th className="py-3 pr-4 font-medium">Acciones</th>
               </tr>
             </thead>
 
@@ -60,6 +62,10 @@ function PromoList({
                     {promo.price}
                   </td>
 
+                  <td className="py-4 pr-4 text-xs text-stone-500">
+                    {promo.service_id ? "Vinculado" : "Sin vincular"}
+                  </td>
+
                   <td className="py-4 pr-4">
                     <span
                       className={`rounded-full px-3 py-1 text-xs font-medium ${
@@ -69,8 +75,16 @@ function PromoList({
                       }`}
                     >
                       {promo.is_active ? "Activa" : "Oculta"}
-                    </span>
-                  </td>
+                      </span>
+                    </td>
+
+                    <td className="py-4 pr-4 text-xs text-stone-500">
+                      {promo.start_date || promo.end_date
+                        ? `${promo.start_date ?? "Sin inicio"} - ${
+                            promo.end_date ?? "Sin fin"
+                          }`
+                        : "Sin fechas"}
+                    </td>
 
                   <td className="py-4 pr-4">
                     <div className="flex flex-wrap gap-2">

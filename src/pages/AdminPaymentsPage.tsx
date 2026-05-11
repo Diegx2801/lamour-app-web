@@ -22,7 +22,7 @@ function AdminPaymentsPage() {
         </h1>
 
         <p className="mt-2 text-sm leading-6 text-stone-600">
-          Registra abonos o pagos completos de una reserva.
+          Registra abonos, pagos restantes, pagos completos o ajustes.
         </p>
       </div>
 
@@ -33,9 +33,18 @@ function AdminPaymentsPage() {
           </p>
 
           <div className="grid gap-3 sm:grid-cols-3">
-            <SummaryItem label="Total" value={`S/ ${payments.totalPrice.toFixed(2)}`} />
-            <SummaryItem label="Pagado" value={`S/ ${payments.totalPaid.toFixed(2)}`} />
-            <SummaryItem label="Restante" value={`S/ ${payments.remainingAmount.toFixed(2)}`} />
+            <SummaryItem
+              label="Total"
+              value={`S/ ${payments.totalPrice.toFixed(2)}`}
+            />
+            <SummaryItem
+              label="Pagado"
+              value={`S/ ${payments.totalPaid.toFixed(2)}`}
+            />
+            <SummaryItem
+              label="Restante"
+              value={`S/ ${payments.remainingAmount.toFixed(2)}`}
+            />
           </div>
         </div>
 
@@ -43,14 +52,40 @@ function AdminPaymentsPage() {
           onSubmit={payments.handlePayment}
           className="space-y-4 rounded-[2rem] border border-stone-200 bg-white p-5 shadow-[0_10px_40px_rgba(0,0,0,0.08)] md:p-6"
         >
+          <Field label="Tipo de pago">
+            <select
+              value={payments.paymentType}
+              onChange={(e) =>
+                payments.setPaymentType(
+                  e.target.value as
+                    | "deposit"
+                    | "remaining"
+                    | "full"
+                    | "adjustment"
+                )
+              }
+              className={inputClass}
+            >
+              <option value="deposit">Abono</option>
+              <option value="remaining">Pago restante</option>
+              <option value="full">Pago completo</option>
+              <option value="adjustment">Ajuste / corrección</option>
+            </select>
+          </Field>
+
           <Field label="Monto">
             <input
               type="number"
-              min="0"
+              min={payments.paymentType === "adjustment" ? undefined : "0"}
               step="0.01"
-              placeholder="Ejemplo: 20"
-              value={payments.amount}
+              placeholder={
+                payments.paymentType === "full"
+                  ? `S/ ${payments.remainingAmount.toFixed(2)}`
+                  : "Ejemplo: 20"
+              }
+              value={payments.paymentType === "full" ? "" : payments.amount}
               onChange={(e) => payments.setAmount(e.target.value)}
+              disabled={payments.paymentType === "full"}
               className={inputClass}
             />
           </Field>
@@ -75,14 +110,21 @@ function AdminPaymentsPage() {
 
           <button
             type="submit"
-            disabled={payments.loading || payments.remainingAmount <= 0}
+            disabled={
+              payments.loading ||
+              (payments.remainingAmount <= 0 &&
+                payments.paymentType !== "adjustment")
+            }
             className="w-full rounded-xl bg-stone-950 px-5 py-3 text-sm font-medium text-white transition hover:bg-stone-800 disabled:opacity-60"
           >
             {payments.loading
               ? "Guardando..."
-              : payments.remainingAmount <= 0
-              ? "Reserva pagada"
-              : "Registrar pago"}
+              : payments.remainingAmount <= 0 &&
+                  payments.paymentType !== "adjustment"
+                ? "Reserva pagada"
+                : payments.paymentType === "full"
+                  ? `Registrar pago completo S/ ${payments.remainingAmount.toFixed(2)}`
+                  : "Registrar pago"}
           </button>
         </form>
 
@@ -112,7 +154,8 @@ function AdminPaymentsPage() {
                     </p>
 
                     <p className="text-xs text-stone-500">
-                      {payment.payment_method ?? "Sin método"}
+                      {payment.payment_method ?? "Sin método"} ·{" "}
+                      {getPaymentTypeLabel(payment.payment_type)}
                     </p>
 
                     {payment.created_at && (
@@ -123,7 +166,7 @@ function AdminPaymentsPage() {
                   </div>
 
                   <span className="rounded-full bg-stone-100 px-3 py-1 text-xs text-stone-600">
-                    Pago
+                    {getPaymentTypeLabel(payment.payment_type)}
                   </span>
                 </article>
               ))}
@@ -169,6 +212,21 @@ function AlertMessage({ message }: { message: string }) {
       {message}
     </p>
   )
+}
+
+function getPaymentTypeLabel(type: string | null) {
+  switch (type) {
+    case "deposit":
+      return "Abono"
+    case "remaining":
+      return "Pago restante"
+    case "full":
+      return "Pago completo"
+    case "adjustment":
+      return "Ajuste"
+    default:
+      return "Pago"
+  }
 }
 
 export default AdminPaymentsPage

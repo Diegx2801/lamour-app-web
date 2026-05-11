@@ -39,6 +39,7 @@ function AdminServicesPage() {
         active={services.activeCount}
         inactive={services.inactiveCount}
         retouch={services.retouchCount}
+        packages={services.packageCount}
       />
 
       {services.error && !services.isModalOpen && (

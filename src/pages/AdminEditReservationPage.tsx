@@ -100,11 +100,20 @@ function AdminEditReservationPage() {
           >
             <option value="pending">Pendiente</option>
             <option value="confirmed">Confirmada</option>
-            <option value="completed">Completada</option>
+            <option
+              value="completed"
+              disabled={reservation.remainingAmount > 0}
+            >
+              Completada
+            </option>
             <option value="cancelled">Cancelada</option>
             <option value="no_show">No show</option>
           </select>
         </Field>
+
+        {reservation.remainingAmount > 0 && (
+          <AlertMessage message="Para marcar como completada, primero registra el saldo pendiente en pagos." />
+        )}
 
         <Field label="Lashista">
           <select
@@ -144,8 +153,75 @@ function AdminEditReservationPage() {
           {reservation.saving ? "Guardando..." : "Guardar cambios"}
         </button>
       </form>
+
+      <section className="mx-auto mt-6 max-w-2xl rounded-[2rem] border border-stone-200 bg-white p-5 shadow-sm md:p-6">
+        <h2 className="text-lg font-semibold text-stone-950">
+          Historial de cambios
+        </h2>
+
+        {reservation.auditLogs.length === 0 ? (
+          <p className="mt-3 text-sm text-stone-500">
+            Aún no hay cambios registrados para esta cita.
+          </p>
+        ) : (
+          <div className="mt-4 space-y-3">
+            {reservation.auditLogs.map((log) => (
+              <article
+                key={log.id}
+                className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm"
+              >
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="font-semibold text-stone-950">
+                    {getAuditLabel(log.action)}
+                  </p>
+                  <p className="text-xs text-stone-500">
+                    {new Date(log.created_at).toLocaleString("es-PE")}
+                  </p>
+                </div>
+                <p className="mt-1 text-xs text-stone-500">
+                  {log.actor_email ?? "Usuario no registrado"}
+                </p>
+                <p className="mt-2 text-xs text-stone-600">
+                  {formatAuditDetails(log.details)}
+                </p>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   )
+}
+
+function getAuditLabel(action: string) {
+  switch (action) {
+    case "status_updated":
+      return "Estado actualizado"
+    case "reservation_updated":
+      return "Reserva editada"
+    case "payment_registered":
+      return "Pago registrado"
+    default:
+      return action
+  }
+}
+
+function formatAuditDetails(details: Record<string, unknown> | null) {
+  if (!details) return "Sin detalle."
+
+  if ("newStatus" in details) {
+    return `Estado: ${String(details.previousStatus ?? "-")} → ${String(
+      details.newStatus ?? "-"
+    )}`
+  }
+
+  if ("paymentAmount" in details) {
+    return `Monto: S/ ${Number(details.paymentAmount ?? 0).toFixed(2)} · Tipo: ${String(
+      details.paymentType ?? "-"
+    )}`
+  }
+
+  return "Cambio registrado."
 }
 
 function Field({

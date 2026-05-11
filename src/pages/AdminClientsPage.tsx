@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Link } from "react-router"
+import type { ClientRow } from "../features/admin-clients/api/adminClientsService"
 import { useAdminClients } from "../features/admin-clients/hooks/useAdminClients"
 
 function AdminClientsPage() {
@@ -8,7 +9,7 @@ function AdminClientsPage() {
   const [fullName, setFullName] = useState("")
   const [phone, setPhone] = useState("")
 
-  const startEdit = (client: any) => {
+  const startEdit = (client: ClientRow) => {
     setEditingId(client.id)
     setFullName(client.full_name ?? "")
     setPhone(client.phone ?? "")

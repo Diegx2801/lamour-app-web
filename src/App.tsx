@@ -20,6 +20,7 @@ const AdminEditReservationPage = lazy(
 )
 const AdminAgendaPage = lazy(() => import("./pages/AdminAgendaPage"))
 const AdminPaymentsPage = lazy(() => import("./pages/AdminPaymentsPage"))
+const AdminCashPage = lazy(() => import("./pages/AdminCashPage"))
 const AdminClientHistoryPage = lazy(
   () => import("./pages/AdminClientHistoryPage")
 )
@@ -128,6 +129,15 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={["owner", "staff"]}>
                   <AdminPaymentsPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="caja"
+              element={
+                <ProtectedRoute allowedRoles={["owner"]}>
+                  <AdminCashPage />
                 </ProtectedRoute>
               }
             />

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { useParams } from "react-router"
 import { toast } from "sonner"
+import { createAppointmentAuditLog } from "../../appointment-audit/api/appointmentAuditService"
 import {
   createAppointmentPayment,
   fetchAppointmentPaymentSummary,
@@ -11,12 +12,14 @@ import {
 } from "../api/adminPaymentsService"
 
 type PaymentMethod = "yape" | "plin" | "efectivo"
+type PaymentType = "deposit" | "remaining" | "full" | "adjustment"
 
 export function useAdminPayments() {
   const { id } = useParams()
 
   const [amount, setAmount] = useState("")
   const [method, setMethod] = useState<PaymentMethod>("yape")
+  const [paymentType, setPaymentType] = useState<PaymentType>("remaining")
   const [payments, setPayments] = useState<PaymentRow[]>([])
   const [summary, setSummary] = useState<AppointmentPaymentSummary | null>(null)
 
@@ -62,22 +65,44 @@ export function useAdminPayments() {
     loadPaymentsData()
   }, [appointmentId])
 
+  const getPaymentAmount = () => {
+    if (paymentType === "full") return remainingAmount
+    return Number(amount)
+  }
+
   const validatePayment = () => {
     if (!appointmentId) return "Reserva no válida."
 
-    const numericAmount = Number(amount)
+    const numericAmount = getPaymentAmount()
 
-    if (!amount || Number.isNaN(numericAmount) || numericAmount <= 0) {
+    if (paymentType === "full" && remainingAmount <= 0) {
+      return "La reserva ya está pagada."
+    }
+
+    if (
+      paymentType !== "full" &&
+      (!amount || Number.isNaN(numericAmount) || numericAmount === 0)
+    ) {
       return "Ingresa un monto válido."
     }
 
-    if (numericAmount > remainingAmount) {
+    if (paymentType !== "adjustment" && numericAmount <= 0) {
+      return "El monto debe ser mayor a cero."
+    }
+
+    const nextTotalPaid = totalPaid + numericAmount
+
+    if (paymentType === "adjustment" && nextTotalPaid < 0) {
+      return "El ajuste no puede dejar el total pagado en negativo."
+    }
+
+    if (nextTotalPaid > totalPrice) {
       return `El pago no puede superar el saldo pendiente de S/ ${remainingAmount.toFixed(
         2
       )}.`
     }
 
-    if (remainingAmount <= 0) {
+    if (remainingAmount <= 0 && paymentType !== "adjustment") {
       return "La reserva ya está pagada."
     }
 
@@ -102,7 +127,7 @@ export function useAdminPayments() {
         return
       }
 
-      const paymentAmount = Number(amount)
+      const paymentAmount = getPaymentAmount()
       const newTotalPaid = totalPaid + paymentAmount
       const newRemainingAmount = Math.max(totalPrice - newTotalPaid, 0)
 
@@ -110,12 +135,25 @@ export function useAdminPayments() {
         appointmentId,
         amount: paymentAmount,
         paymentMethod: method,
+        paymentType,
       })
 
       await updateAppointmentPaymentTotals({
         appointmentId,
         totalPaid: newTotalPaid,
         remainingAmount: newRemainingAmount,
+      })
+
+      await createAppointmentAuditLog({
+        appointmentId,
+        action: "payment_registered",
+        details: {
+          paymentAmount,
+          paymentMethod: method,
+          paymentType,
+          totalPaid: newTotalPaid,
+          remainingAmount: newRemainingAmount,
+        },
       })
 
       setAmount("")
@@ -144,12 +182,16 @@ export function useAdminPayments() {
     method,
     setMethod,
 
+    paymentType,
+    setPaymentType,
+
     payments,
     summary,
 
     totalPaid,
     totalPrice,
     remainingAmount,
+    effectiveAmount: getPaymentAmount(),
 
     error,
     loading,

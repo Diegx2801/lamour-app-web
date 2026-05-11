@@ -1,16 +1,13 @@
-import {
-  getAvailableLashTimeSlots,
-  hasCapacityForLashes,
-} from "../../../lib/availability"
-
 type RelatedAvailabilityService =
   | {
       category: string | null
       duration_minutes: number | null
+      package_includes_lashes?: boolean | null
     }
   | {
       category: string | null
       duration_minutes: number | null
+      package_includes_lashes?: boolean | null
     }[]
   | null
   | undefined
@@ -22,6 +19,7 @@ export type AppointmentAvailabilityRow = {
   status: string
   serviceCategory: string | null
   durationMinutes: number | null
+  requiresLash?: boolean | null
 }
 
 export type ScheduleBlockRow = {
@@ -35,9 +33,10 @@ export type ScheduleBlockRow = {
 export type BasicServiceForAvailability = {
   category: string | null
   duration_minutes: number | null
+  package_includes_lashes?: boolean | null
 }
 
-type RawAppointmentForAvailability = {
+export type RawAppointmentForAvailability = {
   id?: string
   date: string
   time: string
@@ -95,6 +94,63 @@ function timeToMinutes(time: string) {
   return hours * 60 + minutes
 }
 
+function rangesOverlap(
+  startA: number,
+  endA: number,
+  startB: number,
+  endB: number
+) {
+  return startA < endB && startB < endA
+}
+
+function getServiceDuration(service: BasicServiceForAvailability) {
+  return service.category === "Pestañas"
+    ? 120
+    : Number(service.duration_minutes ?? 60)
+}
+
+function getAppointmentDuration(appointment: AppointmentAvailabilityRow) {
+  return appointment.serviceCategory === "Pestañas"
+    ? 120
+    : Number(appointment.durationMinutes ?? 60)
+}
+
+function appointmentConsumesCapacity(appointment: AppointmentAvailabilityRow) {
+  return appointment.status !== "cancelled" && appointment.status !== "no_show"
+}
+
+function hasCapacityForService({
+  appointments,
+  date,
+  time,
+  capacity,
+  duration,
+}: {
+  appointments: AppointmentAvailabilityRow[]
+  date: string
+  time: string
+  capacity: number
+  duration: number
+}) {
+  if (capacity <= 0) return false
+
+  const newStart = timeToMinutes(time)
+  const newEnd = newStart + duration
+
+  const overlappingAppointments = appointments.filter((appointment) => {
+    if (appointment.date !== date) return false
+    if (!appointmentConsumesCapacity(appointment)) return false
+    if (!appointment.time) return false
+
+    const appointmentStart = timeToMinutes(appointment.time)
+    const appointmentEnd = appointmentStart + getAppointmentDuration(appointment)
+
+    return rangesOverlap(newStart, newEnd, appointmentStart, appointmentEnd)
+  })
+
+  return overlappingAppointments.length < capacity
+}
+
 export function getPastTimesForDate(date: string, timeSlots: string[]) {
   const today = getTodayLocalDate()
 
@@ -135,6 +191,11 @@ export function mapAppointmentsForAvailability(
           : relatedService?.category === "Pestañas"
           ? 120
           : relatedService?.duration_minutes ?? null,
+      requiresLash:
+        "requiresLash" in item
+          ? item.requiresLash
+          : relatedService?.category === "Pestañas" ||
+            Boolean(relatedService?.package_includes_lashes),
     }
   })
 }
@@ -175,25 +236,16 @@ export function getAvailableSlotsForService({
     excludeAppointmentId
   )
 
-  let filteredSlots: string[] = []
-
-  if (selectedService.category === "Pestañas") {
-    filteredSlots = getAvailableLashTimeSlots(
-      relevantAppointments,
+  const serviceDuration = getServiceDuration(selectedService)
+  const filteredSlots = timeSlots.filter((slot) =>
+    hasCapacityForService({
+      appointments: relevantAppointments,
       date,
-      timeSlots,
-      lashistas,
-      Number(selectedService.duration_minutes ?? 120)
-    )
-  } else {
-    const occupiedTimes = new Set(
-      relevantAppointments
-        .filter((item) => item.serviceCategory !== "Pestañas")
-        .map((item) => item.time)
-    )
-
-    filteredSlots = timeSlots.filter((slot) => !occupiedTimes.has(slot))
-  }
+      time: slot,
+      capacity: lashistas,
+      duration: serviceDuration,
+    })
+  )
 
   const blockedTimesSet = new Set(blockedTimes)
 
@@ -238,28 +290,16 @@ export function validateSlotAvailability({
     excludeAppointmentId
   )
 
-  if (selectedService.category === "Pestañas") {
-    const hasCapacity = hasCapacityForLashes(
-      relevantAppointments,
-      date,
-      time,
-      lashistas,
-      Number(selectedService.duration_minutes ?? 120)
-    )
-
-    if (!hasCapacity) {
-      throw new Error("Ese horario ya no tiene disponibilidad para pestañas.")
-    }
-
-    return
-  }
-
-  const hasConflict = relevantAppointments.some(
-    (item) => item.time === time && item.serviceCategory !== "Pestañas"
-  )
+  const hasConflict = !hasCapacityForService({
+    appointments: relevantAppointments,
+    date,
+    time,
+    capacity: lashistas,
+    duration: getServiceDuration(selectedService),
+  })
 
   if (hasConflict) {
-    throw new Error("Ese horario ya está ocupado.")
+    throw new Error("Ese horario ya no tiene disponibilidad.")
   }
 }
 

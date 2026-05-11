@@ -7,12 +7,14 @@ export type EditReservationService =
       name: string
       category: string | null
       duration_minutes: number | null
+      package_includes_lashes?: boolean | null
     }
   | {
       id: string
       name: string
       category: string | null
       duration_minutes: number | null
+      package_includes_lashes?: boolean | null
     }[]
   | null
 
@@ -24,6 +26,7 @@ export type EditReservationData = {
   notes: string | null
   lashista: string | null
   lashist_id: string | null
+  remaining_amount: number | null
   services: EditReservationService
 }
 
@@ -57,6 +60,33 @@ export async function fetchReservationById(id: string) {
       notes,
       lashista,
       lashist_id,
+      remaining_amount,
+      services (
+        id,
+        name,
+        category,
+        duration_minutes,
+        package_includes_lashes
+      )
+    `)
+    .eq("id", id)
+    .single()
+
+  if (!error && data) {
+    return data as EditReservationData
+  }
+
+  const { data: fallbackData, error: fallbackError } = await supabase
+    .from("appointments")
+    .select(`
+      id,
+      date,
+      time,
+      status,
+      notes,
+      lashista,
+      lashist_id,
+      remaining_amount,
       services (
         id,
         name,
@@ -67,11 +97,11 @@ export async function fetchReservationById(id: string) {
     .eq("id", id)
     .single()
 
-  if (error || !data) {
+  if (fallbackError || !fallbackData) {
     throw new Error("No se pudo cargar la reserva.")
   }
 
-  return data as EditReservationData
+  return fallbackData as EditReservationData
 }
 
 export async function fetchEditAvailability(date: string) {
@@ -90,7 +120,8 @@ export async function fetchEditAvailability(date: string) {
         lashist_id,
         services (
           category,
-          duration_minutes
+          duration_minutes,
+          package_includes_lashes
         )
       `)
       .eq("date", date)
@@ -102,7 +133,32 @@ export async function fetchEditAvailability(date: string) {
       .eq("date", date),
   ])
 
-  if (appointmentsError) {
+  let appointmentRows = appointmentsData as unknown[] | null
+  let appointmentError = appointmentsError
+
+  if (appointmentError) {
+    const fallbackRes = await supabase
+      .from("appointments")
+      .select(`
+        id,
+        date,
+        time,
+        status,
+        lashista,
+        lashist_id,
+        services (
+          category,
+          duration_minutes
+        )
+      `)
+      .eq("date", date)
+      .neq("status", "cancelled")
+
+    appointmentRows = fallbackRes.data
+    appointmentError = fallbackRes.error
+  }
+
+  if (appointmentError) {
     throw new Error("No se pudieron cargar las reservas del día.")
   }
 
@@ -111,7 +167,7 @@ export async function fetchEditAvailability(date: string) {
   }
 
   return {
-    appointmentsData: appointmentsData ?? [],
+    appointmentsData: appointmentRows ?? [],
     blocks: (blocksData ?? []) as ScheduleBlockRow[],
   }
 }

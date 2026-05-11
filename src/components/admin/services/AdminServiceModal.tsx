@@ -100,6 +100,96 @@ function AdminServiceModal({ services }: AdminServiceModalProps) {
             <label className="flex items-center gap-3 text-sm font-medium text-stone-800">
               <input
                 type="checkbox"
+                name="is_package"
+                checked={services.form.is_package}
+                onChange={services.handleChange}
+              />
+              Este servicio es un paquete
+            </label>
+
+            {services.form.is_package && (
+              <div className="mt-4">
+                <p className="text-sm font-medium text-stone-800">
+                  Servicios incluidos
+                </p>
+                <p className="mt-1 text-xs text-stone-500">
+                  La duración se calcula sola al seleccionar servicios, pero
+                  puedes cambiarla manualmente arriba.
+                </p>
+
+                <div className="mt-3 grid max-h-52 gap-2 overflow-y-auto pr-1">
+                  {services.packageBaseServices.length === 0 ? (
+                    <p className="rounded-xl border border-dashed border-stone-300 px-3 py-3 text-sm text-stone-500">
+                      No hay servicios base activos para incluir.
+                    </p>
+                  ) : (
+                    services.sortedPackageBaseServices.map((service) => (
+                      <label
+                        key={service.id}
+                        className="flex items-center justify-between gap-3 rounded-xl border border-stone-200 bg-white px-3 py-2 text-sm"
+                      >
+                        <span>
+                          <span className="font-medium text-stone-900">
+                            {service.name}
+                          </span>
+                          <span className="ml-2 text-xs text-stone-500">
+                            {service.category ?? "Sin categoría"} -{" "}
+                            {service.duration_minutes ?? 0} min - S/{" "}
+                            {Number(service.price ?? 0).toFixed(2)}
+                          </span>
+                        </span>
+                        <input
+                          type="checkbox"
+                          checked={services.form.package_item_ids.includes(
+                            service.id
+                          )}
+                          onChange={() => services.togglePackageItem(service.id)}
+                        />
+                      </label>
+                    ))
+                  )}
+                </div>
+
+                {services.form.package_item_ids.length > 0 && (
+                  <div className="mt-4 grid gap-2 rounded-2xl border border-stone-200 bg-white p-4 text-sm sm:grid-cols-4">
+                    <div>
+                      <p className="text-xs text-stone-500">Total normal</p>
+                      <p className="mt-1 font-semibold text-stone-950">
+                        S/ {services.packageRegularTotal.toFixed(2)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-stone-500">Precio paquete</p>
+                      <p className="mt-1 font-semibold text-stone-950">
+                        S/ {Number(services.form.price || 0).toFixed(2)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-stone-500">Ahorro cliente</p>
+                      <p className="mt-1 font-semibold text-green-700">
+                        S/ {services.packageSavings.toFixed(2)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-stone-500">Duración sugerida</p>
+                      <button
+                        type="button"
+                        onClick={services.useAutoPackageDuration}
+                        className="mt-1 text-left font-semibold text-stone-950 underline-offset-4 hover:underline"
+                      >
+                        {services.packageAutoDuration} min
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
+            <label className="flex items-center gap-3 text-sm font-medium text-stone-800">
+              <input
+                type="checkbox"
                 name="allows_retouch"
                 checked={services.form.allows_retouch}
                 onChange={services.handleChange}

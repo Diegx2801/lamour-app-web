@@ -1,5 +1,8 @@
 import type { ChangeEvent, FormEvent } from "react"
-import type { PromoFormValues } from "../../../features/promos/api/promoService"
+import type {
+  PromoFormValues,
+  PromoServiceOption,
+} from "../../../features/promos/api/promoService"
 
 type PromoFormProps = {
   form: PromoFormValues
@@ -7,6 +10,7 @@ type PromoFormProps = {
   errorMessage: string
   saving: boolean
   uploadingImage: boolean
+  services: PromoServiceOption[]
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
   onCancelEdit: () => void
   onFieldChange: <Field extends keyof PromoFormValues>(
@@ -22,6 +26,7 @@ function PromoForm({
   errorMessage,
   saving,
   uploadingImage,
+  services,
   onSubmit,
   onCancelEdit,
   onFieldChange,
@@ -73,6 +78,26 @@ function PromoForm({
           />
         </label>
 
+        <label className="block">
+          <span className="text-sm font-medium text-stone-700">
+            Servicio vinculado
+          </span>
+          <select
+            value={form.service_id}
+            onChange={(event) =>
+              onFieldChange("service_id", event.target.value)
+            }
+            className="mt-2 w-full rounded-2xl border border-stone-200 bg-white px-4 py-3 text-sm outline-none focus:border-stone-500"
+          >
+            <option value="">Sin servicio vinculado</option>
+            {services.map((service) => (
+              <option key={service.id} value={service.id}>
+                {service.name} - S/ {Number(service.price).toFixed(2)}
+              </option>
+            ))}
+          </select>
+        </label>
+
         <label className="block md:col-span-2">
           <span className="text-sm font-medium text-stone-700">
             Imagen de la promoción
@@ -108,6 +133,32 @@ function PromoForm({
             }
             className="mt-2 w-full rounded-2xl border border-stone-200 px-4 py-3 text-sm outline-none focus:border-stone-500"
             placeholder="Ej: 1"
+          />
+        </label>
+
+        <label className="block">
+          <span className="text-sm font-medium text-stone-700">
+            Inicio de promo
+          </span>
+          <input
+            type="date"
+            value={form.start_date}
+            onChange={(event) =>
+              onFieldChange("start_date", event.target.value)
+            }
+            className="mt-2 w-full rounded-2xl border border-stone-200 px-4 py-3 text-sm outline-none focus:border-stone-500"
+          />
+        </label>
+
+        <label className="block">
+          <span className="text-sm font-medium text-stone-700">
+            Fin de promo
+          </span>
+          <input
+            type="date"
+            value={form.end_date}
+            onChange={(event) => onFieldChange("end_date", event.target.value)}
+            className="mt-2 w-full rounded-2xl border border-stone-200 px-4 py-3 text-sm outline-none focus:border-stone-500"
           />
         </label>
 

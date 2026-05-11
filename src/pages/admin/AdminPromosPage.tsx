@@ -7,11 +7,13 @@ import {
   createPromo,
   deletePromo,
   fetchAdminPromos,
+  fetchPromoServiceOptions,
   togglePromoStatus,
   updatePromo,
   uploadPromoImage,
   type PromoFormValues,
   type PromoRow,
+  type PromoServiceOption,
 } from "../../features/promos/api/promoService"
 
 const emptyForm: PromoFormValues = {
@@ -22,10 +24,14 @@ const emptyForm: PromoFormValues = {
   image_url: "",
   is_active: true,
   sort_order: 0,
+  start_date: "",
+  end_date: "",
+  service_id: "",
 }
 
 type PromosState = {
   promos: PromoRow[]
+  services: PromoServiceOption[]
   form: PromoFormValues
   editingId: string | null
   loading: boolean
@@ -36,6 +42,7 @@ type PromosState = {
 
 type PromosAction =
   | { type: "set_promos"; promos: PromoRow[] }
+  | { type: "set_services"; services: PromoServiceOption[] }
   | { type: "set_form"; form: PromoFormValues }
   | { type: "update_form"; values: Partial<PromoFormValues> }
   | { type: "set_editing_id"; editingId: string | null }
@@ -47,6 +54,7 @@ type PromosAction =
 
 const initialState: PromosState = {
   promos: [],
+  services: [],
   form: emptyForm,
   editingId: null,
   loading: true,
@@ -62,6 +70,8 @@ function promosReducer(
   switch (action.type) {
     case "set_promos":
       return { ...state, promos: action.promos }
+    case "set_services":
+      return { ...state, services: action.services }
     case "set_form":
       return { ...state, form: action.form }
     case "update_form":
@@ -87,6 +97,7 @@ function AdminPromosPage() {
   const [state, dispatch] = useReducer(promosReducer, initialState)
   const {
     promos,
+    services,
     form,
     editingId,
     loading,
@@ -113,6 +124,19 @@ function AdminPromosPage() {
 
   useEffect(() => {
     loadPromos()
+  }, [])
+
+  useEffect(() => {
+    const loadServices = async () => {
+      try {
+        const data = await fetchPromoServiceOptions()
+        dispatch({ type: "set_services", services: data })
+      } catch (error) {
+        console.error(error)
+      }
+    }
+
+    loadServices()
   }, [])
 
   const handleFieldChange = <Field extends keyof PromoFormValues>(
@@ -185,6 +209,9 @@ function AdminPromosPage() {
       image_url: promo.image_url ?? "",
       is_active: promo.is_active,
       sort_order: promo.sort_order ?? 0,
+      start_date: promo.start_date ?? "",
+      end_date: promo.end_date ?? "",
+      service_id: promo.service_id ?? "",
       },
     })
 
@@ -238,6 +265,7 @@ function AdminPromosPage() {
         errorMessage={errorMessage}
         saving={saving}
         uploadingImage={uploadingImage}
+        services={services}
         onSubmit={handleSubmit}
         onCancelEdit={handleCancelEdit}
         onFieldChange={handleFieldChange}

@@ -44,7 +44,8 @@ export async function fetchAgendaByDate(date: string) {
         services (
           name,
           category,
-          duration_minutes
+          duration_minutes,
+          package_includes_lashes
         )
       `)
       .eq("date", date)
@@ -56,9 +57,44 @@ export async function fetchAgendaByDate(date: string) {
       .eq("date", date),
   ])
 
-  if (reservationsRes.error || blocksRes.error) {
+  let reservationsData = reservationsRes.data as unknown[] | null
+  let reservationsError = reservationsRes.error
+
+  if (reservationsError) {
+    const fallbackRes = await supabase
+      .from("appointments")
+      .select(`
+        id,
+        date,
+        time,
+        status,
+        notes,
+        lashista,
+        lashist_id,
+        appointment_type,
+        total_price,
+        deposit_amount,
+        remaining_amount,
+        clients (
+          full_name,
+          phone
+        ),
+        services (
+          name,
+          category,
+          duration_minutes
+        )
+      `)
+      .eq("date", date)
+      .order("time", { ascending: true })
+
+    reservationsData = fallbackRes.data
+    reservationsError = fallbackRes.error
+  }
+
+  if (reservationsError || blocksRes.error) {
     console.error("Error cargando agenda:", {
-      reservationsError: reservationsRes.error,
+      reservationsError,
       blocksError: blocksRes.error,
     })
 
@@ -66,9 +102,23 @@ export async function fetchAgendaByDate(date: string) {
   }
 
   return {
-    reservations: reservationsRes.data ?? [],
+    reservations: reservationsData ?? [],
     blocks: blocksRes.data ?? [],
   }
+}
+
+export async function fetchAgendaWeek(startDate: string, endDate: string) {
+  const { data, error } = await supabase
+    .from("appointments")
+    .select("id, date, status, remaining_amount")
+    .gte("date", startDate)
+    .lte("date", endDate)
+
+  if (error) {
+    throw new Error("Error cargando resumen semanal")
+  }
+
+  return data ?? []
 }
 
 export async function blockTime(date: string, time: string, reason?: string) {
@@ -124,6 +174,24 @@ export async function unblockFullDay(blockId: string) {
 }
 
 export async function updateAppointmentStatus(id: string, status: string) {
+  if (status === "completed") {
+    const { data, error: fetchError } = await supabase
+      .from("appointments")
+      .select("remaining_amount")
+      .eq("id", id)
+      .single()
+
+    if (fetchError || !data) {
+      throw new Error("No se pudo validar el saldo de la reserva")
+    }
+
+    if (Number(data.remaining_amount ?? 0) > 0) {
+      throw new Error(
+        "No puedes marcar como completada una cita con saldo pendiente."
+      )
+    }
+  }
+
   const { error } = await supabase
     .from("appointments")
     .update({ status })

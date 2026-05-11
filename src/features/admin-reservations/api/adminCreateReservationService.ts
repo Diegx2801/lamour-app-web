@@ -12,6 +12,8 @@ export type AdminServiceRow = {
   allows_retouch: boolean
   retouch_price: number | null
   retouch_days: number | null
+  is_package?: boolean
+  package_includes_lashes?: boolean
 }
 
 export type AdminLashistRow = {
@@ -32,16 +34,37 @@ export async function fetchAdminServices(): Promise<AdminServiceRow[]> {
       duration_minutes,
       allows_retouch,
       retouch_price,
+      retouch_days,
+      is_package,
+      package_includes_lashes
+    `)
+    .eq("is_active", true)
+    .order("name", { ascending: true })
+
+  if (!error) {
+    return (data ?? []) as AdminServiceRow[]
+  }
+
+  const { data: fallbackData, error: fallbackError } = await supabase
+    .from("services")
+    .select(`
+      id,
+      name,
+      price,
+      category,
+      duration_minutes,
+      allows_retouch,
+      retouch_price,
       retouch_days
     `)
     .eq("is_active", true)
     .order("name", { ascending: true })
 
-  if (error) {
+  if (fallbackError) {
     throw new Error("No se pudieron cargar los servicios.")
   }
 
-  return (data ?? []) as AdminServiceRow[]
+  return (fallbackData ?? []) as AdminServiceRow[]
 }
 
 export async function fetchAdminLashists(): Promise<AdminLashistRow[]> {
@@ -75,7 +98,8 @@ export async function fetchAdminAvailability(date: string) {
         appointment_type,
         services (
           category,
-          duration_minutes
+          duration_minutes,
+          package_includes_lashes
         )
       `)
       .eq("date", date)
@@ -87,7 +111,33 @@ export async function fetchAdminAvailability(date: string) {
       .eq("date", date),
   ])
 
-  if (appointmentsError) {
+  let appointmentRows = appointmentsData as unknown[] | null
+  let appointmentError = appointmentsError
+
+  if (appointmentError) {
+    const fallbackRes = await supabase
+      .from("appointments")
+      .select(`
+        id,
+        date,
+        time,
+        status,
+        lashista,
+        lashist_id,
+        appointment_type,
+        services (
+          category,
+          duration_minutes
+        )
+      `)
+      .eq("date", date)
+      .neq("status", "cancelled")
+
+    appointmentRows = fallbackRes.data
+    appointmentError = fallbackRes.error
+  }
+
+  if (appointmentError) {
     throw new Error("No se pudieron cargar las reservas del día.")
   }
 
@@ -96,7 +146,7 @@ export async function fetchAdminAvailability(date: string) {
   }
 
   return {
-    appointmentsData: appointmentsData ?? [],
+    appointmentsData: appointmentRows ?? [],
     blocks: (blocksData ?? []) as ScheduleBlockRow[],
   }
 }

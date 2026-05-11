@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useState } from "react"
+﻿import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { timeSlots } from "../../../data/timeSlots"
+import { createAppointmentAuditLog } from "../../appointment-audit/api/appointmentAuditService"
 import {
   blockFullDay,
   blockTime,
   fetchAgendaByDate,
   fetchAgendaLashists,
+  fetchAgendaWeek,
   unblockFullDay,
   unblockTime,
   updateAppointmentStatus,
@@ -22,11 +24,13 @@ export type AgendaServiceRelation =
       name: string | null
       category: string | null
       duration_minutes: number | null
+      package_includes_lashes?: boolean | null
     }
   | {
       name: string | null
       category: string | null
       duration_minutes: number | null
+      package_includes_lashes?: boolean | null
     }[]
   | null
 
@@ -54,6 +58,13 @@ type ScheduleBlock = {
   is_full_day: boolean
 }
 
+type AgendaWeekReservation = {
+  id: string
+  date: string
+  status: string
+  remaining_amount: number | null
+}
+
 function normalizeTime(time: string | null | undefined) {
   return String(time ?? "").slice(0, 5)
 }
@@ -68,22 +79,25 @@ function getServiceData(services: AgendaServiceRelation) {
   return Array.isArray(services) ? services[0] ?? null : services
 }
 
-function getLashOccupancyAtSlot(reservations: AgendaReservation[], slot: string) {
+function getServiceDuration(service: ReturnType<typeof getServiceData>) {
+  if (!service) return 60
+  return service.category === "Pestañas"
+    ? 120
+    : Number(service.duration_minutes ?? 60)
+}
+
+function getOccupancyAtSlot(reservations: AgendaReservation[], slot: string) {
   const slotStart = timeToMinutes(slot)
 
   return reservations.filter((reservation) => {
     if (reservation.status === "cancelled") return false
+    if (reservation.status === "no_show") return false
 
     const service = getServiceData(reservation.services)
-    if (!service || service.category !== "Pestañas") return false
+    if (!service) return false
 
     const reservationStart = timeToMinutes(normalizeTime(reservation.time))
-    const duration =
-      service.category === "Pestañas"
-        ? 120
-        : Number(service.duration_minutes ?? 60)
-
-    const reservationEnd = reservationStart + duration
+    const reservationEnd = reservationStart + getServiceDuration(service)
 
     return slotStart >= reservationStart && slotStart < reservationEnd
   }).length
@@ -97,6 +111,9 @@ export function useAdminAgenda() {
   const [lashists, setLashists] = useState<AgendaLashistRow[]>([])
 
   const [reservations, setReservations] = useState<AgendaReservation[]>([])
+  const [weekReservations, setWeekReservations] = useState<
+    AgendaWeekReservation[]
+  >([])
   const [blocks, setBlocks] = useState<ScheduleBlock[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingLashists, setLoadingLashists] = useState(true)
@@ -120,6 +137,21 @@ export function useAdminAgenda() {
     }
   }
 
+  const weekRange = useMemo(() => {
+    const selected = new Date(`${selectedDate}T12:00:00`)
+    const day = selected.getDay()
+    const mondayOffset = day === 0 ? -6 : 1 - day
+    const monday = new Date(selected)
+    monday.setDate(selected.getDate() + mondayOffset)
+    const sunday = new Date(monday)
+    sunday.setDate(monday.getDate() + 6)
+
+    return {
+      start: monday.toISOString().slice(0, 10),
+      end: sunday.toISOString().slice(0, 10),
+    }
+  }, [selectedDate])
+
   useEffect(() => {
     const loadLashists = async () => {
       try {
@@ -139,6 +171,19 @@ export function useAdminAgenda() {
   useEffect(() => {
     refreshAgenda()
   }, [selectedDate])
+
+  useEffect(() => {
+    const loadWeek = async () => {
+      try {
+        const data = await fetchAgendaWeek(weekRange.start, weekRange.end)
+        setWeekReservations(data as AgendaWeekReservation[])
+      } catch {
+        toast.error("No se pudo cargar el resumen semanal.")
+      }
+    }
+
+    loadWeek()
+  }, [weekRange.start, weekRange.end])
 
   const filteredReservations = useMemo(() => {
     if (!selectedLashistId) return reservations
@@ -182,6 +227,8 @@ export function useAdminAgenda() {
     return lashists.find((lashist) => lashist.id === selectedLashistId) ?? null
   }, [selectedLashistId, lashists])
 
+  const lashCapacity = selectedLashistId ? 1 : lashists.length
+
   const getBlockByTime = (time: string) => {
     return blocks.find(
       (block) => !block.is_full_day && normalizeTime(block.time) === time
@@ -189,7 +236,7 @@ export function useAdminAgenda() {
   }
 
   const getLashOccupancy = (slot: string) => {
-    return getLashOccupancyAtSlot(filteredReservations, slot)
+    return getOccupancyAtSlot(filteredReservations, slot)
   }
 
   const handleBlock = async (time: string) => {
@@ -226,13 +273,13 @@ export function useAdminAgenda() {
     try {
       setError("")
       const reason =
-        prompt("Motivo del bloqueo del día (opcional)") || undefined
+        prompt("Motivo del bloqueo del dÃ­a (opcional)") || undefined
 
       await blockFullDay(selectedDate, reason)
-      toast.success("Día bloqueado.")
+      toast.success("DÃ­a bloqueado.")
       await refreshAgenda()
     } catch {
-      const message = "No se pudo bloquear el día completo."
+      const message = "No se pudo bloquear el dÃ­a completo."
       setError(message)
       toast.error(message)
     }
@@ -244,10 +291,10 @@ export function useAdminAgenda() {
       if (!fullDayBlock) return
 
       await unblockFullDay(fullDayBlock.id)
-      toast.success("Día desbloqueado.")
+      toast.success("DÃ­a desbloqueado.")
       await refreshAgenda()
     } catch {
-      const message = "No se pudo desbloquear el día completo."
+      const message = "No se pudo desbloquear el dÃ­a completo."
       setError(message)
       toast.error(message)
     }
@@ -256,7 +303,40 @@ export function useAdminAgenda() {
   const updateStatus = async (id: string, status: string) => {
     try {
       setError("")
+      const reservation = reservations.find((item) => item.id === id)
+
+      if (
+        (status === "cancelled" || status === "no_show") &&
+        !window.confirm(
+          status === "cancelled"
+            ? "Â¿Seguro que quieres cancelar esta cita?"
+            : "Â¿Seguro que quieres marcar esta cita como No show?"
+        )
+      ) {
+        return
+      }
+
+      if (
+        status === "completed" &&
+        Number(reservation?.remaining_amount ?? 0) > 0
+      ) {
+        const message =
+          "Primero registra el pago completo antes de marcar como completada."
+        setError(message)
+        toast.error(message)
+        return
+      }
+
       await updateAppointmentStatus(id, status)
+      await createAppointmentAuditLog({
+        appointmentId: id,
+        action: "status_updated",
+        details: {
+          previousStatus: reservation?.status ?? null,
+          newStatus: status,
+          source: "agenda",
+        },
+      })
       toast.success("Estado actualizado.")
       await refreshAgenda()
     } catch {
@@ -276,6 +356,8 @@ export function useAdminAgenda() {
     lashists,
 
     reservations,
+    weekReservations,
+    weekRange,
     filteredReservations,
     reservationsByTime,
     blocks,
@@ -287,6 +369,7 @@ export function useAdminAgenda() {
     loadingLashists,
     error,
 
+    lashCapacity,
     getLashOccupancy,
 
     handleBlock,

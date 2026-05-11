@@ -18,6 +18,9 @@ type ServiceFormState = {
   allows_retouch: boolean
   retouch_price: string
   retouch_days: string
+  is_package: boolean
+  package_item_ids: string[]
+  duration_manually_edited: boolean
 }
 
 const initialForm: ServiceFormState = {
@@ -30,6 +33,9 @@ const initialForm: ServiceFormState = {
   allows_retouch: false,
   retouch_price: "",
   retouch_days: "15",
+  is_package: false,
+  package_item_ids: [],
+  duration_manually_edited: false,
 }
 
 export function useAdminServices() {
@@ -57,6 +63,58 @@ export function useAdminServices() {
     () => services.filter((service) => service.allows_retouch).length,
     [services]
   )
+
+  const packageCount = useMemo(
+    () => services.filter((service) => service.is_package).length,
+    [services]
+  )
+
+  const packageBaseServices = useMemo(
+    () => services.filter((service) => !service.is_package && service.is_active),
+    [services]
+  )
+
+  const selectedPackageServices = useMemo(() => {
+    return form.package_item_ids
+      .map((serviceId) =>
+        packageBaseServices.find((service) => service.id === serviceId)
+      )
+      .filter((service): service is AdminServiceRow => Boolean(service))
+  }, [form.package_item_ids, packageBaseServices])
+
+  const packageRegularTotal = useMemo(() => {
+    return selectedPackageServices.reduce(
+      (total, service) => total + Number(service.price ?? 0),
+      0
+    )
+  }, [selectedPackageServices])
+
+  const packageOfferPrice = Number(form.price || 0)
+  const packageSavings = Math.max(packageRegularTotal - packageOfferPrice, 0)
+
+  const packageAutoDuration = useMemo(() => {
+    return selectedPackageServices.reduce(
+      (total, service) => total + Number(service.duration_minutes ?? 0),
+      0
+    )
+  }, [selectedPackageServices])
+
+  const sortedPackageBaseServices = useMemo(() => {
+    return [...packageBaseServices].sort((a, b) => {
+      const aSelected = form.package_item_ids.includes(a.id)
+      const bSelected = form.package_item_ids.includes(b.id)
+
+      if (aSelected !== bSelected) return aSelected ? -1 : 1
+      return a.name.localeCompare(b.name)
+    })
+  }, [form.package_item_ids, packageBaseServices])
+
+  const getPackageDuration = (serviceIds: string[]) => {
+    return serviceIds.reduce((total, serviceId) => {
+      const service = packageBaseServices.find((item) => item.id === serviceId)
+      return total + Number(service?.duration_minutes ?? 0)
+    }, 0)
+  }
 
   const loadServices = async () => {
     try {
@@ -97,6 +155,9 @@ export function useAdminServices() {
       allows_retouch: Boolean(service.allows_retouch),
       retouch_price: service.retouch_price != null ? String(service.retouch_price) : "",
       retouch_days: String(service.retouch_days ?? 15),
+      is_package: Boolean(service.is_package),
+      package_item_ids: service.package_items ?? [],
+      duration_manually_edited: Boolean(service.is_package),
     })
 
     setError("")
@@ -115,15 +176,64 @@ export function useAdminServices() {
   }
 
   const handleChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    event: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
   ) => {
     const { name, value, type } = event.target
     const checked =
       event.target instanceof HTMLInputElement ? event.target.checked : false
 
+    setForm((prev) => {
+      const next = {
+        ...prev,
+        [name]: type === "checkbox" ? checked : value,
+      }
+
+      if (name === "is_package" && checked && !prev.category.trim()) {
+        next.category = "Paquetes"
+      }
+
+      if (name === "is_package" && checked && !prev.duration_minutes.trim()) {
+        next.duration_manually_edited = false
+      }
+
+      if (name === "is_package" && !checked) {
+        next.package_item_ids = []
+      }
+
+      if (name === "duration_minutes") {
+        next.duration_manually_edited = true
+      }
+
+      return next
+    })
+  }
+
+  const togglePackageItem = (serviceId: string) => {
+    setForm((prev) => {
+      const exists = prev.package_item_ids.includes(serviceId)
+      const packageItemIds = exists
+        ? prev.package_item_ids.filter((id) => id !== serviceId)
+        : [...prev.package_item_ids, serviceId]
+      const autoDuration = getPackageDuration(packageItemIds)
+
+      return {
+        ...prev,
+        package_item_ids: packageItemIds,
+        duration_minutes:
+          prev.is_package && !prev.duration_manually_edited
+            ? String(autoDuration || "")
+            : prev.duration_minutes,
+      }
+    })
+  }
+
+  const useAutoPackageDuration = () => {
     setForm((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      duration_minutes: String(packageAutoDuration || ""),
+      duration_manually_edited: false,
     }))
   }
 
@@ -137,6 +247,10 @@ export function useAdminServices() {
     if (!duration || duration <= 0) return "Duración inválida."
 
     if (!form.category.trim()) return "Ingresa categoría."
+
+    if (form.is_package && form.package_item_ids.length === 0) {
+      return "Selecciona al menos un servicio incluido en el paquete."
+    }
 
     if (form.allows_retouch) {
       const retouchPrice = Number(form.retouch_price)
@@ -194,6 +308,17 @@ export function useAdminServices() {
         allows_retouch: form.allows_retouch,
         retouch_price: form.allows_retouch ? Number(form.retouch_price) : null,
         retouch_days: form.allows_retouch ? Number(form.retouch_days) : 15,
+        is_package: form.is_package,
+        package_includes_lashes: form.is_package
+          ? form.package_item_ids.some((serviceId) => {
+              const service = services.find((item) => item.id === serviceId)
+              return (
+                service?.category === "Pestañas" ||
+                service?.package_includes_lashes
+              )
+            })
+          : false,
+        package_item_ids: form.is_package ? form.package_item_ids : [],
       }
 
       if (editingServiceId) {
@@ -236,12 +361,21 @@ export function useAdminServices() {
     activeCount,
     inactiveCount,
     retouchCount,
+    packageCount,
+    packageBaseServices,
+    sortedPackageBaseServices,
+    selectedPackageServices,
+    packageRegularTotal,
+    packageSavings,
+    packageAutoDuration,
 
     openCreateModal,
     openEditModal,
     closeModal,
 
     handleChange,
+    togglePackageItem,
+    useAutoPackageDuration,
     handleSubmit,
     toggleStatus,
   }

@@ -111,10 +111,12 @@ function PromosSection() {
                   </span>
 
                   <Link
-                    to="/reservar"
+                    to={`/reservar?promo=${encodeURIComponent(promo.title)}${
+                      promo.service_id ? `&serviceId=${promo.service_id}` : ""
+                    }`}
                     className="rounded-full bg-stone-950 px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
                   >
-                    Reservar
+                    Reservar promo
                   </Link>
                 </div>
               </div>
