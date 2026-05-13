@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "react-router"
 import { toast } from "sonner"
 import { timeSlots } from "../../../data/timeSlots"
 import { categories } from "../../../data/services"
+import { supabase } from "../../../lib/supabase"
 import {
   computeAvailability,
 } from "../utils/reservationAvailability"
@@ -65,6 +66,7 @@ export function usePublicReservation() {
   const [loadingServices, setLoadingServices] = useState(true)
   const [loadingSlots, setLoadingSlots] = useState(false)
   const [availableSlots, setAvailableSlots] = useState<string[]>([])
+  const [availabilityVersion, setAvailabilityVersion] = useState(0)
 
   const today = new Date().toISOString().split("T")[0]
 
@@ -102,30 +104,62 @@ export function usePublicReservation() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(formData))
   }, [formData])
 
-  useEffect(() => {
-    const loadServices = async () => {
-      try {
-        setLoadingServices(true)
-        setError("")
+  const loadServices = useCallback(async () => {
+    try {
+      setLoadingServices(true)
+      setError("")
 
-        const [servicesData, activeLashistCount] = await Promise.all([
-          fetchActiveServices(),
-          fetchActiveLashistCount(),
-        ])
+      const [servicesData, activeLashistCount] = await Promise.all([
+        fetchActiveServices(),
+        fetchActiveLashistCount(),
+      ])
 
-        setServices(servicesData)
-        setLashCapacity(activeLashistCount)
-      } catch {
-        const message = "Error cargando servicios."
-        setError(message)
-        toast.error(message)
-      } finally {
-        setLoadingServices(false)
-      }
+      setServices(servicesData)
+      setLashCapacity(activeLashistCount)
+    } catch {
+      const message = "Error cargando servicios."
+      setError(message)
+      toast.error(message)
+    } finally {
+      setLoadingServices(false)
     }
-
-    loadServices()
   }, [])
+
+  useEffect(() => {
+    loadServices()
+  }, [loadServices])
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("public-reservation-catalog")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "services" },
+        () => {
+          loadServices()
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "service_package_items" },
+        () => {
+          loadServices()
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "lashists" },
+        () => {
+          loadServices()
+          setAvailabilityVersion((current) => current + 1)
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [loadServices])
 
   const categoryCards = useMemo(() => {
     const categoryNames = Array.from(
@@ -242,7 +276,49 @@ export function usePublicReservation() {
     }
 
     loadSlots()
-  }, [formData.date, formData.time, lashCapacity, normalizedSelectedService])
+  }, [
+    availabilityVersion,
+    formData.date,
+    formData.time,
+    lashCapacity,
+    normalizedSelectedService,
+  ])
+
+  useEffect(() => {
+    if (!formData.date) return
+
+    const channel = supabase
+      .channel(`public-availability-${formData.date}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "appointments",
+          filter: `date=eq.${formData.date}`,
+        },
+        () => {
+          setAvailabilityVersion((current) => current + 1)
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "schedule_blocks",
+          filter: `date=eq.${formData.date}`,
+        },
+        () => {
+          setAvailabilityVersion((current) => current + 1)
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [formData.date])
 
   const servicePrice = Number(selectedServiceData?.price ?? 0)
   const depositAmount = 10

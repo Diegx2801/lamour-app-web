@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { m } from "framer-motion"
 import { Link } from "react-router"
+import { supabase } from "../../lib/supabase"
 import {
   fetchActivePromos,
   type PromoRow,
@@ -10,20 +11,37 @@ function PromosSection() {
   const [promos, setPromos] = useState<PromoRow[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const loadPromos = async () => {
-      try {
-        const data = await fetchActivePromos()
-        setPromos(data)
-      } catch (error) {
-        console.error("Error cargando promociones:", error)
-      } finally {
-        setLoading(false)
-      }
+  const loadPromos = useCallback(async () => {
+    try {
+      const data = await fetchActivePromos()
+      setPromos(data)
+    } catch (error) {
+      console.error("Error cargando promociones:", error)
+    } finally {
+      setLoading(false)
     }
-
-    loadPromos()
   }, [])
+
+  useEffect(() => {
+    loadPromos()
+  }, [loadPromos])
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("public-promos")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "promos" },
+        () => {
+          loadPromos()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [loadPromos])
 
   if (!loading && promos.length === 0) return null
 
@@ -75,6 +93,8 @@ function PromosSection() {
     <img
       src={promo.image_url}
       alt={promo.title}
+      loading="lazy"
+      decoding="async"
       className="h-full w-full object-contain bg-stone-100 p-2 transition duration-300"
     />
 

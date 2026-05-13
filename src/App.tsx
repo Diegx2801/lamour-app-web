@@ -29,6 +29,8 @@ const AdminServicesPage = lazy(() => import("./pages/AdminServicesPage"))
 const AdminClientsPage = lazy(() => import("./pages/AdminClientsPage"))
 const AdminFollowUpPage = lazy(() => import("./pages/AdminFollowUpPage"))
 const AdminLashistsPage = lazy(() => import("./pages/AdminLashistsPage"))
+const AdminUsersPage = lazy(() => import("./pages/AdminUsersPage"))
+const AdminSiteContentPage = lazy(() => import("./pages/AdminSiteContentPage"))
 const AdminPromosPage = lazy(() => import("./pages/admin/AdminPromosPage"))
 
 function PageFallback() {
@@ -166,6 +168,24 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={["owner"]}>
                   <AdminLashistsPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="usuarios"
+              element={
+                <ProtectedRoute allowedRoles={["owner"]}>
+                  <AdminUsersPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="contenido"
+              element={
+                <ProtectedRoute allowedRoles={["owner"]}>
+                  <AdminSiteContentPage />
                 </ProtectedRoute>
               }
             />

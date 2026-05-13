@@ -14,6 +14,7 @@ type AgendaScheduleGridProps = {
   lashCapacity: number
   lashists: AgendaLashistRow[]
   selectedLashistId: string
+  canManageBlocks: boolean
   getLashOccupancy: (slot: string) => number
   onBlock: (slot: string) => void
   onUnblock: (slot: string) => void
@@ -27,6 +28,7 @@ function AgendaScheduleGrid({
   lashCapacity,
   lashists,
   selectedLashistId,
+  canManageBlocks,
   getLashOccupancy,
   onBlock,
   onUnblock,
@@ -76,7 +78,10 @@ function AgendaScheduleGrid({
                 {isFullDayBlocked ? (
                   <BlockedBox label="Día bloqueado" />
                 ) : isBlocked ? (
-                  <BlockedTimeSlot onUnblock={() => onUnblock(slot)} />
+                  <BlockedTimeSlot
+                    canManageBlocks={canManageBlocks}
+                    onUnblock={() => onUnblock(slot)}
+                  />
                 ) : slotReservations.length > 0 ? (
                   selectedLashistId ? (
                     <ReservationGrid
@@ -91,7 +96,10 @@ function AgendaScheduleGrid({
                     />
                   )
                 ) : (
-                  <AvailableTimeSlot onBlock={() => onBlock(slot)} />
+                  <AvailableTimeSlot
+                    canManageBlocks={canManageBlocks}
+                    onBlock={() => onBlock(slot)}
+                  />
                 )}
               </div>
             </div>
@@ -181,36 +189,52 @@ function LashistColumns({
   )
 }
 
-function BlockedTimeSlot({ onUnblock }: { onUnblock: () => void }) {
+function BlockedTimeSlot({
+  canManageBlocks,
+  onUnblock,
+}: {
+  canManageBlocks: boolean
+  onUnblock: () => void
+}) {
   return (
     <div className="flex flex-col gap-3 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 md:flex-row md:items-center md:justify-between">
       <p className="text-sm font-medium text-red-700">
         Horario bloqueado manualmente
       </p>
 
-      <button
-        type="button"
-        onClick={onUnblock}
-        className="w-full rounded-lg bg-white px-3 py-2 text-xs font-medium text-green-700 md:w-auto"
-      >
-        Desbloquear
-      </button>
+      {canManageBlocks && (
+        <button
+          type="button"
+          onClick={onUnblock}
+          className="w-full rounded-lg bg-white px-3 py-2 text-xs font-medium text-green-700 md:w-auto"
+        >
+          Desbloquear
+        </button>
+      )}
     </div>
   )
 }
 
-function AvailableTimeSlot({ onBlock }: { onBlock: () => void }) {
+function AvailableTimeSlot({
+  canManageBlocks,
+  onBlock,
+}: {
+  canManageBlocks: boolean
+  onBlock: () => void
+}) {
   return (
     <div className="flex min-h-[72px] flex-col gap-3 rounded-2xl border border-dashed border-stone-200 bg-stone-50/60 px-4 py-3 md:min-h-[80px] md:flex-row md:items-center md:justify-between">
       <p className="text-sm font-medium text-stone-400">Disponible</p>
 
-      <button
-        type="button"
-        onClick={onBlock}
-        className="w-full rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-medium text-red-600 md:w-auto"
-      >
-        Bloquear
-      </button>
+      {canManageBlocks && (
+        <button
+          type="button"
+          onClick={onBlock}
+          className="w-full rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-medium text-red-600 md:w-auto"
+        >
+          Bloquear
+        </button>
+      )}
     </div>
   )
 }

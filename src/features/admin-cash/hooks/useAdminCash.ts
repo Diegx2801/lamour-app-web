@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import {
   fetchCashAppointmentsByDate,
@@ -55,7 +55,7 @@ export function useAdminCash() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
-  const loadCash = async () => {
+  const loadCash = useCallback(async () => {
     try {
       setLoading(true)
       setError("")
@@ -75,11 +75,11 @@ export function useAdminCash() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [selectedDate])
 
   useEffect(() => {
     loadCash()
-  }, [selectedDate])
+  }, [loadCash])
 
   const summary = useMemo(() => {
     const dailyIncome = payments.reduce(

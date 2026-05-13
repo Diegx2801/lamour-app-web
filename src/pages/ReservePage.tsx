@@ -60,7 +60,7 @@ function ReservePage() {
           Horario de atención: lunes a sábado, de 9:00 am a 7:00 pm.
         </div>
 
-        <div className="mt-6 grid gap-6 md:mt-8 lg:grid-cols-[1.25fr_0.75fr]">
+        <div className="mt-6 grid gap-4 md:mt-8 lg:grid-cols-[1.25fr_0.75fr] lg:gap-6">
           <div className="rounded-[1.5rem] bg-white p-4 shadow-sm sm:p-6 md:rounded-[2rem] md:p-8">
             <ReserveProgress step={reservation.step} title={stepTitle} />
 
@@ -158,15 +158,17 @@ function ReservePage() {
             </form>
           </div>
 
-          <ReserveSummaryCard
-            service={reservation.selectedServiceData}
-            date={reservation.formData.date}
-            time={reservation.formData.time}
-            servicePrice={reservation.servicePrice}
-            depositAmount={reservation.depositAmount}
-            remainingAmount={reservation.remainingAmount}
-            formatDateForMessage={formatDateForMessage}
-          />
+          <div className="order-first lg:order-none">
+            <ReserveSummaryCard
+              service={reservation.selectedServiceData}
+              date={reservation.formData.date}
+              time={reservation.formData.time}
+              servicePrice={reservation.servicePrice}
+              depositAmount={reservation.depositAmount}
+              remainingAmount={reservation.remainingAmount}
+              formatDateForMessage={formatDateForMessage}
+            />
+          </div>
         </div>
       </div>
     </div>

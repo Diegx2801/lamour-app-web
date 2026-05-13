@@ -1,5 +1,6 @@
-﻿type AgendaHeaderProps = {
+type AgendaHeaderProps = {
   isFullDayBlocked: boolean
+  canManageBlocks: boolean
   selectedLashistName?: string | null
   onBlockFullDay: () => void
   onUnblockFullDay: () => void
@@ -7,6 +8,7 @@
 
 function AgendaHeader({
   isFullDayBlocked,
+  canManageBlocks,
   selectedLashistName,
   onBlockFullDay,
   onUnblockFullDay,
@@ -28,7 +30,7 @@ function AgendaHeader({
         </p>
       </div>
 
-      {!isFullDayBlocked ? (
+      {canManageBlocks && !isFullDayBlocked ? (
         <button
           type="button"
           onClick={onBlockFullDay}
@@ -36,7 +38,7 @@ function AgendaHeader({
         >
           {selectedLashistName ? "Bloquear lashista" : "Bloquear día"}
         </button>
-      ) : (
+      ) : canManageBlocks ? (
         <button
           type="button"
           onClick={onUnblockFullDay}
@@ -44,7 +46,7 @@ function AgendaHeader({
         >
           {selectedLashistName ? "Desbloquear lashista" : "Desbloquear día"}
         </button>
-      )}
+      ) : null}
     </div>
   )
 }

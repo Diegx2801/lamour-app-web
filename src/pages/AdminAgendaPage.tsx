@@ -13,6 +13,7 @@ function AdminAgendaPage() {
     <div>
       <AgendaHeader
         isFullDayBlocked={agenda.isFullDayBlocked}
+        canManageBlocks={agenda.canManageBlocks}
         selectedLashistName={agenda.selectedLashist?.name ?? null}
         onBlockFullDay={agenda.handleBlockFullDay}
         onUnblockFullDay={agenda.handleUnblockFullDay}
@@ -61,6 +62,7 @@ function AdminAgendaPage() {
           lashCapacity={agenda.lashCapacity}
           lashists={agenda.lashists}
           selectedLashistId={agenda.selectedLashistId}
+          canManageBlocks={agenda.canManageBlocks}
           getLashOccupancy={agenda.getLashOccupancy}
           onBlock={agenda.handleBlock}
           onUnblock={agenda.handleUnblock}

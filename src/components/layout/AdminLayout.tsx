@@ -53,6 +53,16 @@ const navItems: NavItem[] = [
     roles: ["owner"],
   },
   {
+    label: "Usuarios",
+    to: "/admin/usuarios",
+    roles: ["owner"],
+  },
+  {
+    label: "Contenido",
+    to: "/admin/contenido",
+    roles: ["owner"],
+  },
+  {
     label: "Seguimiento",
     to: "/admin/seguimiento",
     roles: ["owner", "staff"],
@@ -102,7 +112,7 @@ function AdminLayout() {
 
       const { data: profile, error } = await supabase
         .from("profiles")
-        .select("role")
+        .select("role, is_active")
         .eq("id", userData.user.id)
         .single()
 
@@ -114,7 +124,7 @@ function AdminLayout() {
 
       const normalizedRole = normalizeRole(profile?.role)
 
-      if (!normalizedRole) {
+      if (!normalizedRole || profile?.is_active === false) {
         await supabase.auth.signOut()
         navigate("/admin/login", { replace: true })
         return

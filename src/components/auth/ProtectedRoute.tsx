@@ -79,13 +79,16 @@ function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("role")
+        .select("role, is_active")
         .eq("id", sessionData.session.user.id)
         .single()
 
       if (!isMounted) return
 
-      dispatch({ type: "authenticated", role: normalizeRole(profile?.role) })
+      dispatch({
+        type: "authenticated",
+        role: profile?.is_active === false ? null : normalizeRole(profile?.role),
+      })
     }
 
     loadAccess()

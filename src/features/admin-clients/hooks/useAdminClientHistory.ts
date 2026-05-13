@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useParams } from "react-router"
 import {
   fetchClientHistory,
@@ -66,7 +66,7 @@ export function useAdminClientHistory() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
-  const loadHistory = async () => {
+  const loadHistory = useCallback(async () => {
     try {
       setLoading(true)
       setError("")
@@ -86,11 +86,11 @@ export function useAdminClientHistory() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [clientId])
 
   useEffect(() => {
     loadHistory()
-  }, [clientId])
+  }, [loadHistory])
 
   const clientInfo = useMemo(() => {
     if (history.length === 0) return null

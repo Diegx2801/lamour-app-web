@@ -1,6 +1,8 @@
 ﻿import { useEffect, useMemo, useState } from "react"
+import { useCallback } from "react"
 import { toast } from "sonner"
 import { timeSlots } from "../../../data/timeSlots"
+import { supabase } from "../../../lib/supabase"
 import { createAppointmentAuditLog } from "../../appointment-audit/api/appointmentAuditService"
 import {
   blockFullDay,
@@ -121,8 +123,9 @@ export function useAdminAgenda() {
   const [loading, setLoading] = useState(true)
   const [loadingLashists, setLoadingLashists] = useState(true)
   const [error, setError] = useState("")
+  const [adminRole, setAdminRole] = useState<string | null>(null)
 
-  const refreshAgenda = async () => {
+  const refreshAgenda = useCallback(async () => {
     try {
       setLoading(true)
       setError("")
@@ -138,7 +141,7 @@ export function useAdminAgenda() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [selectedDate])
 
   const weekRange = useMemo(() => {
     const selected = new Date(`${selectedDate}T12:00:00`)
@@ -172,8 +175,60 @@ export function useAdminAgenda() {
   }, [])
 
   useEffect(() => {
+    const loadRole = async () => {
+      const { data: userData } = await supabase.auth.getUser()
+
+      if (!userData.user) return
+
+      const { data } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", userData.user.id)
+        .single()
+
+      setAdminRole(data?.role ?? null)
+    }
+
+    loadRole()
+  }, [])
+
+  useEffect(() => {
     refreshAgenda()
-  }, [selectedDate])
+  }, [refreshAgenda])
+
+  useEffect(() => {
+    const channel = supabase
+      .channel(`admin-agenda-${selectedDate}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "appointments",
+          filter: `date=eq.${selectedDate}`,
+        },
+        () => {
+          refreshAgenda()
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "schedule_blocks",
+          filter: `date=eq.${selectedDate}`,
+        },
+        () => {
+          refreshAgenda()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [refreshAgenda, selectedDate])
 
   useEffect(() => {
     const loadWeek = async () => {
@@ -244,6 +299,7 @@ export function useAdminAgenda() {
   }, [selectedLashistId, lashists])
 
   const lashCapacity = selectedLashistId ? 1 : lashists.length
+  const canManageBlocks = adminRole === "owner" || adminRole === "admin"
 
   const getBlockByTime = (time: string) => {
     return blocks.find(
@@ -262,6 +318,12 @@ export function useAdminAgenda() {
   const handleBlock = async (time: string) => {
     try {
       setError("")
+
+      if (!canManageBlocks) {
+        toast.error("Solo la dueña puede bloquear horarios.")
+        return
+      }
+
       const reason =
         prompt(
           selectedLashist
@@ -285,6 +347,12 @@ export function useAdminAgenda() {
   const handleUnblock = async (time: string) => {
     try {
       setError("")
+
+      if (!canManageBlocks) {
+        toast.error("Solo la dueña puede desbloquear horarios.")
+        return
+      }
+
       const block = getBlockByTime(time)
       if (!block) return
 
@@ -301,6 +369,12 @@ export function useAdminAgenda() {
   const handleBlockFullDay = async () => {
     try {
       setError("")
+
+      if (!canManageBlocks) {
+        toast.error("Solo la dueña puede bloquear días.")
+        return
+      }
+
       const reason =
         prompt(
           selectedLashist
@@ -325,6 +399,12 @@ export function useAdminAgenda() {
   const handleUnblockFullDay = async () => {
     try {
       setError("")
+
+      if (!canManageBlocks) {
+        toast.error("Solo la dueña puede desbloquear días.")
+        return
+      }
+
       if (!fullDayBlock) return
 
       await unblockFullDay(fullDayBlock.id)
@@ -407,6 +487,7 @@ export function useAdminAgenda() {
     error,
 
     lashCapacity,
+    canManageBlocks,
     getLashOccupancy,
 
     handleBlock,

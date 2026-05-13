@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useParams } from "react-router"
 import { toast } from "sonner"
 import { createAppointmentAuditLog } from "../../appointment-audit/api/appointmentAuditService"
@@ -36,7 +36,7 @@ export function useAdminPayments() {
   const totalPrice = Number(summary?.total_price ?? 0)
   const remainingAmount = Math.max(totalPrice - totalPaid, 0)
 
-  const loadPaymentsData = async () => {
+  const loadPaymentsData = useCallback(async () => {
     if (!appointmentId) return
 
     try {
@@ -59,11 +59,11 @@ export function useAdminPayments() {
     } finally {
       setLoadingData(false)
     }
-  }
+  }, [appointmentId])
 
   useEffect(() => {
     loadPaymentsData()
-  }, [appointmentId])
+  }, [loadPaymentsData])
 
   const getPaymentAmount = () => {
     if (paymentType === "full") return remainingAmount
