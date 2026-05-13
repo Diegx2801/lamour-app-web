@@ -14,6 +14,8 @@ import {
   type AgendaLashistRow,
 } from "../api/adminAgendaService"
 
+export type { AgendaLashistRow } from "../api/adminAgendaService"
+
 export type AgendaClientRelation =
   | { full_name: string | null; phone: string | null }
   | { full_name: string | null; phone: string | null }[]
@@ -56,6 +58,7 @@ type ScheduleBlock = {
   time: string | null
   reason: string | null
   is_full_day: boolean
+  lashist_id?: string | null
 }
 
 type AgendaWeekReservation = {
@@ -212,13 +215,26 @@ export function useAdminAgenda() {
 
   const blockedTimes = useMemo(() => {
     return blocks
-      .filter((block) => !block.is_full_day && block.time)
+      .filter(
+        (block) =>
+          !block.is_full_day &&
+          block.time &&
+          (!block.lashist_id ||
+            (selectedLashistId && block.lashist_id === selectedLashistId))
+      )
       .map((block) => normalizeTime(block.time))
-  }, [blocks])
+  }, [blocks, selectedLashistId])
 
   const fullDayBlock = useMemo(() => {
-    return blocks.find((block) => block.is_full_day) ?? null
-  }, [blocks])
+    return (
+      blocks.find(
+        (block) =>
+          block.is_full_day &&
+          (!block.lashist_id ||
+            (selectedLashistId && block.lashist_id === selectedLashistId))
+      ) ?? null
+    )
+  }, [blocks, selectedLashistId])
 
   const isFullDayBlocked = !!fullDayBlock
 
@@ -231,7 +247,11 @@ export function useAdminAgenda() {
 
   const getBlockByTime = (time: string) => {
     return blocks.find(
-      (block) => !block.is_full_day && normalizeTime(block.time) === time
+      (block) =>
+        !block.is_full_day &&
+        normalizeTime(block.time) === time &&
+        (!block.lashist_id ||
+          (selectedLashistId && block.lashist_id === selectedLashistId))
     )
   }
 
@@ -242,9 +262,18 @@ export function useAdminAgenda() {
   const handleBlock = async (time: string) => {
     try {
       setError("")
-      const reason = prompt("Motivo del bloqueo (opcional)") || undefined
-      await blockTime(selectedDate, time, reason)
-      toast.success("Horario bloqueado.")
+      const reason =
+        prompt(
+          selectedLashist
+            ? `Motivo del bloqueo para ${selectedLashist.name} (opcional)`
+            : "Motivo del bloqueo general (opcional)"
+        ) || undefined
+      await blockTime(selectedDate, time, reason, selectedLashistId || null)
+      toast.success(
+        selectedLashist
+          ? `Horario bloqueado para ${selectedLashist.name}.`
+          : "Horario bloqueado."
+      )
       await refreshAgenda()
     } catch {
       const message = "No se pudo bloquear el horario."
@@ -273,10 +302,18 @@ export function useAdminAgenda() {
     try {
       setError("")
       const reason =
-        prompt("Motivo del bloqueo del dÃ­a (opcional)") || undefined
+        prompt(
+          selectedLashist
+            ? `Motivo del bloqueo del día para ${selectedLashist.name} (opcional)`
+            : "Motivo del bloqueo del día (opcional)"
+        ) || undefined
 
-      await blockFullDay(selectedDate, reason)
-      toast.success("DÃ­a bloqueado.")
+      await blockFullDay(selectedDate, reason, selectedLashistId || null)
+      toast.success(
+        selectedLashist
+          ? `Día bloqueado para ${selectedLashist.name}.`
+          : "Día bloqueado."
+      )
       await refreshAgenda()
     } catch {
       const message = "No se pudo bloquear el dÃ­a completo."

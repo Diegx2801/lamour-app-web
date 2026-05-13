@@ -165,7 +165,8 @@ export function useAdminCreateReservation() {
           form.date
         )
 
-        const fullDayBlock = getFullDayBlock(blocks)
+        const selectedLashistId = form.lashistId || null
+        const fullDayBlock = getFullDayBlock(blocks, selectedLashistId)
 
         if (fullDayBlock) {
           setAvailableSlots([])
@@ -173,7 +174,7 @@ export function useAdminCreateReservation() {
           return
         }
 
-        const blockedTimes = getBlockedTimes(blocks)
+        const blockedTimes = getBlockedTimes(blocks, selectedLashistId)
 
         const appointments = mapAppointmentsForAvailability(
           appointmentsData as RawAppointmentForAvailability[]
@@ -186,6 +187,7 @@ export function useAdminCreateReservation() {
           timeSlots,
           blockedTimes,
           lashistas: lashCapacity,
+          selectedLashistId: form.lashistId || null,
         })
 
         setAvailableSlots(filteredSlots)
@@ -209,7 +211,7 @@ export function useAdminCreateReservation() {
     }
 
     loadAvailableSlots()
-  }, [form.date, form.time, lashCapacity, selectedServiceData])
+  }, [form.date, form.time, form.lashistId, lashCapacity, selectedServiceData])
 
   const handleChange = (
     event: React.ChangeEvent<
@@ -234,6 +236,11 @@ export function useAdminCreateReservation() {
       }
 
       if (name === "date") {
+        next.time = ""
+        setBlockedReason("")
+      }
+
+      if (name === "lashistId") {
         next.time = ""
         setBlockedReason("")
       }
@@ -328,8 +335,9 @@ export function useAdminCreateReservation() {
         form.date
       )
 
-      const fullDayBlock = getFullDayBlock(blocks)
-      const blockedTimes = getBlockedTimes(blocks)
+      const selectedLashistId = form.lashistId || null
+      const fullDayBlock = getFullDayBlock(blocks, selectedLashistId)
+      const blockedTimes = getBlockedTimes(blocks, selectedLashistId)
 
       if (fullDayBlock) {
         throw new Error(fullDayBlock.reason || "Ese día está bloqueado.")
@@ -349,6 +357,7 @@ export function useAdminCreateReservation() {
         date: form.date,
         time: form.time,
         lashistas: lashCapacity,
+        selectedLashistId: form.lashistId || null,
       })
 
       const clientId = await findOrCreateAdminClient(

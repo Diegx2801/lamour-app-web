@@ -121,15 +121,24 @@ export async function fetchAgendaWeek(startDate: string, endDate: string) {
   return data ?? []
 }
 
-export async function blockTime(date: string, time: string, reason?: string) {
-  const { error } = await supabase.from("schedule_blocks").insert([
-    {
-      date,
-      time,
-      reason: reason || null,
-      is_full_day: false,
-    },
-  ])
+export async function blockTime(
+  date: string,
+  time: string,
+  reason?: string,
+  lashistId?: string | null
+) {
+  const payload: Record<string, string | boolean | null> = {
+    date,
+    time,
+    reason: reason || null,
+    is_full_day: false,
+  }
+
+  if (lashistId) {
+    payload.lashist_id = lashistId
+  }
+
+  const { error } = await supabase.from("schedule_blocks").insert([payload])
 
   if (error) {
     throw new Error("Error bloqueando horario")
@@ -147,15 +156,23 @@ export async function unblockTime(blockId: string) {
   }
 }
 
-export async function blockFullDay(date: string, reason?: string) {
-  const { error } = await supabase.from("schedule_blocks").insert([
-    {
-      date,
-      time: null,
-      reason: reason || null,
-      is_full_day: true,
-    },
-  ])
+export async function blockFullDay(
+  date: string,
+  reason?: string,
+  lashistId?: string | null
+) {
+  const payload: Record<string, string | boolean | null> = {
+    date,
+    time: null,
+    reason: reason || null,
+    is_full_day: true,
+  }
+
+  if (lashistId) {
+    payload.lashist_id = lashistId
+  }
+
+  const { error } = await supabase.from("schedule_blocks").insert([payload])
 
   if (error) {
     throw new Error("Error bloqueando día")

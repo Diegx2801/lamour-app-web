@@ -50,11 +50,15 @@ function AgendaReservationCard({
   }
 
   const openReminder = () => {
+    const pendingBalance = Number(reservation.remaining_amount ?? 0)
+
     openWhatsapp(`Hola ${client?.full_name ?? ""}, te recordamos tu cita en L'AMOUR Beauty Studio.
 
 Servicio: ${service?.name ?? "Servicio reservado"}
 Fecha: ${reservation.date}
 Hora: ${normalizeTime(reservation.time)}
+${reservation.lashista ? `Lashista: ${reservation.lashista}` : ""}
+${pendingBalance > 0 ? `Saldo pendiente: ${formatMoney(pendingBalance)}` : ""}
 
 Por favor confirma tu asistencia.`)
   }
@@ -65,8 +69,31 @@ Por favor confirma tu asistencia.`)
 Servicio: ${service?.name ?? "Servicio reservado"}
 Fecha: ${reservation.date}
 Hora: ${normalizeTime(reservation.time)}
+${reservation.lashista ? `Lashista: ${reservation.lashista}` : ""}
 
 Te esperamos.`)
+  }
+
+  const openBalanceReminder = () => {
+    openWhatsapp(`Hola ${client?.full_name ?? ""}, te escribimos de L'AMOUR Beauty Studio.
+
+Tu cita tiene un saldo pendiente de ${formatMoney(reservation.remaining_amount)}.
+
+Servicio: ${service?.name ?? "Servicio reservado"}
+Fecha: ${reservation.date}
+Hora: ${normalizeTime(reservation.time)}
+
+Puedes regularizarlo por este medio o al finalizar tu atención.`)
+  }
+
+  const openChangeNotice = () => {
+    openWhatsapp(`Hola ${client?.full_name ?? ""}, te contactamos de L'AMOUR Beauty Studio sobre tu cita.
+
+Servicio: ${service?.name ?? "Servicio reservado"}
+Fecha actual: ${reservation.date}
+Hora actual: ${normalizeTime(reservation.time)}
+
+Necesitamos coordinar un ajuste de horario. ¿Nos confirmas tu disponibilidad, por favor?`)
   }
 
   return (
@@ -148,11 +175,27 @@ Te esperamos.`)
           />
         ) : null}
 
+        {hasPendingBalance && client?.phone ? (
+          <AgendaActionButton
+            label="Saldo WA"
+            onClick={openBalanceReminder}
+            className="text-red-700"
+          />
+        ) : null}
+
         {client?.phone ? (
           <AgendaActionButton
-            label="WhatsApp"
+            label="Confirmar WA"
             onClick={openConfirmation}
             className="text-green-800"
+          />
+        ) : null}
+
+        {client?.phone ? (
+          <AgendaActionButton
+            label="Cambiar WA"
+            onClick={openChangeNotice}
+            className="text-stone-700"
           />
         ) : null}
 

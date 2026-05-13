@@ -9,6 +9,59 @@ export type AppointmentAuditLog = {
   created_at: string
 }
 
+export type AppointmentAuditActivity = AppointmentAuditLog & {
+  appointments:
+    | {
+        date: string | null
+        time: string | null
+        clients:
+          | {
+              full_name: string | null
+              phone: string | null
+            }
+          | {
+              full_name: string | null
+              phone: string | null
+            }[]
+          | null
+        services:
+          | {
+              name: string | null
+              category: string | null
+            }
+          | {
+              name: string | null
+              category: string | null
+            }[]
+          | null
+      }
+    | {
+        date: string | null
+        time: string | null
+        clients:
+          | {
+              full_name: string | null
+              phone: string | null
+            }
+          | {
+              full_name: string | null
+              phone: string | null
+            }[]
+          | null
+        services:
+          | {
+              name: string | null
+              category: string | null
+            }
+          | {
+              name: string | null
+              category: string | null
+            }[]
+          | null
+      }[]
+    | null
+}
+
 export async function createAppointmentAuditLog(payload: {
   appointmentId: string
   action: string
@@ -44,4 +97,37 @@ export async function fetchAppointmentAuditLogs(appointmentId: string) {
   }
 
   return (data ?? []) as AppointmentAuditLog[]
+}
+
+export async function fetchAppointmentAuditActivity(limit = 80) {
+  const { data, error } = await supabase
+    .from("appointment_audit_logs")
+    .select(`
+      id,
+      appointment_id,
+      action,
+      actor_email,
+      details,
+      created_at,
+      appointments (
+        date,
+        time,
+        clients (
+          full_name,
+          phone
+        ),
+        services (
+          name,
+          category
+        )
+      )
+    `)
+    .order("created_at", { ascending: false })
+    .limit(limit)
+
+  if (error) {
+    throw new Error("No se pudo cargar la actividad.")
+  }
+
+  return (data ?? []) as AppointmentAuditActivity[]
 }

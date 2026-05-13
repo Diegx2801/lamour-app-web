@@ -38,6 +38,11 @@ const navItems: NavItem[] = [
     roles: ["owner"],
   },
   {
+    label: "Actividad",
+    to: "/admin/actividad",
+    roles: ["owner"],
+  },
+  {
     label: "Servicios",
     to: "/admin/services",
     roles: ["owner"],

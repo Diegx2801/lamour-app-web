@@ -107,7 +107,7 @@ export async function fetchAdminAvailability(date: string) {
 
     supabase
       .from("schedule_blocks")
-      .select("id, date, time, reason, is_full_day")
+      .select("id, date, time, reason, is_full_day, lashist_id")
       .eq("date", date),
   ])
 

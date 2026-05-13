@@ -17,6 +17,7 @@ export type AppointmentAvailabilityRow = {
   date: string
   time: string
   status: string
+  lashistId?: string | null
   serviceCategory: string | null
   durationMinutes: number | null
   requiresLash?: boolean | null
@@ -28,6 +29,7 @@ export type ScheduleBlockRow = {
   time: string | null
   reason: string | null
   is_full_day: boolean
+  lashist_id?: string | null
 }
 
 export type BasicServiceForAvailability = {
@@ -41,6 +43,7 @@ export type RawAppointmentForAvailability = {
   date: string
   time: string
   status: string
+  lashist_id?: string | null
   services?: RelatedAvailabilityService
 }
 
@@ -52,6 +55,7 @@ type GetAvailableSlotsInput = {
   blockedTimes?: string[]
   excludeAppointmentId?: string
   lashistas?: number
+  selectedLashistId?: string | null
   removePastSlots?: boolean
 }
 
@@ -63,6 +67,7 @@ type ValidateSlotInput = {
   blockedTimes?: string[]
   excludeAppointmentId?: string
   lashistas?: number
+  selectedLashistId?: string | null
   removePastSlots?: boolean
 }
 
@@ -74,6 +79,7 @@ type ComputeAvailabilityInput = {
   timeSlots: string[]
   lashistas?: number
   removePastSlots?: boolean
+  selectedLashistId?: string | null
 }
 
 function normalizeTime(time: string | null | undefined) {
@@ -125,12 +131,14 @@ function hasCapacityForService({
   time,
   capacity,
   duration,
+  selectedLashistId,
 }: {
   appointments: AppointmentAvailabilityRow[]
   date: string
   time: string
   capacity: number
   duration: number
+  selectedLashistId?: string | null
 }) {
   if (capacity <= 0) return false
 
@@ -141,6 +149,9 @@ function hasCapacityForService({
     if (appointment.date !== date) return false
     if (!appointmentConsumesCapacity(appointment)) return false
     if (!appointment.time) return false
+    if (selectedLashistId && appointment.lashistId !== selectedLashistId) {
+      return false
+    }
 
     const appointmentStart = timeToMinutes(appointment.time)
     const appointmentEnd = appointmentStart + getAppointmentDuration(appointment)
@@ -148,7 +159,7 @@ function hasCapacityForService({
     return rangesOverlap(newStart, newEnd, appointmentStart, appointmentEnd)
   })
 
-  return overlappingAppointments.length < capacity
+  return overlappingAppointments.length < (selectedLashistId ? 1 : capacity)
 }
 
 export function getPastTimesForDate(date: string, timeSlots: string[]) {
@@ -181,6 +192,12 @@ export function mapAppointmentsForAvailability(
       date: item.date,
       time: normalizeTime(item.time),
       status: item.status,
+      lashistId:
+        "lashistId" in item
+          ? item.lashistId
+          : "lashist_id" in item
+          ? item.lashist_id ?? null
+          : null,
       serviceCategory:
         "serviceCategory" in item
           ? item.serviceCategory
@@ -200,13 +217,37 @@ export function mapAppointmentsForAvailability(
   })
 }
 
-export function getFullDayBlock(blocks: ScheduleBlockRow[]) {
-  return blocks.find((block) => block.is_full_day) ?? null
+function blockAppliesToLashist(
+  block: ScheduleBlockRow,
+  selectedLashistId?: string | null
+) {
+  if (!block.lashist_id) return true
+  return Boolean(selectedLashistId) && block.lashist_id === selectedLashistId
 }
 
-export function getBlockedTimes(blocks: ScheduleBlockRow[]) {
+export function getFullDayBlock(
+  blocks: ScheduleBlockRow[],
+  selectedLashistId?: string | null
+) {
+  return (
+    blocks.find(
+      (block) =>
+        block.is_full_day && blockAppliesToLashist(block, selectedLashistId)
+    ) ?? null
+  )
+}
+
+export function getBlockedTimes(
+  blocks: ScheduleBlockRow[],
+  selectedLashistId?: string | null
+) {
   return blocks
-    .filter((block) => !block.is_full_day && block.time)
+    .filter(
+      (block) =>
+        !block.is_full_day &&
+        block.time &&
+        blockAppliesToLashist(block, selectedLashistId)
+    )
     .map((block) => normalizeTime(block.time))
 }
 
@@ -227,6 +268,7 @@ export function getAvailableSlotsForService({
   blockedTimes = [],
   excludeAppointmentId,
   lashistas = 2,
+  selectedLashistId,
   removePastSlots = false,
 }: GetAvailableSlotsInput) {
   if (!selectedService || !date) return []
@@ -244,6 +286,7 @@ export function getAvailableSlotsForService({
       time: slot,
       capacity: lashistas,
       duration: serviceDuration,
+      selectedLashistId,
     })
   )
 
@@ -267,6 +310,7 @@ export function validateSlotAvailability({
   blockedTimes = [],
   excludeAppointmentId,
   lashistas = 2,
+  selectedLashistId,
   removePastSlots = false,
 }: ValidateSlotInput) {
   if (!selectedService) {
@@ -296,6 +340,7 @@ export function validateSlotAvailability({
     time,
     capacity: lashistas,
     duration: getServiceDuration(selectedService),
+    selectedLashistId,
   })
 
   if (hasConflict) {
@@ -311,8 +356,9 @@ export function computeAvailability({
   timeSlots,
   lashistas = 2,
   removePastSlots = true,
+  selectedLashistId,
 }: ComputeAvailabilityInput) {
-  const fullDayBlock = getFullDayBlock(blocks)
+  const fullDayBlock = getFullDayBlock(blocks, selectedLashistId)
 
   if (fullDayBlock) {
     return {
@@ -321,7 +367,7 @@ export function computeAvailability({
     }
   }
 
-  const blockedTimes = getBlockedTimes(blocks)
+  const blockedTimes = getBlockedTimes(blocks, selectedLashistId)
   const mappedAppointments = mapAppointmentsForAvailability(appointments)
 
   const slots = getAvailableSlotsForService({
@@ -332,6 +378,7 @@ export function computeAvailability({
     blockedTimes,
     lashistas,
     removePastSlots,
+    selectedLashistId,
   })
 
   return {

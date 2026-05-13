@@ -1,8 +1,5 @@
 import {
-  createAppointment,
-  createClient,
-  findClientByPhone,
-  updateClient,
+  createPublicReservation,
   type ServiceRow,
 } from "../api/reservationService"
 import { normalizePeruvianPhone } from "../utils/reservationUtils"
@@ -19,17 +16,11 @@ export type PublicReservationForm = {
 type SubmitPublicReservationParams = {
   formData: PublicReservationForm
   selectedServiceData: ServiceRow
-  servicePrice: number
-  depositAmount: number
-  remainingAmount: number
 }
 
 export async function submitPublicReservation({
   formData,
   selectedServiceData,
-  servicePrice,
-  depositAmount,
-  remainingAmount,
 }: SubmitPublicReservationParams) {
   const phone = normalizePeruvianPhone(formData.phone)
 
@@ -37,25 +28,13 @@ export async function submitPublicReservation({
     throw new Error("Celular inválido.")
   }
 
-  const existingClient = await findClientByPhone(phone)
-  let clientId = existingClient?.id
-
-  if (!clientId) {
-    const newClient = await createClient(formData.fullName.trim(), phone)
-    clientId = newClient.id
-  } else {
-    await updateClient(clientId, formData.fullName.trim(), phone)
-  }
-
-  await createAppointment({
-    clientId,
+  const reservation = await createPublicReservation({
+    fullName: formData.fullName.trim(),
+    phone,
     serviceId: formData.serviceId,
     date: formData.date,
     time: formData.time,
     notes: formData.notes,
-    totalPrice: servicePrice,
-    depositAmount,
-    remainingAmount,
   })
 
   return {
@@ -63,8 +42,8 @@ export async function submitPublicReservation({
     phone,
     serviceName: selectedServiceData.name,
     category: selectedServiceData.category,
-    totalPrice: servicePrice,
-    depositAmount,
-    remainingAmount,
+    totalPrice: Number(reservation.total_price ?? 0),
+    depositAmount: Number(reservation.deposit_amount ?? 0),
+    remainingAmount: Number(reservation.remaining_amount ?? 0),
   }
 }

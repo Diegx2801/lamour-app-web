@@ -144,7 +144,8 @@ export function useAdminEditReservation() {
           form.date
         )
 
-        const fullDayBlock = getFullDayBlock(blocks)
+        const selectedLashistId = form.lashistId || null
+        const fullDayBlock = getFullDayBlock(blocks, selectedLashistId)
 
         if (fullDayBlock) {
           setAvailableSlots([])
@@ -152,7 +153,7 @@ export function useAdminEditReservation() {
           return
         }
 
-        const blockedTimes = getBlockedTimes(blocks)
+        const blockedTimes = getBlockedTimes(blocks, selectedLashistId)
 
         const appointments = mapAppointmentsForAvailability(
           appointmentsData as RawAppointmentForAvailability[]
@@ -176,18 +177,12 @@ export function useAdminEditReservation() {
           blockedTimes,
           excludeAppointmentId: currentReservationId,
           lashistas: lashCapacity,
+          selectedLashistId: form.lashistId || null,
         })
 
-        const currentTime = form.time
+        setAvailableSlots(slots)
 
-        const normalizedSlots =
-          currentTime && !slots.includes(currentTime)
-            ? [...slots, currentTime].sort()
-            : slots
-
-        setAvailableSlots(normalizedSlots)
-
-        if (currentTime && !normalizedSlots.includes(currentTime)) {
+        if (form.time && !slots.includes(form.time)) {
           setForm((prev) => ({ ...prev, time: "" }))
         }
       } catch (err) {
@@ -206,7 +201,7 @@ export function useAdminEditReservation() {
     }
 
     loadAvailableSlots()
-  }, [form.date, form.time, currentReservationId, lashCapacity, selectedServiceData])
+  }, [form.date, form.time, form.lashistId, currentReservationId, lashCapacity, selectedServiceData])
 
   const handleChange = (
     event: React.ChangeEvent<
@@ -224,6 +219,11 @@ export function useAdminEditReservation() {
       }
 
       if (name === "date") {
+        next.time = ""
+        setBlockedReason("")
+      }
+
+      if (name === "lashistId") {
         next.time = ""
         setBlockedReason("")
       }
@@ -293,8 +293,9 @@ export function useAdminEditReservation() {
 
       const { appointmentsData, blocks } = await fetchEditAvailability(form.date)
 
-      const fullDayBlock = getFullDayBlock(blocks)
-      const blockedTimes = getBlockedTimes(blocks)
+      const selectedLashistId = form.lashistId || null
+      const fullDayBlock = getFullDayBlock(blocks, selectedLashistId)
+      const blockedTimes = getBlockedTimes(blocks, selectedLashistId)
 
       if (fullDayBlock) {
         throw new Error(fullDayBlock.reason || "Ese día está bloqueado.")
@@ -322,6 +323,7 @@ export function useAdminEditReservation() {
         time: form.time,
         excludeAppointmentId: currentReservationId,
         lashistas: lashCapacity,
+        selectedLashistId: form.lashistId || null,
       })
 
       await updateReservationById(currentReservationId, {

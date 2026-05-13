@@ -443,9 +443,6 @@ Hora: ${submittedReservation.time}`
       const reservation = await submitPublicReservation({
         formData,
         selectedServiceData,
-        servicePrice,
-        depositAmount,
-        remainingAmount,
       })
 
       setSubmittedReservation(reservation)

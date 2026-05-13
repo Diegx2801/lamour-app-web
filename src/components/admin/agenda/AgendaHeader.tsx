@@ -1,11 +1,13 @@
-type AgendaHeaderProps = {
+﻿type AgendaHeaderProps = {
   isFullDayBlocked: boolean
+  selectedLashistName?: string | null
   onBlockFullDay: () => void
   onUnblockFullDay: () => void
 }
 
 function AgendaHeader({
   isFullDayBlocked,
+  selectedLashistName,
   onBlockFullDay,
   onUnblockFullDay,
 }: AgendaHeaderProps) {
@@ -21,7 +23,8 @@ function AgendaHeader({
         </h1>
 
         <p className="mt-2 text-sm leading-6 text-stone-600">
-          Visualiza reservas, disponibilidad y bloqueos por horario.
+          Visualiza reservas, disponibilidad y bloqueos por horario
+          {selectedLashistName ? ` para ${selectedLashistName}` : ""}.
         </p>
       </div>
 
@@ -31,7 +34,7 @@ function AgendaHeader({
           onClick={onBlockFullDay}
           className="w-full rounded-xl bg-red-500 px-4 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-red-600 md:w-auto"
         >
-          Bloquear día
+          {selectedLashistName ? "Bloquear lashista" : "Bloquear día"}
         </button>
       ) : (
         <button
@@ -39,7 +42,7 @@ function AgendaHeader({
           onClick={onUnblockFullDay}
           className="w-full rounded-xl bg-green-600 px-4 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-green-700 md:w-auto"
         >
-          Desbloquear día
+          {selectedLashistName ? "Desbloquear lashista" : "Desbloquear día"}
         </button>
       )}
     </div>

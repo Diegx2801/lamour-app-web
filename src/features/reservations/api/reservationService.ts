@@ -38,6 +38,16 @@ type AppointmentAvailabilityRow = {
   serviceCategory: string | null
   durationMinutes: number | null
   requiresLash?: boolean | null
+  appointment_date?: string | null
+  appointment_time?: string | null
+  service_category?: string | null
+  duration_minutes?: number | null
+  package_includes_lashes?: boolean | null
+}
+
+type PublicScheduleBlockRow = ScheduleBlockRow & {
+  block_date?: string | null
+  block_time?: string | null
 }
 
 export async function fetchActiveServices(): Promise<ServiceRow[]> {
@@ -114,21 +124,20 @@ async function withPackageDetails(services: ServiceRow[]) {
 }
 
 export async function fetchActiveLashistCount() {
-  const { count, error } = await supabase
-    .from("lashists")
-    .select("id", { count: "exact", head: true })
-    .eq("is_active", true)
+  const { data, error } = await supabase.rpc("get_active_lashist_count")
 
   if (error) {
     throw new Error("No se pudo cargar la capacidad de lashistas.")
   }
 
-  return count ?? 0
+  return Number(data ?? 0)
 }
 
 async function fetchAppointmentsByDate(
   date: string
 ): Promise<AppointmentAvailabilityRow[]> {
+  return fetchPublicAppointmentsByDate(date)
+
   const { data, error } = await supabase
     .from("appointments")
     .select(`
@@ -188,19 +197,52 @@ async function fetchAppointmentsByDate(
   })
 }
 
+async function fetchPublicAppointmentsByDate(
+  date: string
+): Promise<AppointmentAvailabilityRow[]> {
+  const { data, error } = await supabase.rpc(
+    "get_public_appointments_by_date",
+    { p_date: date }
+  )
+
+  if (error) {
+    throw new Error("Error al verificar disponibilidad del horario.")
+  }
+
+  return ((data ?? []) as AppointmentAvailabilityRow[]).map((item) => ({
+    date: item.date ?? item.appointment_date ?? "",
+    time: String(item.time ?? item.appointment_time ?? "").slice(0, 5),
+    status: item.status,
+    serviceCategory: item.service_category ?? null,
+    durationMinutes:
+      item.service_category === "PestaÃ±as" ? 120 : item.duration_minutes ?? null,
+    requiresLash:
+      item.service_category === "PestaÃ±as" ||
+      Boolean(item.package_includes_lashes),
+    service_category: item.service_category,
+    duration_minutes: item.duration_minutes,
+    package_includes_lashes: item.package_includes_lashes,
+  }))
+}
+
 export async function fetchScheduleBlocksByDate(
   date: string
 ): Promise<ScheduleBlockRow[]> {
   const { data, error } = await supabase
-    .from("schedule_blocks")
-    .select("id, date, time, reason, is_full_day")
-    .eq("date", date)
+    .rpc("get_public_schedule_blocks_by_date", { p_date: date })
 
   if (error) {
     throw new Error("Error al verificar bloqueos de agenda.")
   }
 
-  return (data ?? []) as ScheduleBlockRow[]
+  return ((data ?? []) as PublicScheduleBlockRow[]).map((block) => ({
+    id: block.id,
+    date: block.date ?? block.block_date ?? "",
+    time: block.time ?? block.block_time ?? null,
+    reason: block.reason,
+    is_full_day: block.is_full_day,
+    lashist_id: block.lashist_id ?? null,
+  }))
 }
 
 export async function fetchPublicAvailability(date: string) {
@@ -295,4 +337,38 @@ export async function createAppointment(input: CreateAppointmentInput) {
   if (error) {
     throw new Error("No se pudo registrar la reserva.")
   }
+}
+
+export type PublicReservationResult = {
+  appointment_id: string
+  client_id: string
+  total_price: number
+  deposit_amount: number
+  remaining_amount: number
+}
+
+export async function createPublicReservation(input: {
+  fullName: string
+  phone: string
+  serviceId: string
+  date: string
+  time: string
+  notes: string
+}) {
+  const { data, error } = await supabase
+    .rpc("create_public_reservation", {
+      p_full_name: input.fullName,
+      p_phone: input.phone,
+      p_service_id: input.serviceId,
+      p_date: input.date,
+      p_time: input.time,
+      p_notes: input.notes || null,
+    })
+    .single()
+
+  if (error || !data) {
+    throw new Error(error?.message ?? "No se pudo registrar la reserva.")
+  }
+
+  return data as PublicReservationResult
 }

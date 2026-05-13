@@ -1,5 +1,8 @@
 import { timeSlots } from "../../../data/timeSlots"
-import type { AgendaReservation } from "../../../features/admin-agenda/hooks/useAdminAgenda"
+import type {
+  AgendaLashistRow,
+  AgendaReservation,
+} from "../../../features/admin-agenda/hooks/useAdminAgenda"
 import { BlockedBox } from "./AgendaShared"
 import AgendaReservationCard from "./AgendaReservationCard"
 import { getOccupancyBadgeClasses } from "./agendaUtils"
@@ -9,6 +12,8 @@ type AgendaScheduleGridProps = {
   blockedTimes: string[]
   isFullDayBlocked: boolean
   lashCapacity: number
+  lashists: AgendaLashistRow[]
+  selectedLashistId: string
   getLashOccupancy: (slot: string) => number
   onBlock: (slot: string) => void
   onUnblock: (slot: string) => void
@@ -20,6 +25,8 @@ function AgendaScheduleGrid({
   blockedTimes,
   isFullDayBlocked,
   lashCapacity,
+  lashists,
+  selectedLashistId,
   getLashOccupancy,
   onBlock,
   onUnblock,
@@ -71,15 +78,18 @@ function AgendaScheduleGrid({
                 ) : isBlocked ? (
                   <BlockedTimeSlot onUnblock={() => onUnblock(slot)} />
                 ) : slotReservations.length > 0 ? (
-                  <div className="grid gap-3 lg:grid-cols-2">
-                    {slotReservations.map((reservation) => (
-                      <AgendaReservationCard
-                        key={reservation.id}
-                        reservation={reservation}
-                        onUpdateStatus={onUpdateStatus}
-                      />
-                    ))}
-                  </div>
+                  selectedLashistId ? (
+                    <ReservationGrid
+                      reservations={slotReservations}
+                      onUpdateStatus={onUpdateStatus}
+                    />
+                  ) : (
+                    <LashistColumns
+                      lashists={lashists}
+                      reservations={slotReservations}
+                      onUpdateStatus={onUpdateStatus}
+                    />
+                  )
                 ) : (
                   <AvailableTimeSlot onBlock={() => onBlock(slot)} />
                 )}
@@ -88,6 +98,85 @@ function AgendaScheduleGrid({
           )
         })}
       </div>
+    </div>
+  )
+}
+
+function ReservationGrid({
+  reservations,
+  onUpdateStatus,
+}: {
+  reservations: AgendaReservation[]
+  onUpdateStatus: (id: string, status: string) => void
+}) {
+  return (
+    <div className="grid gap-3 lg:grid-cols-2">
+      {reservations.map((reservation) => (
+        <AgendaReservationCard
+          key={reservation.id}
+          reservation={reservation}
+          onUpdateStatus={onUpdateStatus}
+        />
+      ))}
+    </div>
+  )
+}
+
+function LashistColumns({
+  lashists,
+  reservations,
+  onUpdateStatus,
+}: {
+  lashists: AgendaLashistRow[]
+  reservations: AgendaReservation[]
+  onUpdateStatus: (id: string, status: string) => void
+}) {
+  const columns = [
+    { id: "__unassigned", name: "Sin asignar" },
+    ...lashists.map((lashist) => ({ id: lashist.id, name: lashist.name })),
+  ]
+
+  return (
+    <div className="grid gap-3 xl:grid-cols-3">
+      {columns.map((column) => {
+        const columnReservations = reservations.filter((reservation) =>
+          column.id === "__unassigned"
+            ? !reservation.lashist_id
+            : reservation.lashist_id === column.id
+        )
+
+        return (
+          <div
+            key={column.id}
+            className="min-h-24 rounded-2xl border border-stone-200 bg-stone-50/70 p-2"
+          >
+            <div className="mb-2 flex items-center justify-between gap-2 px-1">
+              <p className="text-xs font-semibold text-stone-700">
+                {column.name}
+              </p>
+              <span className="rounded-full bg-white px-2 py-0.5 text-[10px] text-stone-500">
+                {columnReservations.length}
+              </span>
+            </div>
+
+            {columnReservations.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-stone-200 bg-white/70 px-3 py-4 text-center text-xs text-stone-400">
+                Libre
+              </div>
+            ) : (
+              <div className="grid gap-2">
+                {columnReservations.map((reservation) => (
+                  <AgendaReservationCard
+                    key={reservation.id}
+                    reservation={reservation}
+                    onUpdateStatus={onUpdateStatus}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }

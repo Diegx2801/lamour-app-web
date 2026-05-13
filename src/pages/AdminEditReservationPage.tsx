@@ -1,6 +1,10 @@
-import { Link } from "react-router"
+﻿import { Link } from "react-router"
 import { isSunday } from "../features/reservations/utils/reservationUtils"
 import { useAdminEditReservation } from "../features/admin-reservations/hooks/useAdminEditReservation"
+import {
+  formatAuditDetails,
+  getAuditLabel,
+} from "../features/appointment-audit/utils/auditFormatters"
 
 const inputClass =
   "w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-900 outline-none transition focus:border-stone-900 focus:ring-2 focus:ring-stone-200 disabled:bg-stone-100 disabled:text-stone-500"
@@ -23,7 +27,7 @@ function AdminEditReservationPage() {
           to="/admin/reservas"
           className="text-sm font-medium text-stone-600 transition hover:text-stone-950"
         >
-          ← Volver a reservas
+          â† Volver a reservas
         </Link>
 
         <h1 className="mt-3 text-2xl font-semibold text-stone-950 md:text-4xl">
@@ -68,7 +72,7 @@ function AdminEditReservationPage() {
                   : isSunday(reservation.form.date)
                     ? "Domingo no disponible"
                     : reservation.blockedReason
-                      ? "Día bloqueado"
+                      ? "DÃ­a bloqueado"
                       : reservation.availableSlots.length === 0
                         ? "No hay horarios disponibles"
                         : "Selecciona una hora"}
@@ -138,7 +142,7 @@ function AdminEditReservationPage() {
             name="notes"
             value={reservation.form.notes}
             onChange={reservation.handleChange}
-            placeholder="Escribe algún detalle adicional"
+            placeholder="Escribe algÃºn detalle adicional"
             className={`${inputClass} resize-none`}
           />
         </Field>
@@ -161,7 +165,7 @@ function AdminEditReservationPage() {
 
         {reservation.auditLogs.length === 0 ? (
           <p className="mt-3 text-sm text-stone-500">
-            Aún no hay cambios registrados para esta cita.
+            AÃºn no hay cambios registrados para esta cita.
           </p>
         ) : (
           <div className="mt-4 space-y-3">
@@ -191,37 +195,6 @@ function AdminEditReservationPage() {
       </section>
     </div>
   )
-}
-
-function getAuditLabel(action: string) {
-  switch (action) {
-    case "status_updated":
-      return "Estado actualizado"
-    case "reservation_updated":
-      return "Reserva editada"
-    case "payment_registered":
-      return "Pago registrado"
-    default:
-      return action
-  }
-}
-
-function formatAuditDetails(details: Record<string, unknown> | null) {
-  if (!details) return "Sin detalle."
-
-  if ("newStatus" in details) {
-    return `Estado: ${String(details.previousStatus ?? "-")} → ${String(
-      details.newStatus ?? "-"
-    )}`
-  }
-
-  if ("paymentAmount" in details) {
-    return `Monto: S/ ${Number(details.paymentAmount ?? 0).toFixed(2)} · Tipo: ${String(
-      details.paymentType ?? "-"
-    )}`
-  }
-
-  return "Cambio registrado."
 }
 
 function Field({
