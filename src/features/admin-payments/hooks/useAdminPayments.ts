@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useParams } from "react-router"
 import { toast } from "sonner"
+import { fetchCashClosureByDate } from "../../admin-cash/api/adminCashService"
 import { createAppointmentAuditLog } from "../../appointment-audit/api/appointmentAuditService"
 import {
   createAppointmentPayment,
@@ -22,6 +23,7 @@ export function useAdminPayments() {
   const [paymentType, setPaymentType] = useState<PaymentType>("remaining")
   const [payments, setPayments] = useState<PaymentRow[]>([])
   const [summary, setSummary] = useState<AppointmentPaymentSummary | null>(null)
+  const [cashClosed, setCashClosed] = useState(false)
 
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
@@ -47,9 +49,11 @@ export function useAdminPayments() {
         fetchAppointmentPaymentSummary(appointmentId),
         fetchAppointmentPayments(appointmentId),
       ])
+      const closureData = await fetchCashClosureByDate(summaryData.date)
 
       setSummary(summaryData)
       setPayments(paymentsData)
+      setCashClosed(Boolean(closureData?.is_closed))
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "No se pudo cargar pagos."
@@ -72,6 +76,10 @@ export function useAdminPayments() {
 
   const validatePayment = () => {
     if (!appointmentId) return "Reserva no válida."
+
+    if (cashClosed) {
+      return "La caja de este día ya está cerrada. Reábrela para registrar pagos."
+    }
 
     const numericAmount = getPaymentAmount()
 
@@ -196,6 +204,7 @@ export function useAdminPayments() {
     error,
     loading,
     loadingData,
+    cashClosed,
 
     handlePayment,
   }

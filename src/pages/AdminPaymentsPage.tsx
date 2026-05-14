@@ -52,6 +52,10 @@ function AdminPaymentsPage() {
           onSubmit={payments.handlePayment}
           className="space-y-4 rounded-[2rem] border border-stone-200 bg-white p-5 shadow-[0_10px_40px_rgba(0,0,0,0.08)] md:p-6"
         >
+          {payments.cashClosed && (
+            <AlertMessage message="La caja de esta fecha está cerrada. Solo la dueña puede reabrirla desde Caja para registrar cambios." />
+          )}
+
           <Field label="Tipo de pago">
             <select
               value={payments.paymentType}
@@ -112,6 +116,7 @@ function AdminPaymentsPage() {
             type="submit"
             disabled={
               payments.loading ||
+              payments.cashClosed ||
               (payments.remainingAmount <= 0 &&
                 payments.paymentType !== "adjustment")
             }

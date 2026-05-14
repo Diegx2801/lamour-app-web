@@ -86,15 +86,29 @@ function AdminServiceModal({ services }: AdminServiceModalProps) {
             </Field>
           </div>
 
-          <Field label="Categoría *">
-            <input
-              name="category"
-              value={services.form.category}
-              onChange={services.handleChange}
-              placeholder="Ejemplo: Pestañas"
-              className={serviceInputClass}
-            />
-          </Field>
+          <div className="grid gap-4 md:grid-cols-[1fr_160px]">
+            <Field label="Categoría *">
+              <input
+                name="category"
+                value={services.form.category}
+                onChange={services.handleChange}
+                placeholder="Ejemplo: Pestañas"
+                className={serviceInputClass}
+              />
+            </Field>
+
+            <Field label="Orden">
+              <input
+                type="number"
+                step="1"
+                name="sort_order"
+                value={services.form.sort_order}
+                onChange={services.handleChange}
+                placeholder="0"
+                className={serviceInputClass}
+              />
+            </Field>
+          </div>
 
           <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
             <label className="flex items-center gap-3 text-sm font-medium text-stone-800">

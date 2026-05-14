@@ -1,9 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import {
+  closeCashDay,
   fetchCashAppointmentsByDate,
+  fetchCashClosureByDate,
   fetchCashPaymentsByDate,
+  reopenCashDay,
   type CashAppointmentRow,
+  type CashClosureRow,
   type CashPaymentRow,
 } from "../api/adminCashService"
 
@@ -39,6 +43,16 @@ export function getPaymentTypeLabel(type: string | null | undefined) {
   }
 }
 
+export function formatPaymentTime(value: string | null | undefined) {
+  if (!value) return "--:--"
+
+  return new Intl.DateTimeFormat("es-PE", {
+    timeZone: "America/Lima",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value))
+}
+
 function escapeHtml(value: string) {
   return value
     .replaceAll("&", "&amp;")
@@ -52,7 +66,11 @@ export function useAdminCash() {
   const [selectedDate, setSelectedDate] = useState(getLocalDateString())
   const [payments, setPayments] = useState<CashPaymentRow[]>([])
   const [appointments, setAppointments] = useState<CashAppointmentRow[]>([])
+  const [closure, setClosure] = useState<CashClosureRow | null>(null)
+  const [countedAmount, setCountedAmount] = useState("")
+  const [closureNotes, setClosureNotes] = useState("")
   const [loading, setLoading] = useState(true)
+  const [closing, setClosing] = useState(false)
   const [error, setError] = useState("")
 
   const loadCash = useCallback(async () => {
@@ -60,13 +78,21 @@ export function useAdminCash() {
       setLoading(true)
       setError("")
 
-      const [paymentRows, appointmentRows] = await Promise.all([
+      const [paymentRows, appointmentRows, closureRow] = await Promise.all([
         fetchCashPaymentsByDate(selectedDate),
         fetchCashAppointmentsByDate(selectedDate),
+        fetchCashClosureByDate(selectedDate),
       ])
 
       setPayments(paymentRows)
       setAppointments(appointmentRows)
+      setClosure(closureRow)
+      setCountedAmount(
+        closureRow?.counted_amount !== null && closureRow?.counted_amount !== undefined
+          ? String(closureRow.counted_amount)
+          : ""
+      )
+      setClosureNotes(closureRow?.notes ?? "")
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "No se pudo cargar caja."
@@ -91,6 +117,14 @@ export function useAdminCash() {
       .filter((payment) => payment.payment_type === "deposit")
       .reduce((acc, payment) => acc + Number(payment.amount ?? 0), 0)
 
+    const remainingIncome = payments
+      .filter((payment) => payment.payment_type === "remaining")
+      .reduce((acc, payment) => acc + Number(payment.amount ?? 0), 0)
+
+    const fullIncome = payments
+      .filter((payment) => payment.payment_type === "full")
+      .reduce((acc, payment) => acc + Number(payment.amount ?? 0), 0)
+
     const pendingBalance = appointments
       .filter((appointment) => appointment.status !== "cancelled")
       .reduce(
@@ -107,6 +141,8 @@ export function useAdminCash() {
     return {
       dailyIncome,
       depositIncome,
+      remainingIncome,
+      fullIncome,
       pendingBalance,
       completedWithDebt,
     }
@@ -122,7 +158,7 @@ export function useAdminCash() {
             .map(
               (payment) => `
                 <tr>
-                  <td>${payment.created_at?.slice(11, 16) ?? "--:--"}</td>
+                  <td>${formatPaymentTime(payment.created_at)}</td>
                   <td>${formatMoney(payment.amount)}</td>
                   <td>${escapeHtml(payment.payment_method ?? "Sin método")}</td>
                   <td>${escapeHtml(getPaymentTypeLabel(payment.payment_type))}</td>
@@ -219,6 +255,27 @@ export function useAdminCash() {
             </div>
           </div>
 
+          <h2>Cierre del día</h2>
+          <div class="grid">
+            <div class="card">
+              <div class="label">Estado</div>
+              <div class="value">${closure?.is_closed ? "Cerrada" : "Abierta"}</div>
+            </div>
+            <div class="card">
+              <div class="label">Monto contado</div>
+              <div class="value">${formatMoney(closure?.counted_amount)}</div>
+            </div>
+            <div class="card">
+              <div class="label">Diferencia</div>
+              <div class="value">${formatMoney(closure?.difference_amount)}</div>
+            </div>
+            <div class="card">
+              <div class="label">Responsable</div>
+              <div class="value" style="font-size: 14px;">${escapeHtml(closure?.closed_by_email ?? "-")}</div>
+            </div>
+          </div>
+          <p class="muted">Observación: ${escapeHtml(closure?.notes ?? "-")}</p>
+
           <h2>Pagos recibidos</h2>
           <table>
             <thead>
@@ -253,15 +310,72 @@ export function useAdminCash() {
     reportWindow.print()
   }
 
+  const handleCloseCash = async (event: React.FormEvent) => {
+    event.preventDefault()
+
+    try {
+      setClosing(true)
+      setError("")
+
+      const numericCounted = Number(countedAmount)
+      if (Number.isNaN(numericCounted) || numericCounted < 0) {
+        throw new Error("Ingresa el monto contado correctamente.")
+      }
+
+      await closeCashDay({
+        date: selectedDate,
+        expectedAmount: summary.dailyIncome,
+        countedAmount: numericCounted,
+        notes: closureNotes,
+      })
+
+      toast.success("Caja cerrada correctamente.")
+      await loadCash()
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "No se pudo cerrar caja."
+      setError(message)
+      toast.error(message)
+    } finally {
+      setClosing(false)
+    }
+  }
+
+  const handleReopenCash = async () => {
+    if (!window.confirm("¿Seguro que quieres reabrir esta caja?")) return
+
+    try {
+      setClosing(true)
+      await reopenCashDay(selectedDate)
+      toast.success("Caja reabierta.")
+      await loadCash()
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "No se pudo reabrir caja."
+      setError(message)
+      toast.error(message)
+    } finally {
+      setClosing(false)
+    }
+  }
+
   return {
     selectedDate,
     setSelectedDate,
     payments,
     appointments,
+    closure,
+    countedAmount,
+    setCountedAmount,
+    closureNotes,
+    setClosureNotes,
     summary,
     loading,
+    closing,
     error,
     refresh: loadCash,
     downloadPdfReport,
+    handleCloseCash,
+    handleReopenCash,
   }
 }

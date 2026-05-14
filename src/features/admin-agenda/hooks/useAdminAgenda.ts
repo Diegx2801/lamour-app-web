@@ -66,8 +66,14 @@ type ScheduleBlock = {
 type AgendaWeekReservation = {
   id: string
   date: string
+  time: string | null
   status: string
   remaining_amount: number | null
+  created_at?: string | null
+  lashista?: string | null
+  lashist_id?: string | null
+  clients?: AgendaClientRelation
+  services?: AgendaServiceRelation
 }
 
 function normalizeTime(time: string | null | undefined) {
@@ -108,6 +114,22 @@ function getOccupancyAtSlot(reservations: AgendaReservation[], slot: string) {
   }).length
 }
 
+function getClientData(clients: AgendaClientRelation | undefined) {
+  if (!clients) return null
+  return Array.isArray(clients) ? clients[0] ?? null : clients
+}
+
+function formatDateLabel(date: string) {
+  const [year, month, day] = date.split("-")
+  return `${day}/${month}/${year}`
+}
+
+function normalizePhone(phone: string | null | undefined) {
+  const digits = String(phone ?? "").replace(/\D/g, "")
+  if (!digits) return ""
+  return digits.startsWith("51") ? digits : `51${digits}`
+}
+
 export function useAdminAgenda() {
   const today = useMemo(() => new Date().toISOString().split("T")[0], [])
 
@@ -124,6 +146,7 @@ export function useAdminAgenda() {
   const [loadingLashists, setLoadingLashists] = useState(true)
   const [error, setError] = useState("")
   const [adminRole, setAdminRole] = useState<string | null>(null)
+  const [noticeRefreshKey, setNoticeRefreshKey] = useState(0)
 
   const refreshAgenda = useCallback(async () => {
     try {
@@ -300,6 +323,86 @@ export function useAdminAgenda() {
 
   const lashCapacity = selectedLashistId ? 1 : lashists.length
   const canManageBlocks = adminRole === "owner" || adminRole === "admin"
+
+  const lastNotifyKey = useMemo(
+    () => `lamour_lashist_week_notice_${weekRange.start}_${weekRange.end}`,
+    [weekRange.end, weekRange.start]
+  )
+
+  const lashistNoticeState = useMemo(() => {
+    const refreshKey = noticeRefreshKey
+    void refreshKey
+
+    return lashists.map((lashist) => {
+      const raw = localStorage.getItem(`${lastNotifyKey}_${lashist.id}`)
+      const lastSentAt = raw ? Number(raw) : 0
+      const weeklyAppointments = weekReservations.filter(
+        (reservation) => reservation.lashist_id === lashist.id
+      )
+      const changedAfterSend =
+        lastSentAt > 0
+          ? weeklyAppointments.filter((reservation) => {
+              const createdAt = reservation.created_at
+                ? new Date(reservation.created_at).getTime()
+                : 0
+              return createdAt > lastSentAt
+            }).length
+          : weeklyAppointments.length
+
+      return {
+        lashist,
+        total: weeklyAppointments.length,
+        lastSentAt,
+        changedAfterSend,
+      }
+    })
+  }, [lashists, lastNotifyKey, noticeRefreshKey, weekReservations])
+
+  const sendWeeklyWhatsappToLashist = (lashistId: string) => {
+    const lashist = lashists.find((item) => item.id === lashistId)
+
+    if (!lashist) return
+
+    const phone = normalizePhone(lashist.phone)
+    if (!phone) {
+      toast.error("Esta lashista no tiene WhatsApp registrado.")
+      return
+    }
+
+    const weeklyAppointments = weekReservations.filter(
+      (reservation) => reservation.lashist_id === lashist.id
+    )
+
+    const lines =
+      weeklyAppointments.length > 0
+        ? weeklyAppointments.map((reservation) => {
+            const client = getClientData(reservation.clients)
+            const service = getServiceData(reservation.services ?? null)
+
+            return `• ${formatDateLabel(reservation.date)} ${normalizeTime(
+              reservation.time
+            )} - ${client?.full_name ?? "Cliente"} - ${
+              service?.name ?? "Servicio"
+            }`
+          })
+        : ["No tienes citas asignadas esta semana."]
+
+    const message = `Hola ${lashist.name}, esta es tu agenda de L'AMOUR para la semana ${formatDateLabel(
+      weekRange.start
+    )} al ${formatDateLabel(weekRange.end)}:
+
+${lines.join("\n")}
+
+Si aparece un cambio nuevo, te enviaremos una actualización.`
+
+    window.open(
+      `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
+      "_blank"
+    )
+    localStorage.setItem(`${lastNotifyKey}_${lashist.id}`, String(Date.now()))
+    setNoticeRefreshKey((current) => current + 1)
+    toast.success(`Agenda enviada a ${lashist.name}.`)
+  }
 
   const getBlockByTime = (time: string) => {
     return blocks.find(
@@ -488,7 +591,9 @@ export function useAdminAgenda() {
 
     lashCapacity,
     canManageBlocks,
+    lashistNoticeState,
     getLashOccupancy,
+    sendWeeklyWhatsappToLashist,
 
     handleBlock,
     handleUnblock,

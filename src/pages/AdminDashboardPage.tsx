@@ -1,5 +1,7 @@
 import DashboardCharts from "../components/admin/dashboard/DashboardCharts"
+import DashboardAlerts from "../components/admin/dashboard/DashboardAlerts"
 import DashboardFilters from "../components/admin/dashboard/DashboardFilters"
+import DashboardLashistSummary from "../components/admin/dashboard/DashboardLashistSummary"
 import DashboardLists from "../components/admin/dashboard/DashboardLists"
 import DashboardMetricSections from "../components/admin/dashboard/DashboardMetricSections"
 import { useAdminDashboard } from "../features/admin-dashboard/hooks/useAdminDashboard"
@@ -19,8 +21,9 @@ function AdminDashboardPage() {
             Dashboard
           </h1>
 
-          <p className="mt-2 text-sm leading-6 text-stone-600">
-            Métricas operativas, ingresos y resumen diario del spa.
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-stone-600">
+            Vista de dueña: dinero, agenda, servicios y rendimiento del equipo.
+            Todo se entiende según el rango seleccionado.
           </p>
         </div>
 
@@ -58,12 +61,21 @@ function AdminDashboardPage() {
         <div className="space-y-5 md:space-y-6">
           <DashboardMetricSections stats={dashboard.stats} />
 
+          <DashboardAlerts alerts={dashboard.operationalAlerts} />
+
           <DashboardCharts
             dailyIncome={dashboard.dailyIncome}
             statusCounts={dashboard.statusCounts}
             stats={dashboard.stats}
             maxDailyIncome={dashboard.maxDailyIncome}
             maxStatusCount={dashboard.maxStatusCount}
+          />
+
+          <DashboardLashistSummary
+            summaries={dashboard.lashistWeeklySummary}
+            rangeStart={dashboard.rangeStart}
+            rangeEnd={dashboard.rangeEnd}
+            onDownloadWeeklyReport={dashboard.downloadWeeklyReport}
           />
 
           <DashboardLists

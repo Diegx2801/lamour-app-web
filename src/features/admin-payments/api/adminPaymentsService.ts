@@ -11,6 +11,7 @@ export type PaymentRow = {
 
 export type AppointmentPaymentSummary = {
   id: string
+  date: string
   total_price: number
   deposit_amount: number
   remaining_amount: number
@@ -42,6 +43,7 @@ export async function fetchAppointmentPaymentSummary(appointmentId: string) {
     .from("appointments")
     .select(`
       id,
+      date,
       total_price,
       deposit_amount,
       remaining_amount,

@@ -8,9 +8,13 @@ import type {
 export type ServiceRow = {
   id: string
   name: string
+  description?: string | null
   price: number
   category: string | null
   duration_minutes: number | null
+  retouch_price?: number | null
+  allows_retouch?: boolean | null
+  sort_order?: number | null
   is_active?: boolean
   is_package?: boolean
   package_includes_lashes?: boolean
@@ -54,9 +58,11 @@ export async function fetchActiveServices(): Promise<ServiceRow[]> {
   const { data, error } = await supabase
     .from("services")
     .select(
-      "id, name, price, category, duration_minutes, is_active, is_package, package_includes_lashes"
+      "id, name, description, price, category, duration_minutes, retouch_price, allows_retouch, sort_order, is_active, is_package, package_includes_lashes"
     )
     .eq("is_active", true)
+    .order("category", { ascending: true })
+    .order("sort_order", { ascending: true })
     .order("name", { ascending: true })
 
   if (!error) {
@@ -65,7 +71,7 @@ export async function fetchActiveServices(): Promise<ServiceRow[]> {
 
   const { data: fallbackData, error: fallbackError } = await supabase
     .from("services")
-    .select("id, name, price, category, duration_minutes, is_active")
+    .select("id, name, description, price, category, duration_minutes, retouch_price, allows_retouch, is_active")
     .eq("is_active", true)
     .order("name", { ascending: true })
 

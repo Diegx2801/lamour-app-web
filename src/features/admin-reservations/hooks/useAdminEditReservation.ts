@@ -224,7 +224,6 @@ export function useAdminEditReservation() {
       }
 
       if (name === "lashistId") {
-        next.time = ""
         setBlockedReason("")
       }
 
@@ -339,8 +338,16 @@ export function useAdminEditReservation() {
         appointmentId: currentReservationId,
         action: "reservation_updated",
         details: {
-          previous: initialSnapshot,
-          next: form,
+          previous: {
+            ...initialSnapshot,
+            lashistName:
+              lashists.find((lashist) => lashist.id === initialSnapshot?.lashistId)
+                ?.name ?? "Sin asignar",
+          },
+          next: {
+            ...form,
+            lashistName: selectedLashistData?.name ?? "Sin asignar",
+          },
           source: "edit_reservation",
         },
       })

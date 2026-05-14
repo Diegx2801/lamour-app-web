@@ -28,9 +28,13 @@ const AdminClientHistoryPage = lazy(
 const AdminServicesPage = lazy(() => import("./pages/AdminServicesPage"))
 const AdminClientsPage = lazy(() => import("./pages/AdminClientsPage"))
 const AdminFollowUpPage = lazy(() => import("./pages/AdminFollowUpPage"))
+const AdminRetentionPage = lazy(() => import("./pages/AdminRetentionPage"))
 const AdminLashistsPage = lazy(() => import("./pages/AdminLashistsPage"))
 const AdminUsersPage = lazy(() => import("./pages/AdminUsersPage"))
 const AdminSiteContentPage = lazy(() => import("./pages/AdminSiteContentPage"))
+const AdminWhatsappTemplatesPage = lazy(
+  () => import("./pages/AdminWhatsappTemplatesPage")
+)
 const AdminPromosPage = lazy(() => import("./pages/admin/AdminPromosPage"))
 
 function PageFallback() {
@@ -57,7 +61,7 @@ function App() {
           <Route
             path="/admin"
             element={
-              <ProtectedRoute allowedRoles={["owner", "staff"]}>
+              <ProtectedRoute allowedRoles={["owner", "staff", "followup"]}>
                 <AdminLayout />
               </ProtectedRoute>
             }
@@ -130,7 +134,7 @@ function App() {
             <Route
               path="pagos/:id"
               element={
-                <ProtectedRoute allowedRoles={["owner", "staff"]}>
+                <ProtectedRoute allowedRoles={["owner"]}>
                   <AdminPaymentsPage />
                 </ProtectedRoute>
               }
@@ -191,6 +195,15 @@ function App() {
             />
 
             <Route
+              path="plantillas"
+              element={
+                <ProtectedRoute allowedRoles={["owner"]}>
+                  <AdminWhatsappTemplatesPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
               path="promos"
               element={
                 <ProtectedRoute allowedRoles={["owner"]}>
@@ -202,8 +215,17 @@ function App() {
             <Route
               path="seguimiento"
               element={
-                <ProtectedRoute allowedRoles={["owner", "staff"]}>
+                <ProtectedRoute allowedRoles={["owner", "staff", "followup"]}>
                   <AdminFollowUpPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="fidelizacion"
+              element={
+                <ProtectedRoute allowedRoles={["owner"]}>
+                  <AdminRetentionPage />
                 </ProtectedRoute>
               }
             />

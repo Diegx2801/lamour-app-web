@@ -1,6 +1,7 @@
 import { Link } from "react-router"
 
 type Service = {
+  id?: string
   name: string
   price: string
   description: string
@@ -40,7 +41,7 @@ function ServiceCard({ service }: ServiceCardProps) {
       </p>
 
       <Link
-        to="/reservar"
+        to={service.id ? `/reservar?serviceId=${service.id}` : "/reservar"}
         className="mt-4 inline-flex text-sm font-medium text-stone-900 transition hover:text-stone-500"
       >
         Reservar →

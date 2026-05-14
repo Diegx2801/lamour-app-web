@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
-type AdminRole = "owner" | "staff"
+type AdminRole = "owner" | "staff" | "followup"
 
 type RequestBody = {
   action: "create" | "update" | "deactivate" | "reactivate"
@@ -30,7 +30,7 @@ function jsonResponse(body: unknown, status = 200) {
 }
 
 function assertRole(role: unknown): asserts role is AdminRole {
-  if (role !== "owner" && role !== "staff") {
+  if (role !== "owner" && role !== "staff" && role !== "followup") {
     throw new Error("Rol inválido.")
   }
 }

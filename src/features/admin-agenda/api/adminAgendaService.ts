@@ -110,9 +110,30 @@ export async function fetchAgendaByDate(date: string) {
 export async function fetchAgendaWeek(startDate: string, endDate: string) {
   const { data, error } = await supabase
     .from("appointments")
-    .select("id, date, status, remaining_amount")
+    .select(`
+      id,
+      date,
+      time,
+      status,
+      remaining_amount,
+      created_at,
+      lashista,
+      lashist_id,
+      clients (
+        full_name,
+        phone
+      ),
+      services (
+        name,
+        category,
+        duration_minutes
+      )
+    `)
     .gte("date", startDate)
     .lte("date", endDate)
+    .neq("status", "cancelled")
+    .order("date", { ascending: true })
+    .order("time", { ascending: true })
 
   if (error) {
     throw new Error("Error cargando resumen semanal")

@@ -14,6 +14,7 @@ export type AdminServiceRow = {
   is_package: boolean
   package_includes_lashes: boolean
   package_items: string[]
+  sort_order: number
   created_at?: string | null
 }
 
@@ -30,6 +31,7 @@ export type AdminServicePayload = {
   is_package: boolean
   package_includes_lashes: boolean
   package_item_ids: string[]
+  sort_order: number
 }
 
 type AdminServiceDbRow = Omit<AdminServiceRow, "package_items"> & {
@@ -55,11 +57,16 @@ function normalizeServiceRow(row: Partial<AdminServiceDbRow>): AdminServiceRow {
     is_package: Boolean(row.is_package),
     package_includes_lashes: Boolean(row.package_includes_lashes),
     package_items: packageItems.map((item) => item.included_service_id),
+    sort_order: Number(row.sort_order ?? 0),
     created_at: row.created_at ?? null,
   }
 }
 
-function toServicePayload(payload: AdminServicePayload, includePackageFields = true) {
+function toServicePayload(
+  payload: AdminServicePayload,
+  options: { includePackageFields?: boolean; includeSortOrder?: boolean } = {}
+) {
+  const { includePackageFields = true, includeSortOrder = true } = options
   const servicePayload: Record<string, unknown> = {
     name: payload.name,
     description: payload.description,
@@ -70,6 +77,10 @@ function toServicePayload(payload: AdminServicePayload, includePackageFields = t
     allows_retouch: payload.allows_retouch,
     retouch_price: payload.retouch_price,
     retouch_days: payload.retouch_days,
+  }
+
+  if (includeSortOrder) {
+    servicePayload.sort_order = payload.sort_order
   }
 
   if (includePackageFields) {
@@ -101,9 +112,12 @@ export async function fetchAdminServices() {
         included_service_id,
         sort_order
       ),
+      sort_order,
       created_at
     `
     )
+    .order("category", { ascending: true })
+    .order("sort_order", { ascending: true })
     .order("name", { ascending: true })
 
   if (!error) {
@@ -152,7 +166,7 @@ export async function createAdminService(payload: AdminServicePayload) {
 
   const { error: fallbackError } = await supabase
     .from("services")
-    .insert([toServicePayload(payload, false)])
+    .insert([toServicePayload(payload, { includeSortOrder: false })])
 
   if (fallbackError) {
     throw new Error("No se pudo crear el servicio.")
@@ -175,7 +189,7 @@ export async function updateAdminService(
 
   const { error: fallbackError } = await supabase
     .from("services")
-    .update(toServicePayload(payload, false))
+    .update(toServicePayload(payload, { includeSortOrder: false }))
     .eq("id", id)
 
   if (fallbackError) {

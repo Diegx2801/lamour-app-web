@@ -7,8 +7,15 @@ type AgendaFiltersProps = {
   selectedLashistName: string | null
   lashists: AgendaLashistRow[]
   loadingLashists: boolean
+  noticeState?: {
+    lashist: AgendaLashistRow
+    total: number
+    lastSentAt: number
+    changedAfterSend: number
+  }[]
   onDateChange: (value: string) => void
   onLashistChange: (value: string) => void
+  onSendWeek?: (lashistId: string) => void
 }
 
 function AgendaFilters({
@@ -17,8 +24,10 @@ function AgendaFilters({
   selectedLashistName,
   lashists,
   loadingLashists,
+  noticeState = [],
   onDateChange,
   onLashistChange,
+  onSendWeek,
 }: AgendaFiltersProps) {
   const today = getLocalDateString()
   const tomorrow = getLocalDateString(1)
@@ -98,6 +107,50 @@ function AgendaFilters({
           <span className="font-semibold">{selectedLashistName}</span>
         </p>
       ) : null}
+
+      {noticeState.length > 0 && (
+        <div className="mt-4 rounded-2xl border border-stone-200 bg-stone-50 p-3">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <div>
+              <p className="text-sm font-semibold text-stone-950">
+                Aviso semanal a lashistas
+              </p>
+              <p className="text-xs text-stone-500">
+                Envía por WhatsApp la agenda de la semana y revisa cambios nuevos.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-2 md:grid-cols-2">
+            {noticeState.map((item) => (
+              <div
+                key={item.lashist.id}
+                className="flex flex-col gap-3 rounded-xl border border-stone-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div>
+                  <p className="text-sm font-semibold text-stone-900">
+                    {item.lashist.name}
+                  </p>
+                  <p className="text-xs text-stone-500">
+                    {item.total} citas esta semana
+                    {item.changedAfterSend > 0
+                      ? ` · ${item.changedAfterSend} por avisar`
+                      : " · sin cambios pendientes"}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => onSendWeek?.(item.lashist.id)}
+                  className="rounded-full bg-green-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-green-700"
+                >
+                  WhatsApp
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

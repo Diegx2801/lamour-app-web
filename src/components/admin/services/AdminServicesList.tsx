@@ -60,6 +60,7 @@ function ServicesTable({
           <tr className="text-left text-sm text-stone-500">
             <th className="px-3">Servicio</th>
             <th className="px-3">Categoría</th>
+            <th className="px-3">Orden</th>
             <th className="px-3">Precio</th>
             <th className="px-3">Retoque</th>
             <th className="px-3">Duración</th>
@@ -95,6 +96,10 @@ function ServicesTable({
 
               <td className="px-3 py-4 align-top text-sm text-stone-700">
                 {service.category ?? "Sin categoría"}
+              </td>
+
+              <td className="px-3 py-4 align-top text-sm font-medium text-stone-700">
+                {service.sort_order ?? 0}
               </td>
 
               <td className="px-3 py-4 align-top text-sm font-medium text-stone-900">
@@ -185,6 +190,8 @@ function ServicesCards({
               label="Duración"
               value={`${service.duration_minutes ?? 0} min`}
             />
+
+            <InfoBox label="Orden" value={String(service.sort_order ?? 0)} />
 
             <InfoBox
               label="Retoque"

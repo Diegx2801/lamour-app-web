@@ -1,11 +1,74 @@
 import { m } from "framer-motion"
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import SectionTitle from "../common/SectionTitle"
 import ServiceCard from "../common/ServiceCard"
-import { categories } from "../../data/services"
+import { categories as fallbackCategories } from "../../data/services"
+import {
+  fetchActiveServices,
+  type ServiceRow,
+} from "../../features/reservations/api/reservationService"
+import type { Category } from "../../types/service"
+
+function toPublicCategories(services: ServiceRow[]): Category[] {
+  const grouped = new Map<string, ServiceRow[]>()
+
+  services.forEach((service) => {
+    const category = service.category?.trim() || "Servicios"
+    grouped.set(category, [...(grouped.get(category) ?? []), service])
+  })
+
+  return Array.from(grouped.entries()).map(([title, items]) => {
+    const fallback = fallbackCategories.find((category) => category.title === title)
+
+    return {
+      title,
+      subtitle: fallback?.subtitle ?? "Servicios disponibles para reservar.",
+      services: items.map((service) => ({
+        id: service.id,
+        name: service.name,
+        description:
+          service.description?.trim() ||
+          (service.is_package
+            ? "Paquete preparado por L'AMOUR."
+            : "Servicio disponible para reservar."),
+        price: `S/ ${Number(service.price ?? 0).toFixed(2)}`,
+        retouch:
+          service.allows_retouch && service.retouch_price
+            ? `S/ ${Number(service.retouch_price).toFixed(2)}`
+            : undefined,
+      })),
+    }
+  })
+}
 
 function ServicesSection() {
   const [activeCategory, setActiveCategory] = useState(0)
+  const [dynamicServices, setDynamicServices] = useState<ServiceRow[]>([])
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    let active = true
+
+    fetchActiveServices()
+      .then((services) => {
+        if (!active) return
+        setDynamicServices(services)
+        setLoaded(true)
+      })
+      .catch(() => {
+        if (!active) return
+        setLoaded(true)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const categories = useMemo(() => {
+    if (dynamicServices.length === 0) return fallbackCategories
+    return toPublicCategories(dynamicServices)
+  }, [dynamicServices])
 
   const handleCategoryClick = (index: number) => {
     setActiveCategory(index)
@@ -40,7 +103,7 @@ function ServicesSection() {
           Categorías
         </p>
 
-        <div className="flex gap-2 overflow-x-auto pb-1 md:grid md:grid-cols-5 md:gap-3 md:overflow-visible md:pb-0">
+        <div className="flex gap-2 overflow-x-auto pb-1 md:grid md:auto-cols-fr md:grid-flow-col md:gap-3 md:overflow-visible md:pb-0">
           {categories.map((category, index) => {
             const isActive = activeCategory === index
 
@@ -62,13 +125,13 @@ function ServicesSection() {
         </div>
       </div>
 
+      {!loaded && (
+        <p className="mt-6 text-sm text-stone-500">Cargando servicios...</p>
+      )}
+
       <div className="mt-10 space-y-12 md:space-y-16">
         {categories.map((category, index) => (
-          <div
-  id={`category-${index}`}
-  key={category.title}
-  className="scroll-mt-24"
->
+          <div id={`category-${index}`} key={category.title} className="scroll-mt-24">
             <div className="mb-6 flex flex-col gap-2 border-b border-stone-200 pb-4 md:flex-row md:items-end md:justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.28em] text-stone-500">
@@ -88,7 +151,7 @@ function ServicesSection() {
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               {category.services.map((service, serviceIndex) => (
                 <m.div
-                  key={service.name}
+                  key={service.id ?? service.name}
                   initial={{ opacity: 0, y: 16 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: serviceIndex * 0.03 }}
@@ -98,7 +161,7 @@ function ServicesSection() {
                 </m.div>
               ))}
             </div>
-       </div>
+          </div>
         ))}
       </div>
     </section>

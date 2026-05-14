@@ -19,6 +19,7 @@ export type Stats = {
   todayIncome: number
   monthIncome: number
   rangeIncome: number
+  rangePendingAmount: number
   totalPendingAmount: number
   averageTicket: number
   completionRate: number
@@ -28,6 +29,32 @@ export type Stats = {
 export type TopService = {
   name: string
   count: number
+}
+
+export type LashistServiceSummary = {
+  serviceName: string
+  count: number
+  income: number
+  minutes: number
+}
+
+export type LashistWeeklySummary = {
+  lashistKey: string
+  lashistName: string
+  totalServices: number
+  totalIncome: number
+  totalMinutes: number
+  cancelled: number
+  noShow: number
+  services: LashistServiceSummary[]
+}
+
+export type OperationalAlert = {
+  id: string
+  title: string
+  count: number
+  description: string
+  tone: "red" | "amber" | "blue" | "green" | "stone"
 }
 
 export type UpcomingReservation = {
@@ -63,6 +90,7 @@ const initialStats: Stats = {
   todayIncome: 0,
   monthIncome: 0,
   rangeIncome: 0,
+  rangePendingAmount: 0,
   totalPendingAmount: 0,
   averageTicket: 0,
   completionRate: 0,
@@ -159,6 +187,16 @@ function calculateRate(value: number, total: number) {
   return Number(((value / total) * 100).toFixed(1))
 }
 
+function getDaysBetween(date: string, today: string) {
+  const start = new Date(`${date}T12:00:00`)
+  const end = new Date(`${today}T12:00:00`)
+  return Math.floor((end.getTime() - start.getTime()) / 86400000)
+}
+
+function getWeekNoticeKey(rangeStart: string, rangeEnd: string, lashistId: string) {
+  return `lamour_lashist_week_notice_${rangeStart}_${rangeEnd}_${lashistId}`
+}
+
 function calculateDashboardData(params: {
   appointments: DashboardAppointmentRow[]
   payments: DashboardPaymentRow[]
@@ -199,7 +237,11 @@ function calculateDashboardData(params: {
     .filter((row) => row.status === "pending" || row.status === "confirmed")
     .reduce((acc, row) => acc + Number(row.remaining_amount ?? 0), 0)
 
-  const completedAppointments = appointments.filter(
+  const rangePendingAmount = rangeAppointments
+    .filter((row) => row.status === "pending" || row.status === "confirmed")
+    .reduce((acc, row) => acc + Number(row.remaining_amount ?? 0), 0)
+
+  const completedAppointments = rangeAppointments.filter(
     (row) => row.status === "completed"
   )
 
@@ -215,7 +257,7 @@ function calculateDashboardData(params: {
 
   const serviceCounter = new Map<string, number>()
 
-  appointments
+  rangeAppointments
     .filter((row) => row.status !== "cancelled" && row.status !== "no_show")
     .forEach((row) => {
       const service = getServiceData(row.services)
@@ -228,6 +270,149 @@ function calculateDashboardData(params: {
     .map(([name, count]) => ({ name, count }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 5)
+
+  const lashistSummaryMap = new Map<string, LashistWeeklySummary>()
+
+  rangeAppointments
+    .filter((row) => row.lashist_id || row.lashista)
+    .forEach((row) => {
+      const service = getServiceData(row.services)
+      const lashistKey = row.lashist_id || row.lashista || "unassigned"
+      const lashistName = row.lashista?.trim() || "Sin asignar"
+      const serviceName = service?.name?.trim() || "Sin servicio"
+      const income = Number(row.total_price ?? 0)
+      const minutes = Number(service?.duration_minutes ?? 0)
+      const summary =
+        lashistSummaryMap.get(lashistKey) ??
+        {
+          lashistKey,
+          lashistName,
+          totalServices: 0,
+          totalIncome: 0,
+          totalMinutes: 0,
+          cancelled: 0,
+          noShow: 0,
+          services: [],
+        }
+
+      if (row.status === "cancelled") {
+        summary.cancelled += 1
+        lashistSummaryMap.set(lashistKey, summary)
+        return
+      }
+
+      if (row.status === "no_show") {
+        summary.noShow += 1
+        lashistSummaryMap.set(lashistKey, summary)
+        return
+      }
+
+      if (row.status !== "completed") {
+        lashistSummaryMap.set(lashistKey, summary)
+        return
+      }
+
+      const serviceSummary =
+        summary.services.find((item) => item.serviceName === serviceName) ??
+        {
+          serviceName,
+          count: 0,
+          income: 0,
+          minutes: 0,
+        }
+
+      serviceSummary.count += 1
+      serviceSummary.income += income
+      serviceSummary.minutes += minutes
+
+      if (!summary.services.some((item) => item.serviceName === serviceName)) {
+        summary.services.push(serviceSummary)
+      }
+
+      summary.totalServices += 1
+      summary.totalIncome += income
+      summary.totalMinutes += minutes
+      lashistSummaryMap.set(lashistKey, summary)
+    })
+
+  const lashistWeeklySummary = Array.from(lashistSummaryMap.values())
+    .map((summary) => ({
+      ...summary,
+      services: summary.services.sort((a, b) => b.count - a.count),
+    }))
+    .sort((a, b) => b.totalServices - a.totalServices)
+
+  const activeRangeAppointments = rangeAppointments.filter(
+    (row) => row.status !== "cancelled" && row.status !== "no_show"
+  )
+
+  const lastVisitByClient = new Map<string, string>()
+  appointments
+    .filter((row) => row.client_id && (row.status === "completed" || row.status === "confirmed"))
+    .forEach((row) => {
+      const key = row.client_id ?? ""
+      const current = lastVisitByClient.get(key)
+      if (!current || row.date > current) lastVisitByClient.set(key, row.date)
+    })
+
+  const inactiveClients = Array.from(lastVisitByClient.values()).filter(
+    (date) => getDaysBetween(date, today) >= 45
+  ).length
+
+  const pendingLashistNotices = rangeAppointments.filter((row) => {
+    if (!row.lashist_id || !row.created_at) return false
+    if (row.status === "cancelled" || row.status === "no_show") return false
+    if (typeof window === "undefined") return false
+
+    const lastSent = Number(
+      window.localStorage.getItem(
+        getWeekNoticeKey(rangeStart, rangeEnd, row.lashist_id)
+      ) ?? 0
+    )
+
+    if (!lastSent) return true
+    return new Date(row.created_at).getTime() > lastSent
+  }).length
+
+  const operationalAlerts: OperationalAlert[] = [
+    {
+      id: "unassigned",
+      title: "Citas sin lashista",
+      count: activeRangeAppointments.filter((row) => !row.lashist_id).length,
+      description: "Asigna responsable para evitar huecos en agenda.",
+      tone: "amber",
+    },
+    {
+      id: "confirmed-debt",
+      title: "Confirmadas con saldo",
+      count: rangeAppointments.filter(
+        (row) => row.status === "confirmed" && Number(row.remaining_amount ?? 0) > 0
+      ).length,
+      description: "Conviene recordar pago antes del cierre.",
+      tone: "red",
+    },
+    {
+      id: "new-pending",
+      title: "Reservas por confirmar",
+      count: rangeAppointments.filter((row) => row.status === "pending").length,
+      description: "Nuevas o pendientes de validación.",
+      tone: "blue",
+    },
+    {
+      id: "inactive-clients",
+      title: "Clientas por recuperar",
+      count: inactiveClients,
+      description: "No volvieron en 45 días o más.",
+      tone: "stone",
+    },
+    {
+      id: "lashist-notices",
+      title: "Avisos a lashistas",
+      count: pendingLashistNotices,
+      description: "Cambios o reservas asignadas sin aviso semanal.",
+      tone: "green",
+    },
+  ]
 
   const upcomingReservations: UpcomingReservation[] = todayRows
     .filter((row) => isTodayFutureReservation(row, today))
@@ -327,6 +512,7 @@ function calculateDashboardData(params: {
     todayIncome,
     monthIncome,
     rangeIncome,
+    rangePendingAmount,
     totalPendingAmount,
     averageTicket,
     completionRate: calculateRate(completedInRange, rangeAppointments.length),
@@ -339,6 +525,8 @@ function calculateDashboardData(params: {
     upcomingReservations,
     dailyIncome,
     statusCounts,
+    lashistWeeklySummary,
+    operationalAlerts,
   }
 }
 
@@ -410,6 +598,24 @@ export function useAdminDashboard() {
   const downloadPdfReport = () => {
     const reportWindow = window.open("", "_blank")
     if (!reportWindow) return
+
+    const lashistRows =
+      dashboardData.lashistWeeklySummary.length > 0
+        ? dashboardData.lashistWeeklySummary
+            .flatMap((summary) =>
+              summary.services.map(
+                (service) => `
+                  <tr>
+                    <td>${summary.lashistName}</td>
+                    <td>${service.serviceName}</td>
+                    <td>${service.count}</td>
+                    <td>S/ ${service.income.toFixed(2)}</td>
+                  </tr>
+                `
+              )
+            )
+            .join("")
+        : `<tr><td colspan="4">No hay servicios completados por lashista.</td></tr>`
 
     const html = `
       <html>
@@ -487,7 +693,7 @@ export function useAdminDashboard() {
             <div class="card"><div class="label">Ingresos del rango</div><div class="value">S/ ${dashboardData.stats.rangeIncome.toFixed(2)}</div></div>
             <div class="card"><div class="label">Ingresos hoy</div><div class="value">S/ ${dashboardData.stats.todayIncome.toFixed(2)}</div></div>
             <div class="card"><div class="label">Ingresos del mes</div><div class="value">S/ ${dashboardData.stats.monthIncome.toFixed(2)}</div></div>
-            <div class="card"><div class="label">Saldo pendiente global</div><div class="value">S/ ${dashboardData.stats.totalPendingAmount.toFixed(2)}</div></div>
+            <div class="card"><div class="label">Saldo pendiente del rango</div><div class="value">S/ ${dashboardData.stats.rangePendingAmount.toFixed(2)}</div></div>
             <div class="card"><div class="label">Ticket promedio</div><div class="value">S/ ${dashboardData.stats.averageTicket.toFixed(2)}</div></div>
             <div class="card"><div class="label">Tasa completadas</div><div class="value">${dashboardData.stats.completionRate}%</div></div>
             <div class="card"><div class="label">Tasa no show</div><div class="value">${dashboardData.stats.noShowRate}%</div></div>
@@ -529,6 +735,19 @@ export function useAdminDashboard() {
             </tbody>
           </table>
 
+          <h2>Servicios realizados por lashista</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Lashista</th>
+                <th>Servicio</th>
+                <th>Cantidad</th>
+                <th>Ingreso estimado</th>
+              </tr>
+            </thead>
+            <tbody>${lashistRows}</tbody>
+          </table>
+
           <h2>Servicios más vendidos</h2>
           <table>
             <thead>
@@ -554,6 +773,70 @@ export function useAdminDashboard() {
     reportWindow.print()
   }
 
+  const downloadWeeklyReport = () => {
+    const reportWindow = window.open("", "_blank")
+    if (!reportWindow) return
+
+    const rows =
+      dashboardData.lashistWeeklySummary.length > 0
+        ? dashboardData.lashistWeeklySummary
+            .map(
+              (summary) => `
+                <tr>
+                  <td>${summary.lashistName}</td>
+                  <td>${summary.totalServices}</td>
+                  <td>S/ ${summary.totalIncome.toFixed(2)}</td>
+                  <td>${Math.round(summary.totalMinutes / 60)} h</td>
+                  <td>${summary.noShow}</td>
+                  <td>${summary.cancelled}</td>
+                  <td>${summary.services
+                    .map((service) => `${service.serviceName} (${service.count})`)
+                    .join(", ") || "-"}</td>
+                </tr>
+              `
+            )
+            .join("")
+        : `<tr><td colspan="7">No hay actividad por lashista en este rango.</td></tr>`
+
+    const html = `
+      <html>
+        <head>
+          <title>Reporte semanal por lashista</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 32px; color: #1c1917; }
+            h1 { margin-bottom: 4px; }
+            .muted { color: #78716c; font-size: 13px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 24px; }
+            th, td { border-bottom: 1px solid #e7e5e4; padding: 10px; text-align: left; font-size: 12px; vertical-align: top; }
+            th { background: #f5f5f4; }
+          </style>
+        </head>
+        <body>
+          <h1>Reporte semanal por lashista</h1>
+          <p class="muted">Rango: ${rangeStart} al ${rangeEnd}</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Lashista</th>
+                <th>Servicios</th>
+                <th>Ingresos</th>
+                <th>Horas</th>
+                <th>No show</th>
+                <th>Canceladas</th>
+                <th>Detalle</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </body>
+      </html>
+    `
+
+    reportWindow.document.write(html)
+    reportWindow.document.close()
+    reportWindow.print()
+  }
+
   return {
     today,
     rangeStart,
@@ -562,9 +845,12 @@ export function useAdminDashboard() {
     setRangeEnd,
     setLastDaysRange,
     downloadPdfReport,
+    downloadWeeklyReport,
 
     stats: dashboardData.stats ?? initialStats,
     topServices: dashboardData.topServices,
+    lashistWeeklySummary: dashboardData.lashistWeeklySummary,
+    operationalAlerts: dashboardData.operationalAlerts,
     upcomingReservations: dashboardData.upcomingReservations,
     dailyIncome: dashboardData.dailyIncome,
     statusCounts: dashboardData.statusCounts,

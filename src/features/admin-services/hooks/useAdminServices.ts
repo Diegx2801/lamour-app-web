@@ -21,6 +21,7 @@ type ServiceFormState = {
   is_package: boolean
   package_item_ids: string[]
   duration_manually_edited: boolean
+  sort_order: string
 }
 
 const initialForm: ServiceFormState = {
@@ -36,6 +37,7 @@ const initialForm: ServiceFormState = {
   is_package: false,
   package_item_ids: [],
   duration_manually_edited: false,
+  sort_order: "0",
 }
 
 export function useAdminServices() {
@@ -158,6 +160,7 @@ export function useAdminServices() {
       is_package: Boolean(service.is_package),
       package_item_ids: service.package_items ?? [],
       duration_manually_edited: Boolean(service.is_package),
+      sort_order: String(service.sort_order ?? 0),
     })
 
     setError("")
@@ -319,6 +322,7 @@ export function useAdminServices() {
             })
           : false,
         package_item_ids: form.is_package ? form.package_item_ids : [],
+        sort_order: Number(form.sort_order || 0),
       }
 
       if (editingServiceId) {

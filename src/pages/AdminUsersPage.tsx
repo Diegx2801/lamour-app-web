@@ -6,7 +6,8 @@ import type {
 
 function getRoleLabel(role: string | null) {
   if (role === "admin" || role === "owner") return "Dueña"
-  if (role === "staff") return "Agenda y seguimiento"
+  if (role === "staff") return "Agenda"
+  if (role === "followup") return "Seguimiento"
   return "Sin rol"
 }
 
@@ -84,7 +85,7 @@ function AdminUsersPage() {
           </h2>
 
           <p className="mt-1 text-sm text-stone-500">
-            El rol operativo puede gestionar agenda, reservas y seguimiento.
+            Separa agenda de seguimiento para que cada persona vea solo lo necesario.
           </p>
 
           <form onSubmit={users.handleSubmit} className="mt-5 space-y-4">
@@ -142,7 +143,8 @@ function AdminUsersPage() {
                 onChange={users.handleChange}
                 className="w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-sm outline-none focus:border-stone-500"
               >
-                <option value="staff">Agenda y seguimiento</option>
+                <option value="staff">Agenda</option>
+                <option value="followup">Seguimiento</option>
                 <option value="owner">Dueña</option>
               </select>
             </Field>

@@ -1,4 +1,4 @@
-﻿import { Link } from "react-router"
+import { Link } from "react-router"
 import {
   getSingle,
   useAdminActivity,
@@ -26,7 +26,7 @@ function AdminActivityPage() {
             Actividad
           </h1>
           <p className="mt-2 text-sm leading-6 text-stone-600">
-            Revisa quiÃ©n editÃ³ citas, cambiÃ³ estados o registrÃ³ pagos.
+            Revisa quién editó citas, cambió estados o registró pagos.
           </p>
         </div>
 
@@ -48,14 +48,14 @@ function AdminActivityPage() {
           <input
             value={activity.search}
             onChange={(event) => activity.setSearch(event.target.value)}
-            placeholder="Cliente, telÃ©fono, servicio o usuario"
+            placeholder="Cliente, teléfono, servicio o usuario"
             className="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-sm outline-none focus:border-stone-700"
           />
         </label>
 
         <label className="block">
           <span className="mb-2 block text-sm font-medium text-stone-800">
-            AcciÃ³n
+            Acción
           </span>
           <select
             value={activity.actionFilter}
@@ -113,10 +113,10 @@ function AdminActivityPage() {
               return (
                 <article
                   key={log.id}
-                  className="rounded-2xl border border-stone-200 bg-stone-50 p-4"
+                  className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm ring-1 ring-stone-100"
                 >
                   <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                    <div>
+                    <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <span
                           className={`rounded-full px-3 py-1 text-xs font-semibold ${getActionClasses(
@@ -126,19 +126,22 @@ function AdminActivityPage() {
                           {getActionLabel(log.action)}
                         </span>
                         <span className="text-xs text-stone-500">
-                          {new Date(log.created_at).toLocaleString("es-PE")}
+                          {new Date(log.created_at).toLocaleString("es-PE", {
+                            dateStyle: "short",
+                            timeStyle: "short",
+                          })}
                         </span>
                       </div>
 
-                      <h3 className="mt-3 font-semibold text-stone-950">
+                      <h3 className="mt-3 text-base font-semibold text-stone-950">
                         {client?.full_name ?? "Cliente no disponible"}
                       </h3>
                       <p className="mt-1 text-sm text-stone-600">
-                        {service?.name ?? "Servicio no disponible"} Â·{" "}
-                        {formatAppointmentDate(appointment?.date)} Â·{" "}
+                        {service?.name ?? "Servicio no disponible"} ·{" "}
+                        {formatAppointmentDate(appointment?.date)} ·{" "}
                         {String(appointment?.time ?? "").slice(0, 5) || "--:--"}
                       </p>
-                      <p className="mt-2 text-sm text-stone-700">
+                      <p className="mt-3 rounded-2xl bg-stone-50 px-4 py-3 text-sm leading-6 text-stone-800">
                         {formatAuditDetails(log.details)}
                       </p>
                       <p className="mt-2 text-xs text-stone-500">
@@ -176,7 +179,7 @@ function getActionLabel(action: string) {
     case "status_updated":
       return "Estado"
     case "reservation_updated":
-      return "EdiciÃ³n"
+      return "Edición"
     case "payment_registered":
       return "Pago"
     default:

@@ -27,6 +27,8 @@ function AdminAgendaPage() {
         loadingLashists={agenda.loadingLashists}
         onDateChange={agenda.setSelectedDate}
         onLashistChange={agenda.setSelectedLashistId}
+        noticeState={agenda.lashistNoticeState}
+        onSendWeek={agenda.sendWeeklyWhatsappToLashist}
       />
 
       <AgendaSummary reservations={agenda.filteredReservations} />

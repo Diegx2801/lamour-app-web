@@ -149,13 +149,15 @@ function AdminEditReservationPage() {
 
         {reservation.error && <AlertMessage message={reservation.error} />}
 
-        <button
-          type="submit"
-          disabled={reservation.saving}
-          className="w-full rounded-xl bg-stone-950 px-6 py-3 text-sm font-medium text-white transition hover:bg-stone-800 disabled:opacity-60"
-        >
-          {reservation.saving ? "Guardando..." : "Guardar cambios"}
-        </button>
+        <div className="sticky bottom-20 z-10 rounded-2xl bg-white/95 pt-2 backdrop-blur md:static md:bg-transparent md:pt-0 md:backdrop-blur-0">
+          <button
+            type="submit"
+            disabled={reservation.saving}
+            className="w-full rounded-xl bg-stone-950 px-6 py-3 text-sm font-medium text-white shadow-lg transition hover:bg-stone-800 disabled:opacity-60 md:shadow-none"
+          >
+            {reservation.saving ? "Guardando..." : "Guardar cambios"}
+          </button>
+        </div>
       </form>
 
       <section className="mx-auto mt-6 max-w-2xl rounded-[2rem] border border-stone-200 bg-white p-5 shadow-sm md:p-6">

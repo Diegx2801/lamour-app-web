@@ -68,7 +68,7 @@ export function formatAuditDetails(details: AuditDetails) {
       getChangeText(previous, next, "date", "fecha"),
       getChangeText(previous, next, "time", "hora"),
       getChangeText(previous, next, "status", "estado", labelStatus),
-      getChangeText(previous, next, "lashistId", "lashista"),
+      getChangeText(previous, next, "lashistName", "lashista"),
       getChangeText(previous, next, "notes", "observaciones"),
     ].filter(Boolean)
 
