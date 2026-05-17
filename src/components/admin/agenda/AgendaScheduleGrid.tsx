@@ -1,4 +1,3 @@
-import { timeSlots } from "../../../data/timeSlots"
 import type {
   AgendaLashistRow,
   AgendaReservation,
@@ -9,6 +8,7 @@ import { getOccupancyBadgeClasses } from "./agendaUtils"
 
 type AgendaScheduleGridProps = {
   reservationsByTime: Record<string, AgendaReservation[]>
+  timeSlots: string[]
   blockedTimes: string[]
   isFullDayBlocked: boolean
   lashCapacity: number
@@ -23,6 +23,7 @@ type AgendaScheduleGridProps = {
 
 function AgendaScheduleGrid({
   reservationsByTime,
+  timeSlots,
   blockedTimes,
   isFullDayBlocked,
   lashCapacity,
@@ -36,12 +37,12 @@ function AgendaScheduleGrid({
 }: AgendaScheduleGridProps) {
   return (
     <div className="overflow-hidden rounded-[1.5rem] border border-stone-200 bg-white shadow-sm md:rounded-3xl">
-      <div className="grid grid-cols-[82px_1fr] border-b border-stone-200 bg-stone-50 md:grid-cols-[110px_1fr]">
-        <div className="border-r border-stone-200 px-3 py-3 text-xs font-semibold text-stone-600 md:px-4 md:text-sm">
+      <div className="grid grid-cols-[68px_1fr] border-b border-stone-200 bg-stone-50 sm:grid-cols-[82px_1fr] md:grid-cols-[110px_1fr]">
+        <div className="border-r border-stone-200 px-2 py-3 text-xs font-semibold text-stone-600 md:px-4 md:text-sm">
           Hora
         </div>
 
-        <div className="px-3 py-3 text-xs font-semibold text-stone-600 md:px-4 md:text-sm">
+        <div className="px-2 py-3 text-xs font-semibold text-stone-600 md:px-4 md:text-sm">
           Reservas / disponibilidad
         </div>
       </div>
@@ -55,9 +56,9 @@ function AgendaScheduleGrid({
           return (
             <div
               key={slot}
-              className="grid grid-cols-[82px_1fr] border-b border-stone-100 last:border-b-0 md:grid-cols-[110px_1fr]"
+              className="grid grid-cols-[68px_1fr] border-b border-stone-100 last:border-b-0 sm:grid-cols-[82px_1fr] md:grid-cols-[110px_1fr]"
             >
-              <div className="border-r border-stone-100 bg-stone-50/70 px-3 py-4 md:px-4 md:py-5">
+              <div className="border-r border-stone-100 bg-stone-50/70 px-2 py-4 md:px-4 md:py-5">
                 <p className="text-sm font-semibold text-stone-900 md:text-base">
                   {slot}
                 </p>
@@ -74,7 +75,7 @@ function AgendaScheduleGrid({
                 </span>
               </div>
 
-              <div className="min-h-[96px] px-3 py-3 md:min-h-[110px] md:px-4 md:py-4">
+              <div className="min-w-0 px-2 py-3 md:min-h-[110px] md:px-4 md:py-4">
                 {isFullDayBlocked ? (
                   <BlockedBox label="Día bloqueado" />
                 ) : isBlocked ? (
@@ -145,7 +146,7 @@ function LashistColumns({
   ]
 
   return (
-    <div className="grid gap-3 xl:grid-cols-3">
+    <div className="grid gap-2 md:gap-3 xl:grid-cols-3">
       {columns.map((column) => {
         const columnReservations = reservations.filter((reservation) =>
           column.id === "__unassigned"
@@ -168,7 +169,7 @@ function LashistColumns({
             </div>
 
             {columnReservations.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-stone-200 bg-white/70 px-3 py-4 text-center text-xs text-stone-400">
+              <div className="rounded-xl border border-dashed border-stone-200 bg-white/70 px-3 py-3 text-center text-xs text-stone-400 md:py-4">
                 Libre
               </div>
             ) : (

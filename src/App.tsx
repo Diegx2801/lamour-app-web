@@ -32,6 +32,9 @@ const AdminRetentionPage = lazy(() => import("./pages/AdminRetentionPage"))
 const AdminLashistsPage = lazy(() => import("./pages/AdminLashistsPage"))
 const AdminUsersPage = lazy(() => import("./pages/AdminUsersPage"))
 const AdminSiteContentPage = lazy(() => import("./pages/AdminSiteContentPage"))
+const AdminBusinessHoursPage = lazy(
+  () => import("./pages/AdminBusinessHoursPage")
+)
 const AdminWhatsappTemplatesPage = lazy(
   () => import("./pages/AdminWhatsappTemplatesPage")
 )
@@ -195,6 +198,15 @@ function App() {
             />
 
             <Route
+              path="horarios"
+              element={
+                <ProtectedRoute allowedRoles={["owner"]}>
+                  <AdminBusinessHoursPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
               path="plantillas"
               element={
                 <ProtectedRoute allowedRoles={["owner"]}>
@@ -224,7 +236,7 @@ function App() {
             <Route
               path="fidelizacion"
               element={
-                <ProtectedRoute allowedRoles={["owner"]}>
+                <ProtectedRoute allowedRoles={["owner", "staff"]}>
                   <AdminRetentionPage />
                 </ProtectedRoute>
               }

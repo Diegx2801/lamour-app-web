@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router"
 import { toast } from "sonner"
-import { timeSlots } from "../../../data/timeSlots"
+import { fetchBusinessHours } from "../../business-hours/api/businessHoursService"
 import {
-  isSunday,
-  normalizePeruvianPhone,
-} from "../../reservations/utils/reservationUtils"
+  getBusinessHourForDate,
+  getTimeSlotsForBusinessHour,
+  type BusinessHour,
+} from "../../business-hours/utils/businessHoursUtils"
+import { normalizePeruvianPhone } from "../../reservations/utils/reservationUtils"
 import {
   getBlockedTimes,
   getFullDayBlock,
@@ -57,6 +59,7 @@ export function useAdminCreateReservation() {
   const [form, setForm] = useState<AdminCreateReservationForm>(initialForm)
   const [services, setServices] = useState<AdminServiceRow[]>([])
   const [lashists, setLashists] = useState<AdminLashistRow[]>([])
+  const [businessHours, setBusinessHours] = useState<BusinessHour[]>([])
   const [availableSlots, setAvailableSlots] = useState<string[]>([])
   const [blockedReason, setBlockedReason] = useState("")
 
@@ -107,13 +110,15 @@ export function useAdminCreateReservation() {
         setLoadingServices(true)
         setLoadingLashists(true)
 
-        const [servicesData, lashistsData] = await Promise.all([
+        const [servicesData, lashistsData, businessHoursData] = await Promise.all([
           fetchAdminServices(),
           fetchAdminLashists(),
+          fetchBusinessHours(),
         ])
 
         setServices(servicesData)
         setLashists(lashistsData)
+        setBusinessHours(businessHoursData)
 
         setForm((prev) => ({
           ...prev,
@@ -152,9 +157,12 @@ export function useAdminCreateReservation() {
         return
       }
 
-      if (isSunday(form.date)) {
+      const businessHour = getBusinessHourForDate(businessHours, form.date)
+      const dateTimeSlots = getTimeSlotsForBusinessHour(businessHour)
+
+      if (businessHour?.is_closed || dateTimeSlots.length === 0) {
         setAvailableSlots([])
-        setBlockedReason("No se atiende domingos.")
+        setBlockedReason("No se atiende ese día.")
         return
       }
 
@@ -184,7 +192,7 @@ export function useAdminCreateReservation() {
           appointments,
           selectedService: selectedServiceData,
           date: form.date,
-          timeSlots,
+          timeSlots: dateTimeSlots,
           blockedTimes,
           lashistas: lashCapacity,
           selectedLashistId: form.lashistId || null,
@@ -211,7 +219,7 @@ export function useAdminCreateReservation() {
     }
 
     loadAvailableSlots()
-  }, [form.date, form.time, form.lashistId, lashCapacity, selectedServiceData])
+  }, [businessHours, form.date, form.time, form.lashistId, lashCapacity, selectedServiceData])
 
   const handleChange = (
     event: React.ChangeEvent<
@@ -262,8 +270,11 @@ export function useAdminCreateReservation() {
       return "Completa todos los campos obligatorios."
     }
 
-    if (isSunday(form.date)) {
-      return "No se atiende domingos."
+    const businessHour = getBusinessHourForDate(businessHours, form.date)
+    const dateTimeSlots = getTimeSlotsForBusinessHour(businessHour)
+
+    if (businessHour?.is_closed || dateTimeSlots.length === 0) {
+      return "No se atiende ese día."
     }
 
     if (!availableSlots.includes(form.time)) {
@@ -356,6 +367,9 @@ export function useAdminCreateReservation() {
         selectedService: selectedServiceData,
         date: form.date,
         time: form.time,
+        timeSlots: getTimeSlotsForBusinessHour(
+          getBusinessHourForDate(businessHours, form.date)
+        ),
         lashistas: lashCapacity,
         selectedLashistId: form.lashistId || null,
       })

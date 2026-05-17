@@ -1,13 +1,13 @@
+import { useBusinessHours } from "../../features/business-hours/hooks/useBusinessHours"
+import { formatBusinessHour } from "../../features/business-hours/utils/businessHoursUtils"
+
 function HoursSection() {
-  const schedule = [
-    { day: "Lunes", hours: "9:00 AM - 8:00 PM" },
-    { day: "Martes", hours: "9:00 AM - 8:00 PM" },
-    { day: "Miércoles", hours: "9:00 AM - 8:00 PM" },
-    { day: "Jueves", hours: "9:00 AM - 8:00 PM" },
-    { day: "Viernes", hours: "9:00 AM - 8:00 PM" },
-    { day: "Sábado", hours: "9:00 AM - 7:00 PM" },
-    { day: "Domingo", hours: "Cerrado" },
-  ]
+  const { businessHours } = useBusinessHours()
+  const schedule = [...businessHours].sort((a, b) => {
+    const dayA = a.day_of_week === 0 ? 7 : a.day_of_week
+    const dayB = b.day_of_week === 0 ? 7 : b.day_of_week
+    return dayA - dayB
+  })
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 md:py-16">
@@ -28,12 +28,14 @@ function HoursSection() {
         <div className="mt-8 space-y-3 md:space-y-4">
           {schedule.map((item) => (
             <div
-              key={item.day}
+              key={item.day_of_week}
               className="flex items-center justify-between gap-4 rounded-2xl border border-stone-200 px-4 py-4"
             >
-              <span className="font-medium text-stone-900">{item.day}</span>
+              <span className="font-medium text-stone-900">
+                {item.day_label}
+              </span>
               <span className="text-right text-sm text-stone-600">
-                {item.hours}
+                {formatBusinessHour(item)}
               </span>
             </div>
           ))}

@@ -1,13 +1,17 @@
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate, useParams } from "react-router"
 import { toast } from "sonner"
-import { timeSlots } from "../../../data/timeSlots"
+import { fetchBusinessHours } from "../../business-hours/api/businessHoursService"
+import {
+  getBusinessHourForDate,
+  getTimeSlotsForBusinessHour,
+  type BusinessHour,
+} from "../../business-hours/utils/businessHoursUtils"
 import {
   createAppointmentAuditLog,
   fetchAppointmentAuditLogs,
   type AppointmentAuditLog,
 } from "../../appointment-audit/api/appointmentAuditService"
-import { isSunday } from "../../reservations/utils/reservationUtils"
 import {
   getAvailableSlotsForService,
   getBlockedTimes,
@@ -52,11 +56,12 @@ export function useAdminEditReservation() {
 
   const [form, setForm] = useState<EditReservationForm>(initialForm)
   const [lashists, setLashists] = useState<EditLashistRow[]>([])
+  const [businessHours, setBusinessHours] = useState<BusinessHour[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [loadingSlots, setLoadingSlots] = useState(false)
   const [error, setError] = useState("")
-  const [availableSlots, setAvailableSlots] = useState<string[]>(timeSlots)
+  const [availableSlots, setAvailableSlots] = useState<string[]>([])
   const [selectedServiceData, setSelectedServiceData] = useState<
     ReturnType<typeof getRelatedService>
   >(null)
@@ -86,9 +91,10 @@ export function useAdminEditReservation() {
         setLoading(true)
         setError("")
 
-        const [reservation, lashistsData] = await Promise.all([
+        const [reservation, lashistsData, businessHoursData] = await Promise.all([
           fetchReservationById(currentReservationId),
           fetchEditLashists(),
+          fetchBusinessHours(),
         ])
 
         const service = getRelatedService(reservation.services)
@@ -101,6 +107,7 @@ export function useAdminEditReservation() {
         }
 
         setLashists(lashistsData)
+        setBusinessHours(businessHoursData)
         setForm(nextForm)
         setInitialSnapshot(nextForm)
 
@@ -127,13 +134,16 @@ export function useAdminEditReservation() {
       setError("")
 
       if (!form.date || !currentReservationId) {
-        setAvailableSlots(timeSlots)
+        setAvailableSlots([])
         return
       }
 
-      if (isSunday(form.date)) {
+      const businessHour = getBusinessHourForDate(businessHours, form.date)
+      const dateTimeSlots = getTimeSlotsForBusinessHour(businessHour)
+
+      if (businessHour?.is_closed || dateTimeSlots.length === 0) {
         setAvailableSlots([])
-        setBlockedReason("No se atiende domingos.")
+        setBlockedReason("No se atiende ese día.")
         return
       }
 
@@ -173,7 +183,7 @@ export function useAdminEditReservation() {
               }
             : null,
           date: form.date,
-          timeSlots,
+          timeSlots: dateTimeSlots,
           blockedTimes,
           excludeAppointmentId: currentReservationId,
           lashistas: lashCapacity,
@@ -191,7 +201,7 @@ export function useAdminEditReservation() {
             ? err.message
             : "Error al cargar disponibilidad."
 
-        setAvailableSlots(timeSlots)
+        setAvailableSlots([])
         setBlockedReason("")
         setError(message)
         toast.error(message)
@@ -201,7 +211,7 @@ export function useAdminEditReservation() {
     }
 
     loadAvailableSlots()
-  }, [form.date, form.time, form.lashistId, currentReservationId, lashCapacity, selectedServiceData])
+  }, [businessHours, form.date, form.time, form.lashistId, currentReservationId, lashCapacity, selectedServiceData])
 
   const handleChange = (
     event: React.ChangeEvent<
@@ -236,8 +246,11 @@ export function useAdminEditReservation() {
       return "Completa los campos obligatorios."
     }
 
-    if (isSunday(form.date)) {
-      return "No se atiende domingos."
+    const businessHour = getBusinessHourForDate(businessHours, form.date)
+    const dateTimeSlots = getTimeSlotsForBusinessHour(businessHour)
+
+    if (businessHour?.is_closed || dateTimeSlots.length === 0) {
+      return "No se atiende ese día."
     }
 
     if (blockedReason) {
@@ -320,6 +333,9 @@ export function useAdminEditReservation() {
         },
         date: form.date,
         time: form.time,
+        timeSlots: getTimeSlotsForBusinessHour(
+          getBusinessHourForDate(businessHours, form.date)
+        ),
         excludeAppointmentId: currentReservationId,
         lashistas: lashCapacity,
         selectedLashistId: form.lashistId || null,

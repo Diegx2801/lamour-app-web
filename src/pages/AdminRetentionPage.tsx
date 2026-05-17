@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react"
 import { Link } from "react-router"
 import { useAdminRetention } from "../features/admin-retention/hooks/useAdminRetention"
+import { supabase } from "../lib/supabase"
 
 function formatDate(date: string) {
   const [year, month, day] = date.split("-")
@@ -8,6 +10,24 @@ function formatDate(date: string) {
 
 function AdminRetentionPage() {
   const retention = useAdminRetention()
+  const [role, setRole] = useState<string | null>(null)
+
+  useEffect(() => {
+    const loadRole = async () => {
+      const { data: userData } = await supabase.auth.getUser()
+      if (!userData.user) return
+
+      const { data } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", userData.user.id)
+        .single()
+
+      setRole(data?.role ?? null)
+    }
+
+    loadRole()
+  }, [])
 
   return (
     <div>
@@ -101,12 +121,14 @@ function AdminRetentionPage() {
                   >
                     WhatsApp
                   </button>
-                  <Link
-                    to={`/admin/clientes/${client.clientId}/historial`}
-                    className="rounded-xl border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-700"
-                  >
-                    Historial
-                  </Link>
+                  {(role === "owner" || role === "admin") && (
+                    <Link
+                      to={`/admin/clientes/${client.clientId}/historial`}
+                      className="rounded-xl border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-700"
+                    >
+                      Historial
+                    </Link>
+                  )}
                 </div>
               </div>
             </article>

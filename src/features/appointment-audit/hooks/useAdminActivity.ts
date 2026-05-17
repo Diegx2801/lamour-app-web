@@ -1,8 +1,13 @@
 import { useEffect, useMemo, useState } from "react"
 import {
-  fetchAppointmentAuditActivity,
+  fetchUnifiedAdminActivity,
+  type AdminActivityLog,
   type AppointmentAuditActivity,
 } from "../api/appointmentAuditService"
+import {
+  formatAuditDetails,
+  getAuditLabel,
+} from "../utils/auditFormatters"
 
 export function getSingle<T>(value: T | T[] | null | undefined) {
   if (!value) return null
@@ -18,7 +23,9 @@ function getLocalDateString() {
 }
 
 export function useAdminActivity() {
-  const [logs, setLogs] = useState<AppointmentAuditActivity[]>([])
+  const [logs, setLogs] = useState<(AppointmentAuditActivity | AdminActivityLog)[]>(
+    []
+  )
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [actionFilter, setActionFilter] = useState("all")
@@ -29,7 +36,7 @@ export function useAdminActivity() {
     try {
       setLoading(true)
       setError("")
-      const data = await fetchAppointmentAuditActivity()
+      const data = await fetchUnifiedAdminActivity()
       setLogs(data)
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo cargar actividad.")
@@ -59,6 +66,9 @@ export function useAdminActivity() {
       const text = [
         log.actor_email,
         log.action,
+        getAuditLabel(log.action),
+        formatAuditDetails(log.details),
+        "entity_type" in log ? log.entity_type : "",
         client?.full_name,
         client?.phone,
         service?.name,
@@ -78,6 +88,12 @@ export function useAdminActivity() {
     })
   }, [actionFilter, dateFilter, logs, search])
 
+  const clearFilters = () => {
+    setSearch("")
+    setActionFilter("all")
+    setDateFilter("")
+  }
+
   return {
     logs: filteredLogs,
     totalLogs: logs.length,
@@ -89,6 +105,7 @@ export function useAdminActivity() {
     setDateFilter,
     search,
     setSearch,
+    clearFilters,
     today: getLocalDateString(),
     refresh: loadActivity,
   }

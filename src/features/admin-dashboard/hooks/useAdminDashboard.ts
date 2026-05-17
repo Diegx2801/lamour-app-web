@@ -55,6 +55,12 @@ export type OperationalAlert = {
   count: number
   description: string
   tone: "red" | "amber" | "blue" | "green" | "stone"
+  items: {
+    id: string
+    title: string
+    subtitle: string
+    href?: string
+  }[]
 }
 
 export type UpcomingReservation = {
@@ -132,6 +138,27 @@ function isTodayFutureReservation(row: DashboardAppointmentRow, today: string) {
   const currentMinutes = now.getHours() * 60 + now.getMinutes()
 
   return timeToMinutes(row.time) >= currentMinutes
+}
+
+function getCurrentMinutes() {
+  const now = new Date()
+  return now.getHours() * 60 + now.getMinutes()
+}
+
+function getAppointmentDuration(row: DashboardAppointmentRow) {
+  const service = getServiceData(row.services)
+  if (!service) return 60
+  return service.category === "Pestañas"
+    ? 120
+    : Number(service.duration_minutes ?? 60)
+}
+
+function isOverdueOpenAppointment(row: DashboardAppointmentRow, today: string) {
+  if (row.date !== today) return false
+  if (row.status !== "pending" && row.status !== "confirmed") return false
+
+  const endMinutes = timeToMinutes(row.time) + getAppointmentDuration(row)
+  return endMinutes <= getCurrentMinutes()
 }
 
 export function getStatusLabel(status: string) {
@@ -374,29 +401,66 @@ function calculateDashboardData(params: {
     return new Date(row.created_at).getTime() > lastSent
   }).length
 
+  const overdueOpenAppointments = todayRows.filter((row) =>
+    isOverdueOpenAppointment(row, today)
+  )
+  const unassignedRows = activeRangeAppointments.filter((row) => !row.lashist_id)
+  const confirmedDebtRows = rangeAppointments.filter(
+    (row) => row.status === "confirmed" && Number(row.remaining_amount ?? 0) > 0
+  )
+  const pendingRows = rangeAppointments.filter((row) => row.status === "pending")
+
+  const buildAppointmentItem = (row: DashboardAppointmentRow) => {
+    const client = getClientData(row.clients)
+    const service = getServiceData(row.services)
+
+    return {
+      id: row.id,
+      title: client?.full_name?.trim() || "Sin nombre",
+      subtitle: `${formatShortDate(row.date)} ${normalizeTime(row.time)} · ${
+        service?.name?.trim() || "Sin servicio"
+      }`,
+      href: `/admin/reservas/${row.id}`,
+    }
+  }
+
   const operationalAlerts: OperationalAlert[] = [
+    {
+      id: "overdue-open",
+      title: "Citas por cerrar",
+      count: overdueOpenAppointments.length,
+      description: "Ya pasó su duración y siguen pendiente/confirmada.",
+      tone: "red",
+      items: overdueOpenAppointments.map(buildAppointmentItem),
+    },
     {
       id: "unassigned",
       title: "Citas sin lashista",
-      count: activeRangeAppointments.filter((row) => !row.lashist_id).length,
+      count: unassignedRows.length,
       description: "Asigna responsable para evitar huecos en agenda.",
       tone: "amber",
+      items: unassignedRows.map(buildAppointmentItem),
     },
     {
       id: "confirmed-debt",
       title: "Confirmadas con saldo",
-      count: rangeAppointments.filter(
-        (row) => row.status === "confirmed" && Number(row.remaining_amount ?? 0) > 0
-      ).length,
+      count: confirmedDebtRows.length,
       description: "Conviene recordar pago antes del cierre.",
       tone: "red",
+      items: confirmedDebtRows.map((row) => ({
+        ...buildAppointmentItem(row),
+        subtitle: `${buildAppointmentItem(row).subtitle} · Saldo S/ ${Number(
+          row.remaining_amount ?? 0
+        ).toFixed(2)}`,
+      })),
     },
     {
       id: "new-pending",
       title: "Reservas por confirmar",
-      count: rangeAppointments.filter((row) => row.status === "pending").length,
+      count: pendingRows.length,
       description: "Nuevas o pendientes de validación.",
       tone: "blue",
+      items: pendingRows.map(buildAppointmentItem),
     },
     {
       id: "inactive-clients",
@@ -404,6 +468,15 @@ function calculateDashboardData(params: {
       count: inactiveClients,
       description: "No volvieron en 45 días o más.",
       tone: "stone",
+      items: Array.from(lastVisitByClient.entries())
+        .filter(([, date]) => getDaysBetween(date, today) >= 45)
+        .slice(0, 8)
+        .map(([clientId, date]) => ({
+          id: clientId,
+          title: "Clienta sin retorno",
+          subtitle: `Ultima visita: ${formatShortDate(date)}`,
+          href: "/admin/fidelizacion",
+        })),
     },
     {
       id: "lashist-notices",
@@ -411,6 +484,21 @@ function calculateDashboardData(params: {
       count: pendingLashistNotices,
       description: "Cambios o reservas asignadas sin aviso semanal.",
       tone: "green",
+      items: rangeAppointments
+        .filter(
+          (row) =>
+            row.lashist_id &&
+            row.status !== "cancelled" &&
+            row.status !== "no_show"
+        )
+        .slice(0, 8)
+        .map((row) => ({
+          ...buildAppointmentItem(row),
+          subtitle: `${buildAppointmentItem(row).subtitle} · ${
+            row.lashista || "Lashista asignada"
+          }`,
+          href: "/admin/agenda",
+        })),
     },
   ]
 

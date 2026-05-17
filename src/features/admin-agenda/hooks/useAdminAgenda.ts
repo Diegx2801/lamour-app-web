@@ -1,8 +1,13 @@
 ﻿import { useEffect, useMemo, useState } from "react"
 import { useCallback } from "react"
 import { toast } from "sonner"
-import { timeSlots } from "../../../data/timeSlots"
 import { supabase } from "../../../lib/supabase"
+import { fetchBusinessHours } from "../../business-hours/api/businessHoursService"
+import {
+  getBusinessHourForDate,
+  getTimeSlotsForBusinessHour,
+  type BusinessHour,
+} from "../../business-hours/utils/businessHoursUtils"
 import { createAppointmentAuditLog } from "../../appointment-audit/api/appointmentAuditService"
 import {
   blockFullDay,
@@ -97,6 +102,11 @@ function getServiceDuration(service: ReturnType<typeof getServiceData>) {
     : Number(service.duration_minutes ?? 60)
 }
 
+function getCurrentMinutes() {
+  const now = new Date()
+  return now.getHours() * 60 + now.getMinutes()
+}
+
 function getOccupancyAtSlot(reservations: AgendaReservation[], slot: string) {
   const slotStart = timeToMinutes(slot)
 
@@ -136,6 +146,7 @@ export function useAdminAgenda() {
   const [selectedDate, setSelectedDate] = useState(today)
   const [selectedLashistId, setSelectedLashistId] = useState("")
   const [lashists, setLashists] = useState<AgendaLashistRow[]>([])
+  const [businessHours, setBusinessHours] = useState<BusinessHour[]>([])
 
   const [reservations, setReservations] = useState<AgendaReservation[]>([])
   const [weekReservations, setWeekReservations] = useState<
@@ -185,8 +196,12 @@ export function useAdminAgenda() {
     const loadLashists = async () => {
       try {
         setLoadingLashists(true)
-        const data = await fetchAgendaLashists()
-        setLashists(data)
+        const [lashistsData, businessHoursData] = await Promise.all([
+          fetchAgendaLashists(),
+          fetchBusinessHours(),
+        ])
+        setLashists(lashistsData)
+        setBusinessHours(businessHoursData)
       } catch {
         toast.error("No se pudieron cargar las lashistas.")
       } finally {
@@ -277,7 +292,11 @@ export function useAdminAgenda() {
   const reservationsByTime = useMemo(() => {
     const grouped: Record<string, AgendaReservation[]> = {}
 
-    timeSlots.forEach((slot) => {
+    const scheduleSlots = getTimeSlotsForBusinessHour(
+      getBusinessHourForDate(businessHours, selectedDate)
+    )
+
+    scheduleSlots.forEach((slot) => {
       grouped[slot] = []
     })
 
@@ -289,7 +308,13 @@ export function useAdminAgenda() {
     })
 
     return grouped
-  }, [filteredReservations])
+  }, [businessHours, filteredReservations, selectedDate])
+
+  const scheduleSlots = useMemo(() => {
+    return getTimeSlotsForBusinessHour(
+      getBusinessHourForDate(businessHours, selectedDate)
+    )
+  }, [businessHours, selectedDate])
 
   const blockedTimes = useMemo(() => {
     return blocks
@@ -323,6 +348,27 @@ export function useAdminAgenda() {
 
   const lashCapacity = selectedLashistId ? 1 : lashists.length
   const canManageBlocks = adminRole === "owner" || adminRole === "admin"
+
+  const overdueOpenReservations = useMemo(() => {
+    if (selectedDate !== today) return []
+
+    const currentMinutes = getCurrentMinutes()
+
+    return filteredReservations
+      .filter(
+        (reservation) =>
+          reservation.status === "pending" || reservation.status === "confirmed"
+      )
+      .filter((reservation) => {
+        const service = getServiceData(reservation.services)
+        const endMinutes =
+          timeToMinutes(normalizeTime(reservation.time)) +
+          getServiceDuration(service)
+
+        return endMinutes <= currentMinutes
+      })
+      .sort((a, b) => normalizeTime(a.time).localeCompare(normalizeTime(b.time)))
+  }, [filteredReservations, selectedDate, today])
 
   const lastNotifyKey = useMemo(
     () => `lamour_lashist_week_notice_${weekRange.start}_${weekRange.end}`,
@@ -574,6 +620,7 @@ Si aparece un cambio nuevo, te enviaremos una actualización.`
     setSelectedLashistId,
     selectedLashist,
     lashists,
+    scheduleSlots,
 
     reservations,
     weekReservations,
@@ -591,6 +638,7 @@ Si aparece un cambio nuevo, te enviaremos una actualización.`
 
     lashCapacity,
     canManageBlocks,
+    overdueOpenReservations,
     lashistNoticeState,
     getLashOccupancy,
     sendWeeklyWhatsappToLashist,

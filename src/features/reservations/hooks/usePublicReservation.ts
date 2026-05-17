@@ -1,9 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "react-router"
 import { toast } from "sonner"
-import { timeSlots } from "../../../data/timeSlots"
 import { categories } from "../../../data/services"
 import { supabase } from "../../../lib/supabase"
+import { fetchBusinessHours } from "../../business-hours/api/businessHoursService"
+import {
+  getBusinessHourForDate,
+  getTimeSlotsForBusinessHour,
+  type BusinessHour,
+} from "../../business-hours/utils/businessHoursUtils"
 import {
   computeAvailability,
 } from "../utils/reservationAvailability"
@@ -55,6 +60,7 @@ export function usePublicReservation() {
   const [step, setStep] = useState(1)
   const [formData, setFormData] = useState<ReservationForm>(initialForm)
   const [services, setServices] = useState<ServiceRow[]>([])
+  const [businessHours, setBusinessHours] = useState<BusinessHour[]>([])
   const [lashCapacity, setLashCapacity] = useState(0)
   const [submittedReservation, setSubmittedReservation] =
     useState<SubmittedReservation | null>(null)
@@ -109,13 +115,15 @@ export function usePublicReservation() {
       setLoadingServices(true)
       setError("")
 
-      const [servicesData, activeLashistCount] = await Promise.all([
+      const [servicesData, activeLashistCount, businessHoursData] = await Promise.all([
         fetchActiveServices(),
         fetchActiveLashistCount(),
+        fetchBusinessHours(),
       ])
 
       setServices(servicesData)
       setLashCapacity(activeLashistCount)
+      setBusinessHours(businessHoursData)
     } catch {
       const message = "Error cargando servicios."
       setError(message)
@@ -226,9 +234,12 @@ export function usePublicReservation() {
         return
       }
 
-      if (isSunday(formData.date)) {
+      const businessHour = getBusinessHourForDate(businessHours, formData.date)
+      const dateTimeSlots = getTimeSlotsForBusinessHour(businessHour)
+
+      if (businessHour?.is_closed || dateTimeSlots.length === 0) {
         setAvailableSlots([])
-        setBlockedReason("No atendemos los domingos.")
+        setBlockedReason("No atendemos ese día.")
         return
       }
 
@@ -254,7 +265,7 @@ export function usePublicReservation() {
           blocks,
           selectedService: normalizedSelectedService,
           date: formData.date,
-          timeSlots,
+          timeSlots: dateTimeSlots,
           lashistas: lashCapacity,
           removePastSlots: true,
         })
@@ -280,6 +291,7 @@ export function usePublicReservation() {
     availabilityVersion,
     formData.date,
     formData.time,
+    businessHours,
     lashCapacity,
     normalizedSelectedService,
   ])
@@ -415,8 +427,11 @@ Hora: ${submittedReservation.time}`
         return
       }
 
-      if (isSunday(formData.date)) {
-        const message = "No atendemos los domingos."
+      const businessHour = getBusinessHourForDate(businessHours, formData.date)
+      const dateTimeSlots = getTimeSlotsForBusinessHour(businessHour)
+
+      if (businessHour?.is_closed || dateTimeSlots.length === 0) {
+        const message = "No atendemos ese día."
         setError(message)
         toast.error(message)
         return
@@ -482,8 +497,11 @@ Hora: ${submittedReservation.time}`
         throw new Error("Selecciona un servicio válido.")
       }
 
-      if (isSunday(formData.date)) {
-        throw new Error("No atendemos los domingos.")
+      const businessHour = getBusinessHourForDate(businessHours, formData.date)
+      const dateTimeSlots = getTimeSlotsForBusinessHour(businessHour)
+
+      if (businessHour?.is_closed || dateTimeSlots.length === 0) {
+        throw new Error("No atendemos ese día.")
       }
 
       const { appointments, blocks } = await fetchPublicAvailability(
@@ -503,7 +521,7 @@ Hora: ${submittedReservation.time}`
         blocks,
         selectedService: normalizedSelectedService,
         date: formData.date,
-        timeSlots,
+        timeSlots: dateTimeSlots,
         lashistas: lashCapacity,
         removePastSlots: true,
       })
@@ -561,7 +579,9 @@ Hora: ${submittedReservation.time}`
     whatsappUrl,
 
     today,
-    timeSlots,
+    timeSlots: formData.date
+      ? getTimeSlotsForBusinessHour(getBusinessHourForDate(businessHours, formData.date))
+      : [],
     isSunday,
 
     servicePrice,

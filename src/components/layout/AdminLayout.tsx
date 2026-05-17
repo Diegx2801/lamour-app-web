@@ -63,6 +63,11 @@ const navItems: NavItem[] = [
     roles: ["owner"],
   },
   {
+    label: "Horarios",
+    to: "/admin/horarios",
+    roles: ["owner"],
+  },
+  {
     label: "Plantillas",
     to: "/admin/plantillas",
     roles: ["owner"],
@@ -75,7 +80,7 @@ const navItems: NavItem[] = [
   {
     label: "Fidelización",
     to: "/admin/fidelizacion",
-    roles: ["owner"],
+    roles: ["owner", "staff"],
   },
   {
     label: "Promos",
@@ -170,20 +175,20 @@ function AdminLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f6f1e9] pb-20 md:pb-0">
-      <header className="sticky top-0 z-50 border-b border-stone-200 bg-white/90 px-4 py-3 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
-          <div>
+    <div className="min-h-screen bg-[#f6f1e9] pb-24 md:pb-0">
+      <header className="sticky top-0 z-50 border-b border-stone-200 bg-white/95 px-3 py-3 backdrop-blur md:px-4">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
+          <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-[0.3em] text-stone-500">
               Panel admin
             </p>
 
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg font-semibold text-stone-950">
+            <div className="flex min-w-0 items-center gap-2">
+              <h1 className="truncate text-base font-semibold text-stone-950 md:text-lg">
                 L’AMOUR
               </h1>
 
-              <span className="rounded-full bg-stone-100 px-2 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-stone-500">
+              <span className="shrink-0 rounded-full bg-stone-100 px-2 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-stone-500">
                 {role === "owner"
                   ? "Owner"
                   : role === "followup"
@@ -193,10 +198,10 @@ function AdminLayout() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <Link
               to="/"
-              className="rounded-full border border-stone-300 px-4 py-2 text-xs font-medium text-stone-700"
+              className="rounded-full border border-stone-300 px-3 py-2 text-xs font-medium text-stone-700 md:px-4"
             >
               Ver web
             </Link>
@@ -212,7 +217,7 @@ function AdminLayout() {
         </div>
       </header>
 
-      <div className="mx-auto flex max-w-7xl gap-6 px-4 py-6">
+      <div className="mx-auto flex max-w-7xl gap-6 px-3 py-4 md:px-4 md:py-6">
         <aside className="hidden w-56 shrink-0 md:block">
           <nav className="sticky top-24 space-y-2">
             {visibleNavItems.map((item) => {
@@ -240,7 +245,10 @@ function AdminLayout() {
         </main>
       </div>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-50 flex gap-2 overflow-x-auto border-t border-stone-200 bg-white px-3 py-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] md:hidden">
+      <nav
+        aria-label="Navegacion admin movil"
+        className="fixed bottom-0 left-0 right-0 z-50 flex snap-x gap-2 overflow-x-auto border-t border-stone-200 bg-white px-3 py-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] shadow-[0_-10px_30px_rgba(0,0,0,0.08)] md:hidden"
+      >
         {visibleNavItems.map((item) => {
           const isActive = isActiveRoute(pathname, item)
 
@@ -248,7 +256,7 @@ function AdminLayout() {
             <Link
               key={item.to}
               to={item.to}
-              className={`min-w-fit rounded-full px-4 py-2 text-xs font-medium ${
+              className={`min-h-10 min-w-fit snap-start rounded-full px-4 py-2.5 text-xs font-medium ${
                 isActive
                   ? "bg-stone-950 text-white"
                   : "bg-stone-100 text-stone-700"

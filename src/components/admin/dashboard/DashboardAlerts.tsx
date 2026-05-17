@@ -1,3 +1,5 @@
+import { Link } from "react-router"
+import { useState } from "react"
 import type { OperationalAlert } from "../../../features/admin-dashboard/hooks/useAdminDashboard"
 
 const toneClasses: Record<OperationalAlert["tone"], string> = {
@@ -9,7 +11,10 @@ const toneClasses: Record<OperationalAlert["tone"], string> = {
 }
 
 function DashboardAlerts({ alerts }: { alerts: OperationalAlert[] }) {
+  const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null)
   const totalPending = alerts.reduce((acc, alert) => acc + alert.count, 0)
+  const selectedAlert =
+    alerts.find((alert) => alert.id === selectedAlertId) ?? null
 
   return (
     <section className="rounded-[2rem] border border-stone-200 bg-white p-4 shadow-sm md:p-6">
@@ -33,18 +38,87 @@ function DashboardAlerts({ alerts }: { alerts: OperationalAlert[] }) {
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
         {alerts.map((alert) => (
-          <article
+          <button
+            type="button"
             key={alert.id}
-            className={`rounded-[1.5rem] border p-4 ${toneClasses[alert.tone]}`}
+            onClick={() =>
+              setSelectedAlertId((current) =>
+                current === alert.id ? null : alert.id
+              )
+            }
+            className={`rounded-[1.5rem] border p-4 text-left transition hover:-translate-y-0.5 hover:shadow-sm ${toneClasses[alert.tone]}`}
           >
             <p className="text-2xl font-semibold">{alert.count}</p>
             <h3 className="mt-2 text-sm font-semibold">{alert.title}</h3>
             <p className="mt-2 text-xs leading-5 opacity-75">
               {alert.description}
             </p>
-          </article>
+            <p className="mt-3 text-xs font-semibold opacity-80">
+              Ver detalle
+            </p>
+          </button>
         ))}
       </div>
+
+      {selectedAlert && (
+        <div className="mt-4 rounded-[1.5rem] border border-stone-200 bg-stone-50 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="font-semibold text-stone-950">
+                {selectedAlert.title}
+              </h3>
+              <p className="mt-1 text-sm text-stone-500">
+                {selectedAlert.count} registro
+                {selectedAlert.count === 1 ? "" : "s"} encontrado
+                {selectedAlert.count === 1 ? "" : "s"}.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSelectedAlertId(null)}
+              className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-stone-600"
+            >
+              Cerrar
+            </button>
+          </div>
+
+          <div className="mt-4 grid gap-2 md:grid-cols-2">
+            {selectedAlert.items.length === 0 ? (
+              <p className="rounded-2xl bg-white px-4 py-3 text-sm text-stone-500">
+                No hay registros para mostrar.
+              </p>
+            ) : (
+              selectedAlert.items.map((item) => {
+                const content = (
+                  <>
+                    <p className="font-semibold text-stone-950">{item.title}</p>
+                    <p className="mt-1 text-xs leading-5 text-stone-500">
+                      {item.subtitle}
+                    </p>
+                  </>
+                )
+
+                return item.href ? (
+                  <Link
+                    key={item.id}
+                    to={item.href}
+                    className="rounded-2xl bg-white px-4 py-3 text-sm shadow-sm transition hover:bg-stone-100"
+                  >
+                    {content}
+                  </Link>
+                ) : (
+                  <div
+                    key={item.id}
+                    className="rounded-2xl bg-white px-4 py-3 text-sm shadow-sm"
+                  >
+                    {content}
+                  </div>
+                )
+              })
+            )}
+          </div>
+        </div>
+      )}
     </section>
   )
 }

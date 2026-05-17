@@ -103,10 +103,14 @@ Necesitamos coordinar un ajuste de horario. ¿Nos confirmas tu disponibilidad, p
       )}`}
     >
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <p className="font-semibold">{client?.full_name ?? "Sin nombre"}</p>
+        <div className="min-w-0">
+          <p className="truncate font-semibold">
+            {client?.full_name ?? "Sin nombre"}
+          </p>
 
-          <p className="mt-1 text-sm">{service?.name ?? "Sin servicio"}</p>
+          <p className="mt-1 line-clamp-2 text-sm">
+            {service?.name ?? "Sin servicio"}
+          </p>
 
           <p className="mt-1 text-xs opacity-80">
             {service?.category ?? "Sin categoría"} ·{" "}
@@ -146,7 +150,7 @@ Necesitamos coordinar un ajuste de horario. ¿Nos confirmas tu disponibilidad, p
           hasPendingBalance ? (
             <Link
               to={`/admin/pagos/${reservation.id}`}
-              className="rounded-lg bg-white/80 px-3 py-2 text-center text-xs font-medium text-red-700"
+              className="flex min-h-10 items-center justify-center rounded-lg bg-white/80 px-3 py-2 text-center text-xs font-medium text-red-700 transition hover:bg-white"
             >
               Pagar saldo
             </Link>
@@ -209,14 +213,14 @@ Necesitamos coordinar un ajuste de horario. ¿Nos confirmas tu disponibilidad, p
 
         <Link
           to={`/admin/pagos/${reservation.id}`}
-          className="rounded-lg bg-white/80 px-3 py-2 text-center text-xs font-medium text-stone-700"
+          className="flex min-h-10 items-center justify-center rounded-lg bg-white/80 px-3 py-2 text-center text-xs font-medium text-stone-700 transition hover:bg-white"
         >
           Pago
         </Link>
 
         <Link
           to={`/admin/reservas/${reservation.id}`}
-          className="rounded-lg bg-white/80 px-3 py-2 text-center text-xs font-medium text-stone-700"
+          className="flex min-h-10 items-center justify-center rounded-lg bg-white/80 px-3 py-2 text-center text-xs font-medium text-stone-700 transition hover:bg-white"
         >
           Editar
         </Link>

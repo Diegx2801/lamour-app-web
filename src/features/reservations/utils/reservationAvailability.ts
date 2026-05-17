@@ -64,6 +64,7 @@ type ValidateSlotInput = {
   selectedService: BasicServiceForAvailability | null
   date: string
   time: string
+  timeSlots?: string[]
   blockedTimes?: string[]
   excludeAppointmentId?: string
   lashistas?: number
@@ -307,6 +308,7 @@ export function validateSlotAvailability({
   selectedService,
   date,
   time,
+  timeSlots,
   blockedTimes = [],
   excludeAppointmentId,
   lashistas = 2,
@@ -315,6 +317,10 @@ export function validateSlotAvailability({
 }: ValidateSlotInput) {
   if (!selectedService) {
     throw new Error("Servicio no encontrado.")
+  }
+
+  if (timeSlots && !timeSlots.includes(time)) {
+    throw new Error("Ese horario no está dentro del horario de atención.")
   }
 
   if (blockedTimes.includes(time)) {
