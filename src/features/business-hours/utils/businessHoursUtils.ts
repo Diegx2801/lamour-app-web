@@ -57,7 +57,7 @@ export function getTimeSlotsForBusinessHour(hour: BusinessHour | null | undefine
   const end = timeToMinutes(hour.close_time)
   const slots: string[] = []
 
-  for (let current = start; current < end; current += interval) {
+  for (let current = start; current <= end; current += interval) {
     slots.push(minutesToTime(current))
   }
 
