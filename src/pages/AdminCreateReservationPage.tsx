@@ -141,6 +141,7 @@ function AdminCreateReservationPage() {
             <input
               type="date"
               name="date"
+              min={reservation.minReservationDate}
               value={reservation.form.date}
               onChange={reservation.handleChange}
               className={inputClass}

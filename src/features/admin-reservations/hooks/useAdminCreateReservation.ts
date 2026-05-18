@@ -52,6 +52,20 @@ const initialForm: AdminCreateReservationForm = {
   lashistId: "",
 }
 
+function getLocalDateString() {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, "0")
+  const day = String(now.getDate()).padStart(2, "0")
+
+  return `${year}-${month}-${day}`
+}
+
+function isPastDate(date: string) {
+  if (!date) return false
+  return date < getLocalDateString()
+}
+
 export function useAdminCreateReservation() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -102,6 +116,7 @@ export function useAdminCreateReservation() {
 
   const loading = submitStatus === "loading"
   const lashCapacity = lashists.length
+  const minReservationDate = getLocalDateString()
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -157,6 +172,12 @@ export function useAdminCreateReservation() {
         return
       }
 
+      if (isPastDate(form.date)) {
+        setAvailableSlots([])
+        setBlockedReason("No se puede crear una reserva en una fecha pasada.")
+        return
+      }
+
       const businessHour = getBusinessHourForDate(businessHours, form.date)
       const dateTimeSlots = getTimeSlotsForBusinessHour(businessHour)
 
@@ -196,6 +217,7 @@ export function useAdminCreateReservation() {
           blockedTimes,
           lashistas: lashCapacity,
           selectedLashistId: form.lashistId || null,
+          removePastSlots: true,
         })
 
         setAvailableSlots(filteredSlots)
@@ -268,6 +290,10 @@ export function useAdminCreateReservation() {
 
     if (!form.service || !form.date || !form.time) {
       return "Completa todos los campos obligatorios."
+    }
+
+    if (isPastDate(form.date)) {
+      return "No se puede crear una reserva en una fecha pasada."
     }
 
     const businessHour = getBusinessHourForDate(businessHours, form.date)
@@ -372,6 +398,7 @@ export function useAdminCreateReservation() {
         ),
         lashistas: lashCapacity,
         selectedLashistId: form.lashistId || null,
+        removePastSlots: true,
       })
 
       const clientId = await findOrCreateAdminClient(
@@ -432,6 +459,7 @@ export function useAdminCreateReservation() {
     loadingServices,
     loadingLashists,
     loadingSlots,
+    minReservationDate,
 
     handleChange,
     handleSubmit,
