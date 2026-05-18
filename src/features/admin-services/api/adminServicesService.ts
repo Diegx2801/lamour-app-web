@@ -62,6 +62,48 @@ function normalizeServiceRow(row: Partial<AdminServiceDbRow>): AdminServiceRow {
   }
 }
 
+function normalizeCategory(value: string | null | undefined) {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+}
+
+function getCategoryPriority(category: string | null | undefined) {
+  const normalized = normalizeCategory(category)
+
+  if (normalized === "pestanas") return 0
+  if (normalized === "cejas") return 1
+  if (normalized === "depilacion") return 2
+  if (normalized === "faciales") return 3
+  if (normalized === "labios") return 4
+  if (normalized === "paquetes") return 5
+
+  return 20
+}
+
+function sortServicesForAdmin(services: AdminServiceRow[]) {
+  return [...services].sort((a, b) => {
+    if (a.is_active !== b.is_active) return a.is_active ? -1 : 1
+
+    const categoryPriority =
+      getCategoryPriority(a.category) - getCategoryPriority(b.category)
+    if (categoryPriority !== 0) return categoryPriority
+
+    const categoryCompare = String(a.category ?? "").localeCompare(
+      String(b.category ?? ""),
+      "es"
+    )
+    if (categoryCompare !== 0) return categoryCompare
+
+    const orderCompare = Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0)
+    if (orderCompare !== 0) return orderCompare
+
+    return a.name.localeCompare(b.name, "es")
+  })
+}
+
 function toServicePayload(
   payload: AdminServicePayload,
   options: { includePackageFields?: boolean; includeSortOrder?: boolean } = {}
@@ -121,7 +163,9 @@ export async function fetchAdminServices() {
     .order("name", { ascending: true })
 
   if (!error) {
-    return ((data ?? []) as AdminServiceDbRow[]).map(normalizeServiceRow)
+    return sortServicesForAdmin(
+      ((data ?? []) as AdminServiceDbRow[]).map(normalizeServiceRow)
+    )
   }
 
   const { data: fallbackData, error: fallbackError } = await supabase
@@ -147,8 +191,10 @@ export async function fetchAdminServices() {
     throw new Error("No se pudieron cargar los servicios.")
   }
 
-  return ((fallbackData ?? []) as Partial<AdminServiceDbRow>[]).map(
-    normalizeServiceRow
+  return sortServicesForAdmin(
+    ((fallbackData ?? []) as Partial<AdminServiceDbRow>[]).map(
+      normalizeServiceRow
+    )
   )
 }
 

@@ -54,6 +54,46 @@ type PublicScheduleBlockRow = ScheduleBlockRow & {
   block_time?: string | null
 }
 
+function normalizeCategory(value: string | null | undefined) {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+}
+
+function getCategoryPriority(category: string | null | undefined) {
+  const normalized = normalizeCategory(category)
+
+  if (normalized === "pestanas") return 0
+  if (normalized === "cejas") return 1
+  if (normalized === "depilacion") return 2
+  if (normalized === "faciales") return 3
+  if (normalized === "labios") return 4
+  if (normalized === "paquetes") return 5
+
+  return 20
+}
+
+function sortPublicServices(services: ServiceRow[]) {
+  return [...services].sort((a, b) => {
+    const categoryPriority =
+      getCategoryPriority(a.category) - getCategoryPriority(b.category)
+    if (categoryPriority !== 0) return categoryPriority
+
+    const categoryCompare = String(a.category ?? "").localeCompare(
+      String(b.category ?? ""),
+      "es"
+    )
+    if (categoryCompare !== 0) return categoryCompare
+
+    const orderCompare = Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0)
+    if (orderCompare !== 0) return orderCompare
+
+    return a.name.localeCompare(b.name, "es")
+  })
+}
+
 export async function fetchActiveServices(): Promise<ServiceRow[]> {
   const { data, error } = await supabase
     .from("services")
@@ -66,7 +106,8 @@ export async function fetchActiveServices(): Promise<ServiceRow[]> {
     .order("name", { ascending: true })
 
   if (!error) {
-    return withPackageDetails((data ?? []) as ServiceRow[])
+    const services = await withPackageDetails((data ?? []) as ServiceRow[])
+    return sortPublicServices(services)
   }
 
   const { data: fallbackData, error: fallbackError } = await supabase
@@ -79,7 +120,7 @@ export async function fetchActiveServices(): Promise<ServiceRow[]> {
     throw new Error("No se pudieron cargar los servicios.")
   }
 
-  return (fallbackData ?? []) as ServiceRow[]
+  return sortPublicServices((fallbackData ?? []) as ServiceRow[])
 }
 
 async function withPackageDetails(services: ServiceRow[]) {
