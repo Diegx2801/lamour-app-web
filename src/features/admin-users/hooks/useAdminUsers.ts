@@ -69,8 +69,9 @@ export function useAdminUsers() {
     const owners = users.filter((user) =>
       ["admin", "owner"].includes(String(user.role))
     ).length
-    const staff = users.filter((user) => user.role === "staff").length
-    const followup = users.filter((user) => user.role === "followup").length
+    const staff = users.filter((user) =>
+      ["staff", "followup"].includes(String(user.role))
+    ).length
 
     return {
       total: users.length,
@@ -78,7 +79,6 @@ export function useAdminUsers() {
       inactive: users.length - active,
       owners,
       staff,
-      followup,
     }
   }, [users])
 
@@ -96,9 +96,7 @@ export function useAdminUsers() {
       role:
         user.role === "owner" || user.role === "admin"
           ? "owner"
-          : user.role === "followup"
-            ? "followup"
-            : "staff",
+          : "staff",
       isActive: user.is_active,
     })
   }

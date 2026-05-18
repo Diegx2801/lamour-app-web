@@ -1,12 +1,12 @@
 import { supabase } from "../../../lib/supabase"
 
-export type AdminUserRole = "owner" | "staff" | "followup"
+export type AdminUserRole = "owner" | "staff"
 
 export type AdminUserRow = {
   id: string
   full_name: string | null
   email: string | null
-  role: AdminUserRole | "admin" | null
+  role: AdminUserRole | "admin" | "followup" | null
   is_active: boolean
   created_at: string | null
   updated_at: string | null

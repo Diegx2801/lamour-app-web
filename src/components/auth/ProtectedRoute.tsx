@@ -2,7 +2,7 @@ import { useEffect, useReducer } from "react"
 import { Navigate, useLocation } from "react-router"
 import { supabase } from "../../lib/supabase"
 
-export type AdminRole = "owner" | "staff" | "followup"
+export type AdminRole = "owner" | "staff"
 
 type ProtectedRouteProps = {
   children: React.ReactNode
@@ -13,7 +13,7 @@ function normalizeRole(role: string | null | undefined): AdminRole | null {
   if (role === "admin") return "owner"
   if (role === "owner") return "owner"
   if (role === "staff") return "staff"
-  if (role === "followup") return "followup"
+  if (role === "followup") return "staff"
 
   return null
 }

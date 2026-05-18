@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
-type AdminRole = "owner" | "staff" | "followup"
+type AdminRole = "owner" | "staff"
 
 type RequestBody = {
   action: "create" | "update" | "deactivate" | "reactivate"
@@ -12,25 +12,55 @@ type RequestBody = {
   isActive?: boolean
 }
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+function getAllowedOrigins() {
+  return String(Deno.env.get("ALLOWED_ORIGINS") ?? "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean)
 }
 
-function jsonResponse(body: unknown, status = 200) {
+function isLocalOrigin(origin: string) {
+  return (
+    origin.startsWith("http://localhost:") ||
+    origin.startsWith("http://127.0.0.1:")
+  )
+}
+
+function getCors(req: Request) {
+  const origin = req.headers.get("Origin") ?? ""
+  const allowedOrigins = getAllowedOrigins()
+  const isAllowed =
+    !origin ||
+    isLocalOrigin(origin) ||
+    allowedOrigins.length === 0 ||
+    allowedOrigins.includes(origin)
+
+  return {
+    isAllowed,
+    headers: {
+      "Access-Control-Allow-Origin": isAllowed ? origin || "*" : "null",
+      "Access-Control-Allow-Headers":
+        "authorization, x-client-info, apikey, content-type",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Vary": "Origin",
+    },
+  }
+}
+
+function jsonResponse(req: Request, body: unknown, status = 200) {
+  const cors = getCors(req)
+
   return new Response(JSON.stringify(body), {
     status,
     headers: {
-      ...corsHeaders,
+      ...cors.headers,
       "Content-Type": "application/json",
     },
   })
 }
 
 function assertRole(role: unknown): asserts role is AdminRole {
-  if (role !== "owner" && role !== "staff" && role !== "followup") {
+  if (role !== "owner" && role !== "staff") {
     throw new Error("Rol inválido.")
   }
 }
@@ -44,8 +74,14 @@ function normalizeName(name: string | undefined) {
 }
 
 Deno.serve(async (req) => {
+  const cors = getCors(req)
+
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders })
+    return new Response("ok", { headers: cors.headers })
+  }
+
+  if (!cors.isAllowed) {
+    return jsonResponse(req, { error: "Origen no permitido." }, 403)
   }
 
   try {
@@ -69,7 +105,7 @@ Deno.serve(async (req) => {
     } = await userClient.auth.getUser()
 
     if (actorError || !actor) {
-      return jsonResponse({ error: "Sesión inválida." }, 401)
+      return jsonResponse(req, { error: "Sesión inválida." }, 401)
     }
 
     const { data: actorProfile, error: profileError } = await adminClient
@@ -84,14 +120,14 @@ Deno.serve(async (req) => {
       !["admin", "owner"].includes(actorProfile.role) ||
       actorProfile.is_active === false
     ) {
-      return jsonResponse({ error: "Solo la dueña puede administrar usuarios." }, 403)
+      return jsonResponse(req, { error: "Solo la dueña puede administrar usuarios." }, 403)
     }
 
     const body = (await req.json()) as RequestBody
     const action = body.action
 
     if (!["create", "update", "deactivate", "reactivate"].includes(action)) {
-      return jsonResponse({ error: "Acción inválida." }, 400)
+      return jsonResponse(req, { error: "Acción inválida." }, 400)
     }
 
     let targetUserId = body.userId ?? ""
@@ -230,9 +266,9 @@ Deno.serve(async (req) => {
       details,
     })
 
-    return jsonResponse({ ok: true })
+    return jsonResponse(req, { ok: true })
   } catch (error) {
     const message = error instanceof Error ? error.message : "Error inesperado."
-    return jsonResponse({ error: message }, 400)
+    return jsonResponse(req, { error: message }, 400)
   }
 })

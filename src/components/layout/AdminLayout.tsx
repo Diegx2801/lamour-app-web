@@ -75,7 +75,7 @@ const navItems: NavItem[] = [
   {
     label: "Seguimiento",
     to: "/admin/seguimiento",
-    roles: ["owner", "staff", "followup"],
+    roles: ["owner", "staff"],
   },
   {
     label: "Fidelización",
@@ -93,7 +93,7 @@ function normalizeRole(role: string | null | undefined): AdminRole | null {
   if (role === "admin") return "owner"
   if (role === "owner") return "owner"
   if (role === "staff") return "staff"
-  if (role === "followup") return "followup"
+  if (role === "followup") return "staff"
 
   return null
 }
@@ -191,9 +191,7 @@ function AdminLayout() {
               <span className="shrink-0 rounded-full bg-stone-100 px-2 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-stone-500">
                 {role === "owner"
                   ? "Owner"
-                  : role === "followup"
-                    ? "Seguimiento"
-                    : "Staff"}
+                  : "Agenda"}
               </span>
             </div>
           </div>

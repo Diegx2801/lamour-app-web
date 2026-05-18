@@ -64,7 +64,7 @@ function App() {
           <Route
             path="/admin"
             element={
-              <ProtectedRoute allowedRoles={["owner", "staff", "followup"]}>
+              <ProtectedRoute allowedRoles={["owner", "staff"]}>
                 <AdminLayout />
               </ProtectedRoute>
             }
@@ -227,7 +227,7 @@ function App() {
             <Route
               path="seguimiento"
               element={
-                <ProtectedRoute allowedRoles={["owner", "staff", "followup"]}>
+                <ProtectedRoute allowedRoles={["owner", "staff"]}>
                   <AdminFollowUpPage />
                 </ProtectedRoute>
               }
