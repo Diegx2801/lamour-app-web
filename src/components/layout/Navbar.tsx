@@ -34,13 +34,6 @@ function Navbar() {
           <a href="#contacto" className="transition hover:text-stone-500">
             Contacto
           </a>
-
-          <Link
-            to="/admin/login"
-            className="rounded-full border border-stone-400 bg-white px-4 py-2 text-sm font-semibold text-stone-800 shadow-sm transition hover:bg-stone-100"
-          >
-            Admin
-          </Link>
         </nav>
 
         <div className="flex items-center gap-2">
@@ -104,14 +97,6 @@ function Navbar() {
               className="mt-3 rounded-full bg-stone-950 px-5 py-3 text-center text-sm font-medium text-white"
             >
               Reservar cita
-            </Link>
-
-            <Link
-              to="/admin/login"
-              onClick={closeMenu}
-              className="mt-2 rounded-full border border-stone-300 bg-white px-5 py-3 text-center text-sm font-semibold text-stone-800 shadow-sm"
-            >
-              Admin
             </Link>
           </nav>
         </div>
