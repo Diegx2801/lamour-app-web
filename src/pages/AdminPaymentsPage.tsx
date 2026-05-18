@@ -97,16 +97,15 @@ function AdminPaymentsPage() {
           <Field label="Método de pago">
             <select
               value={payments.method}
-              onChange={(e) =>
-                payments.setMethod(
-                  e.target.value as "yape" | "plin" | "efectivo"
-                )
-              }
+              onChange={(e) => payments.setMethod(e.target.value)}
+              disabled={payments.loadingPaymentMethods}
               className={inputClass}
             >
-              <option value="yape">Yape</option>
-              <option value="plin">Plin</option>
-              <option value="efectivo">Efectivo</option>
+              {payments.paymentMethods.map((method) => (
+                <option key={method.id} value={method.code}>
+                  {method.name}
+                </option>
+              ))}
             </select>
           </Field>
 

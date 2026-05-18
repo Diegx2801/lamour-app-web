@@ -17,8 +17,8 @@ function DashboardAlerts({ alerts }: { alerts: OperationalAlert[] }) {
     alerts.find((alert) => alert.id === selectedAlertId) ?? null
 
   return (
-    <section className="rounded-[2rem] border border-stone-200 bg-white p-4 shadow-sm md:p-6">
-      <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+    <section className="rounded-[1.5rem] border border-stone-200 bg-white p-3 shadow-sm md:rounded-[2rem] md:p-6">
+      <div className="mb-3 flex items-start justify-between gap-3 md:mb-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">
             Pendientes de revisar
@@ -31,12 +31,12 @@ function DashboardAlerts({ alerts }: { alerts: OperationalAlert[] }) {
           </p>
         </div>
 
-        <span className="w-fit rounded-full bg-stone-950 px-3 py-1 text-xs font-semibold text-white">
+        <span className="shrink-0 rounded-full bg-stone-950 px-3 py-1 text-xs font-semibold text-white">
           {totalPending} pendientes
         </span>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+      <div className="-mx-3 flex snap-x gap-2 overflow-x-auto px-3 pb-2 md:mx-0 md:grid md:grid-cols-2 md:gap-3 md:overflow-visible md:px-0 md:pb-0 xl:grid-cols-5">
         {alerts.map((alert) => (
           <button
             type="button"
@@ -46,14 +46,23 @@ function DashboardAlerts({ alerts }: { alerts: OperationalAlert[] }) {
                 current === alert.id ? null : alert.id
               )
             }
-            className={`rounded-[1.5rem] border p-4 text-left transition hover:-translate-y-0.5 hover:shadow-sm ${toneClasses[alert.tone]}`}
+            className={`min-w-[72%] snap-start rounded-2xl border p-3 text-left transition hover:-translate-y-0.5 hover:shadow-sm sm:min-w-[44%] md:min-w-0 md:rounded-[1.5rem] md:p-4 ${
+              selectedAlertId === alert.id ? "ring-2 ring-stone-900/15" : ""
+            } ${toneClasses[alert.tone]}`}
           >
-            <p className="text-2xl font-semibold">{alert.count}</p>
-            <h3 className="mt-2 text-sm font-semibold">{alert.title}</h3>
-            <p className="mt-2 text-xs leading-5 opacity-75">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-2xl font-semibold">{alert.count}</p>
+                <h3 className="mt-1 text-sm font-semibold">{alert.title}</h3>
+              </div>
+              <span className="rounded-full bg-white/70 px-2 py-1 text-[10px] font-semibold md:hidden">
+                Ver
+              </span>
+            </div>
+            <p className="mt-2 line-clamp-2 text-xs leading-5 opacity-75 md:line-clamp-none">
               {alert.description}
             </p>
-            <p className="mt-3 text-xs font-semibold opacity-80">
+            <p className="mt-3 hidden text-xs font-semibold opacity-80 md:block">
               Ver detalle
             </p>
           </button>
@@ -61,7 +70,7 @@ function DashboardAlerts({ alerts }: { alerts: OperationalAlert[] }) {
       </div>
 
       {selectedAlert && (
-        <div className="mt-4 rounded-[1.5rem] border border-stone-200 bg-stone-50 p-4">
+        <div className="mt-3 rounded-[1.25rem] border border-stone-200 bg-stone-50 p-3 md:mt-4 md:rounded-[1.5rem] md:p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="font-semibold text-stone-950">
@@ -82,7 +91,7 @@ function DashboardAlerts({ alerts }: { alerts: OperationalAlert[] }) {
             </button>
           </div>
 
-          <div className="mt-4 grid gap-2 md:grid-cols-2">
+          <div className="mt-3 grid max-h-[45vh] gap-2 overflow-y-auto pr-1 md:mt-4 md:max-h-none md:grid-cols-2 md:overflow-visible md:pr-0">
             {selectedAlert.items.length === 0 ? (
               <p className="rounded-2xl bg-white px-4 py-3 text-sm text-stone-500">
                 No hay registros para mostrar.

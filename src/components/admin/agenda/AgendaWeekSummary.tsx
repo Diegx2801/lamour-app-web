@@ -12,7 +12,7 @@ type AgendaWeekSummaryProps = {
   onDateChange: (date: string) => void
 }
 
-const dayLabels = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
+const dayLabels = ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"]
 
 function AgendaWeekSummary({
   selectedDate,
@@ -27,15 +27,15 @@ function AgendaWeekSummary({
   })
 
   return (
-    <div className="mb-5 rounded-3xl border border-stone-200 bg-white p-4 shadow-sm">
+    <div className="mb-4 rounded-[1.5rem] border border-stone-200 bg-white p-3 shadow-sm md:mb-5 md:rounded-3xl md:p-4">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold text-stone-950">Esta semana</h2>
-        <p className="text-xs text-stone-500">
+        <h2 className="text-sm font-semibold text-stone-950">Semana</h2>
+        <p className="rounded-full bg-stone-100 px-3 py-1 text-xs font-semibold text-stone-600">
           {weekReservations.length} citas
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-7">
+      <div className="-mx-3 flex snap-x gap-2 overflow-x-auto px-3 pb-1 md:mx-0 md:grid md:grid-cols-7 md:overflow-visible md:px-0 md:pb-0">
         {days.map((date, index) => {
           const dayReservations = weekReservations.filter(
             (item) => item.date === date
@@ -54,21 +54,26 @@ function AgendaWeekSummary({
               key={date}
               type="button"
               onClick={() => onDateChange(date)}
-              className={`rounded-2xl border px-3 py-3 text-left transition ${
+              className={`min-w-[105px] snap-start rounded-2xl border px-3 py-3 text-left transition md:min-w-0 ${
                 isActive
                   ? "border-stone-950 bg-stone-950 text-white"
                   : "border-stone-200 bg-stone-50 text-stone-800 hover:border-stone-400"
               }`}
             >
-              <p className="text-xs font-semibold">{dayLabels[index]}</p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-semibold">{dayLabels[index]}</p>
+                {pending > 0 ? (
+                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                    {pending}
+                  </span>
+                ) : null}
+              </div>
               <p className="mt-1 text-lg font-semibold">
                 {dayReservations.length}
               </p>
-              <p className="mt-1 text-[11px] opacity-75">
-                {pending} pendientes
-              </p>
+              <p className="text-[11px] opacity-70">citas</p>
               {pendingBalance > 0 ? (
-                <p className="mt-1 text-[11px] font-semibold opacity-80">
+                <p className="mt-1 truncate text-[11px] font-semibold opacity-85">
                   S/ {pendingBalance.toFixed(2)}
                 </p>
               ) : null}

@@ -137,30 +137,37 @@ function AdminServiceModal({ services }: AdminServiceModalProps) {
                       No hay servicios base activos para incluir.
                     </p>
                   ) : (
-                    services.sortedPackageBaseServices.map((service) => (
-                      <label
-                        key={service.id}
-                        className="flex items-center justify-between gap-3 rounded-xl border border-stone-200 bg-white px-3 py-2 text-sm"
-                      >
-                        <span>
-                          <span className="font-medium text-stone-900">
-                            {service.name}
+                    services.sortedPackageBaseServices.map((service) => {
+                      const inputId = `package-service-${service.id}`
+
+                      return (
+                        <label
+                          key={service.id}
+                          htmlFor={inputId}
+                          className="flex items-center justify-between gap-3 rounded-xl border border-stone-200 bg-white px-3 py-2 text-sm"
+                        >
+                          <span>
+                            <span className="font-medium text-stone-900">
+                              {service.name}
+                            </span>
+                            <span className="ml-2 text-xs text-stone-500">
+                              {service.category ?? "Sin categoría"} -{" "}
+                              {service.duration_minutes ?? 0} min - S/{" "}
+                              {Number(service.price ?? 0).toFixed(2)}
+                            </span>
                           </span>
-                          <span className="ml-2 text-xs text-stone-500">
-                            {service.category ?? "Sin categoría"} -{" "}
-                            {service.duration_minutes ?? 0} min - S/{" "}
-                            {Number(service.price ?? 0).toFixed(2)}
-                          </span>
-                        </span>
-                        <input
-                          type="checkbox"
-                          checked={services.form.package_item_ids.includes(
-                            service.id
-                          )}
-                          onChange={() => services.togglePackageItem(service.id)}
-                        />
-                      </label>
-                    ))
+                          <input
+                            id={inputId}
+                            type="checkbox"
+                            aria-label={`Incluir ${service.name} en el paquete`}
+                            checked={services.form.package_item_ids.includes(
+                              service.id
+                            )}
+                            onChange={() => services.togglePackageItem(service.id)}
+                          />
+                        </label>
+                      )
+                    })
                   )}
                 </div>
 

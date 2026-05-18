@@ -12,7 +12,7 @@ type RelatedAvailabilityService =
   | null
   | undefined
 
-export type AppointmentAvailabilityRow = {
+type AppointmentAvailabilityRow = {
   id?: string
   date: string
   time: string
@@ -32,7 +32,7 @@ export type ScheduleBlockRow = {
   lashist_id?: string | null
 }
 
-export type BasicServiceForAvailability = {
+type BasicServiceForAvailability = {
   category: string | null
   duration_minutes: number | null
   package_includes_lashes?: boolean | null
@@ -163,7 +163,7 @@ function hasCapacityForService({
   return overlappingAppointments.length < (selectedLashistId ? 1 : capacity)
 }
 
-export function getPastTimesForDate(date: string, timeSlots: string[]) {
+function getPastTimesForDate(date: string, timeSlots: string[]) {
   const today = getTodayLocalDate()
 
   if (date !== today) return []
@@ -174,7 +174,7 @@ export function getPastTimesForDate(date: string, timeSlots: string[]) {
   return timeSlots.filter((slot) => timeToMinutes(slot) <= currentMinutes)
 }
 
-export function getRelatedAvailabilityService(
+function getRelatedAvailabilityService(
   service: RelatedAvailabilityService
 ) {
   if (!service) return null

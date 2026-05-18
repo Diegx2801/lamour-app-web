@@ -648,5 +648,6 @@ Si aparece un cambio nuevo, te enviaremos una actualización.`
     handleBlockFullDay,
     handleUnblockFullDay,
     updateStatus,
+    refreshAgenda,
   }
 }

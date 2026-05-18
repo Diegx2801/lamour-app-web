@@ -22,7 +22,7 @@ export type AdminUserAuditLog = {
   created_at: string
 }
 
-export type ManageAdminUserPayload =
+type ManageAdminUserPayload =
   | {
       action: "create"
       fullName: string

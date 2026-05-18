@@ -140,7 +140,7 @@ export async function fetchAppointmentAuditLogs(appointmentId: string) {
   return (data ?? []) as AppointmentAuditLog[]
 }
 
-export async function fetchAppointmentAuditActivity(limit = 80) {
+async function fetchAppointmentAuditActivity(limit = 80) {
   const { data, error } = await supabase
     .from("appointment_audit_logs")
     .select(`
@@ -176,7 +176,7 @@ export async function fetchAppointmentAuditActivity(limit = 80) {
   }))
 }
 
-export async function fetchAdminActivityLogs(limit = 80) {
+async function fetchAdminActivityLogs(limit = 80) {
   const { data, error } = await supabase
     .from("admin_activity_logs")
     .select("id, entity_type, entity_id, action, actor_email, details, created_at")

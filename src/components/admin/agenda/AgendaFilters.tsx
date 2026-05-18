@@ -1,18 +1,22 @@
 import type { AgendaLashistRow } from "../../../features/admin-agenda/api/adminAgendaService"
 import { StatusLegend } from "./AgendaShared"
 
+type LashistNoticeState = {
+  lashist: AgendaLashistRow
+  total: number
+  lastSentAt: number
+  changedAfterSend: number
+}
+
+const EMPTY_NOTICE_STATE: LashistNoticeState[] = []
+
 type AgendaFiltersProps = {
   selectedDate: string
   selectedLashistId: string
   selectedLashistName: string | null
   lashists: AgendaLashistRow[]
   loadingLashists: boolean
-  noticeState?: {
-    lashist: AgendaLashistRow
-    total: number
-    lastSentAt: number
-    changedAfterSend: number
-  }[]
+  noticeState?: LashistNoticeState[]
   onDateChange: (value: string) => void
   onLashistChange: (value: string) => void
   onSendWeek?: (lashistId: string) => void
@@ -24,7 +28,7 @@ function AgendaFilters({
   selectedLashistName,
   lashists,
   loadingLashists,
-  noticeState = [],
+  noticeState = EMPTY_NOTICE_STATE,
   onDateChange,
   onLashistChange,
   onSendWeek,
@@ -33,8 +37,8 @@ function AgendaFilters({
   const tomorrow = getLocalDateString(1)
 
   return (
-    <div className="mb-5 rounded-[1.5rem] border border-stone-200 bg-white/80 p-4 shadow-sm backdrop-blur md:mb-6 md:rounded-3xl md:p-5">
-      <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
+    <div className="mb-4 rounded-[1.5rem] border border-stone-200 bg-white/90 p-3 shadow-sm backdrop-blur md:mb-5 md:rounded-3xl md:p-5">
+      <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto] md:items-end md:gap-4">
         <div>
           <label
             htmlFor="agenda-date"
@@ -48,10 +52,10 @@ function AgendaFilters({
             type="date"
             value={selectedDate}
             onChange={(event) => onDateChange(event.target.value)}
-            className="mt-2 block w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-sm outline-none focus:border-stone-500"
+            className="mt-2 block w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-sm outline-none focus:border-stone-500"
           />
 
-          <div className="mt-2 flex gap-2">
+          <div className="mt-2 grid grid-cols-2 gap-2 sm:flex">
             <QuickDateButton
               label="Hoy"
               active={selectedDate === today}
@@ -78,7 +82,7 @@ function AgendaFilters({
             value={selectedLashistId}
             onChange={(event) => onLashistChange(event.target.value)}
             disabled={loadingLashists}
-            className="mt-2 block w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-sm outline-none focus:border-stone-500 disabled:bg-stone-100"
+            className="mt-2 block w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-sm outline-none focus:border-stone-500 disabled:bg-stone-100"
           >
             <option value="">
               {loadingLashists ? "Cargando lashistas..." : "Todas"}
@@ -92,7 +96,7 @@ function AgendaFilters({
           </select>
         </div>
 
-        <div className="flex gap-2 overflow-x-auto pb-1 text-xs md:flex-wrap md:overflow-visible md:pb-0">
+        <div className="flex gap-2 overflow-x-auto pb-1 text-xs md:max-w-md md:flex-wrap md:justify-end md:overflow-visible md:pb-0">
           <StatusLegend label="Pendiente" className="bg-amber-100 text-amber-700" />
           <StatusLegend label="Confirmada" className="bg-green-100 text-green-700" />
           <StatusLegend label="Completada" className="bg-blue-100 text-blue-700" />
@@ -102,14 +106,14 @@ function AgendaFilters({
       </div>
 
       {selectedLashistName ? (
-        <p className="mt-4 rounded-2xl bg-stone-100 px-4 py-2 text-sm text-stone-700">
+        <p className="mt-3 rounded-2xl bg-stone-100 px-4 py-2 text-sm text-stone-700 md:mt-4">
           Mostrando solo reservas de{" "}
           <span className="font-semibold">{selectedLashistName}</span>
         </p>
       ) : null}
 
       {noticeState.length > 0 && (
-        <div className="mt-4 rounded-2xl border border-stone-200 bg-stone-50 p-3">
+        <div className="mt-3 rounded-2xl border border-stone-200 bg-stone-50 p-3 md:mt-4">
           <div className="mb-3 flex items-center justify-between gap-2">
             <div>
               <p className="text-sm font-semibold text-stone-950">
@@ -121,7 +125,7 @@ function AgendaFilters({
             </div>
           </div>
 
-          <div className="grid gap-2 md:grid-cols-2">
+          <div className="grid max-h-60 gap-2 overflow-y-auto pr-1 md:max-h-none md:grid-cols-2 md:overflow-visible md:pr-0">
             {noticeState.map((item) => (
               <div
                 key={item.lashist.id}

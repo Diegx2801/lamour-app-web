@@ -3,6 +3,7 @@ import { useParams } from "react-router"
 import { toast } from "sonner"
 import { fetchCashClosureByDate } from "../../admin-cash/api/adminCashService"
 import { createAppointmentAuditLog } from "../../appointment-audit/api/appointmentAuditService"
+import { usePaymentMethods } from "../../payment-methods/hooks/usePaymentMethods"
 import {
   createAppointmentPayment,
   fetchAppointmentPaymentSummary,
@@ -12,14 +13,14 @@ import {
   type PaymentRow,
 } from "../api/adminPaymentsService"
 
-type PaymentMethod = "yape" | "plin" | "efectivo"
 type PaymentType = "deposit" | "remaining" | "full" | "adjustment"
 
 export function useAdminPayments() {
   const { id } = useParams()
+  const { paymentMethods, loadingPaymentMethods } = usePaymentMethods()
 
   const [amount, setAmount] = useState("")
-  const [method, setMethod] = useState<PaymentMethod>("yape")
+  const [method, setMethod] = useState("yape")
   const [paymentType, setPaymentType] = useState<PaymentType>("remaining")
   const [payments, setPayments] = useState<PaymentRow[]>([])
   const [summary, setSummary] = useState<AppointmentPaymentSummary | null>(null)
@@ -68,6 +69,15 @@ export function useAdminPayments() {
   useEffect(() => {
     loadPaymentsData()
   }, [loadPaymentsData])
+
+  useEffect(() => {
+    if (paymentMethods.length === 0) return
+    if (paymentMethods.some((paymentMethod) => paymentMethod.code === method)) {
+      return
+    }
+
+    setMethod(paymentMethods[0].code)
+  }, [method, paymentMethods])
 
   const getPaymentAmount = () => {
     if (paymentType === "full") return remainingAmount
@@ -189,6 +199,8 @@ export function useAdminPayments() {
 
     method,
     setMethod,
+    paymentMethods,
+    loadingPaymentMethods,
 
     paymentType,
     setPaymentType,

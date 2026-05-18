@@ -21,7 +21,7 @@ export type ServiceRow = {
   package_items?: PackageItemDetail[]
 }
 
-export type PackageItemDetail = {
+type PackageItemDetail = {
   id: string
   name: string
   price: number
@@ -231,7 +231,7 @@ async function fetchPublicAppointmentsByDate(
   }))
 }
 
-export async function fetchScheduleBlocksByDate(
+async function fetchScheduleBlocksByDate(
   date: string
 ): Promise<ScheduleBlockRow[]> {
   const { data, error } = await supabase
@@ -263,89 +263,7 @@ export async function fetchPublicAvailability(date: string) {
   }
 }
 
-export async function findClientByPhone(phone: string) {
-  const { data, error } = await supabase
-    .from("clients")
-    .select("id, full_name, phone")
-    .eq("phone", phone)
-    .maybeSingle()
-
-  if (error) {
-    throw new Error("Error al verificar cliente.")
-  }
-
-  return data
-}
-
-export async function createClient(fullName: string, phone: string) {
-  const { data, error } = await supabase
-    .from("clients")
-    .insert([
-      {
-        full_name: fullName,
-        phone,
-      },
-    ])
-    .select("id")
-    .single()
-
-  if (error || !data) {
-    throw new Error("No se pudo registrar el cliente.")
-  }
-
-  return data
-}
-
-export async function updateClient(
-  clientId: string,
-  fullName: string,
-  phone: string
-) {
-  const { error } = await supabase
-    .from("clients")
-    .update({
-      full_name: fullName,
-      phone,
-    })
-    .eq("id", clientId)
-
-  if (error) {
-    throw new Error("No se pudo actualizar el cliente.")
-  }
-}
-
-type CreateAppointmentInput = {
-  clientId: string
-  serviceId: string
-  date: string
-  time: string
-  notes: string
-  totalPrice: number
-  depositAmount: number
-  remainingAmount: number
-}
-
-export async function createAppointment(input: CreateAppointmentInput) {
-  const { error } = await supabase.from("appointments").insert([
-    {
-      client_id: input.clientId,
-      service_id: input.serviceId,
-      date: input.date,
-      time: input.time,
-      status: "pending",
-      notes: input.notes || null,
-      total_price: input.totalPrice,
-      deposit_amount: input.depositAmount,
-      remaining_amount: input.remainingAmount,
-    },
-  ])
-
-  if (error) {
-    throw new Error("No se pudo registrar la reserva.")
-  }
-}
-
-export type PublicReservationResult = {
+type PublicReservationResult = {
   appointment_id: string
   client_id: string
   total_price: number

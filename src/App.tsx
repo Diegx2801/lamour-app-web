@@ -35,6 +35,9 @@ const AdminSiteContentPage = lazy(() => import("./pages/AdminSiteContentPage"))
 const AdminBusinessHoursPage = lazy(
   () => import("./pages/AdminBusinessHoursPage")
 )
+const AdminPaymentMethodsPage = lazy(
+  () => import("./pages/AdminPaymentMethodsPage")
+)
 const AdminWhatsappTemplatesPage = lazy(
   () => import("./pages/AdminWhatsappTemplatesPage")
 )
@@ -202,6 +205,15 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={["owner"]}>
                   <AdminBusinessHoursPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="metodos-pago"
+              element={
+                <ProtectedRoute allowedRoles={["owner"]}>
+                  <AdminPaymentMethodsPage />
                 </ProtectedRoute>
               }
             />

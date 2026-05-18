@@ -1,7 +1,7 @@
 import { supabase } from "../../../lib/supabase"
 import type { ScheduleBlockRow } from "../../reservations/utils/reservationAvailability"
 
-export type AppointmentType = "normal" | "retouch"
+type AppointmentType = "normal" | "retouch"
 
 export type AdminServiceRow = {
   id: string

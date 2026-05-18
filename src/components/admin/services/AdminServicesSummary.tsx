@@ -16,12 +16,17 @@ function AdminServicesSummary({
   packages,
 }: AdminServicesSummaryProps) {
   return (
-    <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5 md:mb-6">
-      <SummaryCard title="Total servicios" value={total} />
-      <SummaryCard title="Activos" value={active} />
-      <SummaryCard title="Inactivos" value={inactive} />
-      <SummaryCard title="Con retoque" value={retouch} />
-      <SummaryCard title="Paquetes" value={packages} />
+    <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-5 md:mb-6">
+      <SummaryCard title="Total" value={total} hint="catalogo admin" />
+      <SummaryCard title="Activos" value={active} hint="visibles" tone="green" />
+      <SummaryCard
+        title="Inactivos"
+        value={inactive}
+        hint="ocultos"
+        tone={inactive > 0 ? "amber" : "stone"}
+      />
+      <SummaryCard title="Retoque" value={retouch} hint="permiten retoque" tone="blue" />
+      <SummaryCard title="Paquetes" value={packages} hint="combos" />
     </div>
   )
 }

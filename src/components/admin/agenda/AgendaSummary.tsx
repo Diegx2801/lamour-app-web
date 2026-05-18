@@ -6,6 +6,9 @@ type AgendaSummaryProps = {
 }
 
 function AgendaSummary({ reservations }: AgendaSummaryProps) {
+  const activeReservations = reservations.filter(
+    (item) => item.status !== "cancelled"
+  )
   const pending = reservations.filter((item) => item.status === "pending").length
   const confirmed = reservations.filter(
     (item) => item.status === "confirmed"
@@ -13,17 +16,18 @@ function AgendaSummary({ reservations }: AgendaSummaryProps) {
   const completed = reservations.filter(
     (item) => item.status === "completed"
   ).length
-  const pendingBalance = reservations
-    .filter((item) => item.status !== "cancelled")
-    .reduce((acc, item) => acc + Number(item.remaining_amount ?? 0), 0)
+  const pendingBalance = activeReservations.reduce(
+    (acc, item) => acc + Number(item.remaining_amount ?? 0),
+    0
+  )
 
   return (
-    <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      <SummaryCard label="Citas del día" value={String(reservations.length)} />
+    <div className="mb-4 grid grid-cols-2 gap-2 md:mb-5 md:grid-cols-4 md:gap-3">
+      <SummaryCard label="Citas" value={String(activeReservations.length)} />
       <SummaryCard label="Confirmadas" value={String(confirmed)} tone="green" />
       <SummaryCard label="Pendientes" value={String(pending)} tone="amber" />
       <SummaryCard
-        label="Saldos pendientes"
+        label="Saldo"
         value={formatMoney(pendingBalance)}
         tone={pendingBalance > 0 ? "red" : "green"}
         detail={`${completed} completadas`}
@@ -51,12 +55,12 @@ function SummaryCard({
   }
 
   return (
-    <div className={`rounded-3xl border p-4 shadow-sm ${toneClasses[tone]}`}>
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
+    <div className={`rounded-2xl border p-3 shadow-sm md:rounded-3xl md:p-4 ${toneClasses[tone]}`}>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] opacity-60 md:text-xs">
         {label}
       </p>
-      <p className="mt-2 text-2xl font-semibold">{value}</p>
-      {detail ? <p className="mt-1 text-xs opacity-70">{detail}</p> : null}
+      <p className="mt-1 text-xl font-semibold md:mt-2 md:text-2xl">{value}</p>
+      {detail ? <p className="mt-1 text-[11px] opacity-70 md:text-xs">{detail}</p> : null}
     </div>
   )
 }

@@ -9,6 +9,11 @@ import {
 } from "../../features/reservations/api/reservationService"
 import type { Category } from "../../types/service"
 
+type ServicesLoadState = {
+  items: ServiceRow[]
+  loaded: boolean
+}
+
 function toPublicCategories(services: ServiceRow[]): Category[] {
   const grouped = new Map<string, ServiceRow[]>()
 
@@ -43,8 +48,10 @@ function toPublicCategories(services: ServiceRow[]): Category[] {
 
 function ServicesSection() {
   const [activeCategory, setActiveCategory] = useState(0)
-  const [dynamicServices, setDynamicServices] = useState<ServiceRow[]>([])
-  const [loaded, setLoaded] = useState(false)
+  const [servicesState, setServicesState] = useState<ServicesLoadState>({
+    items: [],
+    loaded: false,
+  })
 
   useEffect(() => {
     let active = true
@@ -52,12 +59,11 @@ function ServicesSection() {
     fetchActiveServices()
       .then((services) => {
         if (!active) return
-        setDynamicServices(services)
-        setLoaded(true)
+        setServicesState({ items: services, loaded: true })
       })
       .catch(() => {
         if (!active) return
-        setLoaded(true)
+        setServicesState((current) => ({ ...current, loaded: true }))
       })
 
     return () => {
@@ -66,9 +72,9 @@ function ServicesSection() {
   }, [])
 
   const categories = useMemo(() => {
-    if (dynamicServices.length === 0) return fallbackCategories
-    return toPublicCategories(dynamicServices)
-  }, [dynamicServices])
+    if (servicesState.items.length === 0) return fallbackCategories
+    return toPublicCategories(servicesState.items)
+  }, [servicesState.items])
 
   const handleCategoryClick = (index: number) => {
     setActiveCategory(index)
@@ -125,7 +131,7 @@ function ServicesSection() {
         </div>
       </div>
 
-      {!loaded && (
+      {!servicesState.loaded && (
         <p className="mt-6 text-sm text-stone-500">Cargando servicios...</p>
       )}
 

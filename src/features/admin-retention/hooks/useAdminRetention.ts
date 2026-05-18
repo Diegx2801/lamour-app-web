@@ -23,7 +23,7 @@ function normalizePhone(phone: string | null | undefined) {
   return digits.startsWith("51") ? digits : `51${digits}`
 }
 
-export type RetentionClient = {
+type RetentionClient = {
   clientId: string
   clientName: string
   phone: string

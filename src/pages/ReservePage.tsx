@@ -64,13 +64,7 @@ function ReservePage() {
           <div className="rounded-[1.5rem] bg-white p-4 shadow-sm sm:p-6 md:rounded-[2rem] md:p-8">
             <ReserveProgress step={reservation.step} title={stepTitle} />
 
-            <form
-              className="grid gap-5"
-              onSubmit={(event) => {
-                event.preventDefault()
-                reservation.handleSubmit()
-              }}
-            >
+            <div className="grid gap-5">
               <div className="sticky top-2 z-30 grid grid-cols-[0.45fr_1fr] gap-2 rounded-2xl border border-stone-200 bg-white/95 p-2 shadow-lg backdrop-blur sm:static sm:flex sm:flex-row sm:justify-between sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-0">
                 <button
                   type="button"
@@ -92,7 +86,8 @@ function ReservePage() {
                   </button>
                 ) : (
                   <button
-                    type="submit"
+                    type="button"
+                    onClick={reservation.handleSubmit}
                     disabled={reservation.loading}
                     className="rounded-full bg-stone-950 px-4 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-60 sm:px-6"
                   >
@@ -155,7 +150,7 @@ function ReservePage() {
                   {reservation.error}
                 </div>
               )}
-            </form>
+            </div>
           </div>
 
           <div className="order-first lg:order-none">

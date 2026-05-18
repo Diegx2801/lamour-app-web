@@ -104,6 +104,7 @@ function AdminAgendaPage() {
           onBlock={agenda.handleBlock}
           onUnblock={agenda.handleUnblock}
           onUpdateStatus={agenda.updateStatus}
+          onPaymentRegistered={agenda.refreshAgenda}
         />
       )}
     </div>

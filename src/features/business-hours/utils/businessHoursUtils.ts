@@ -35,7 +35,7 @@ function minutesToTime(totalMinutes: number) {
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`
 }
 
-export function getDayOfWeek(date: string) {
+function getDayOfWeek(date: string) {
   return new Date(`${date}T12:00:00`).getDay()
 }
 

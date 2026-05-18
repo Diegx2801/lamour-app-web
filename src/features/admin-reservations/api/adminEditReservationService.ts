@@ -18,7 +18,7 @@ export type EditReservationService =
     }[]
   | null
 
-export type EditReservationData = {
+type EditReservationData = {
   id: string
   date: string
   time: string

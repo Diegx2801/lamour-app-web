@@ -25,13 +25,13 @@ export function formatMoney(value: number | null | undefined) {
 export function getStatusClasses(status: string) {
   switch (status) {
     case "confirmed":
-      return "border-green-300 bg-green-100 text-green-950"
+      return "border-green-200 bg-green-50 text-green-950"
     case "completed":
-      return "border-blue-300 bg-blue-100 text-blue-950"
+      return "border-blue-200 bg-blue-50 text-blue-950"
     case "cancelled":
-      return "border-red-300 bg-red-100 text-red-950"
+      return "border-red-200 bg-red-50 text-red-950"
     case "pending":
-      return "border-amber-300 bg-amber-100 text-amber-950"
+      return "border-amber-200 bg-amber-50 text-amber-950"
     case "no_show":
       return "border-stone-300 bg-stone-100 text-stone-700"
     default:

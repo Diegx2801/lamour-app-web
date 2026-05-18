@@ -6,7 +6,7 @@ import pestanas1 from "../assets/pestanas1.jpg"
 import pestanas2 from "../assets/pestanas2.jpg"
 import pestanas3 from "../assets/pestanas3.jpg"
 
-export type GalleryItem = {
+type GalleryItem = {
   id: number
   image: string
   title: string

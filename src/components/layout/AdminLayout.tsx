@@ -68,6 +68,11 @@ const navItems: NavItem[] = [
     roles: ["owner"],
   },
   {
+    label: "Métodos pago",
+    to: "/admin/metodos-pago",
+    roles: ["owner"],
+  },
+  {
     label: "Plantillas",
     to: "/admin/plantillas",
     roles: ["owner"],

@@ -19,6 +19,7 @@ type AgendaScheduleGridProps = {
   onBlock: (slot: string) => void
   onUnblock: (slot: string) => void
   onUpdateStatus: (id: string, status: string) => void
+  onPaymentRegistered: () => void
 }
 
 function AgendaScheduleGrid({
@@ -34,10 +35,11 @@ function AgendaScheduleGrid({
   onBlock,
   onUnblock,
   onUpdateStatus,
+  onPaymentRegistered,
 }: AgendaScheduleGridProps) {
   return (
     <div className="overflow-hidden rounded-[1.5rem] border border-stone-200 bg-white shadow-sm md:rounded-3xl">
-      <div className="grid grid-cols-[68px_1fr] border-b border-stone-200 bg-stone-50 sm:grid-cols-[82px_1fr] md:grid-cols-[110px_1fr]">
+      <div className="sticky top-[73px] z-20 grid grid-cols-[64px_1fr] border-b border-stone-200 bg-stone-50/95 backdrop-blur sm:grid-cols-[82px_1fr] md:top-[85px] md:grid-cols-[100px_1fr]">
         <div className="border-r border-stone-200 px-2 py-3 text-xs font-semibold text-stone-600 md:px-4 md:text-sm">
           Hora
         </div>
@@ -56,9 +58,9 @@ function AgendaScheduleGrid({
           return (
             <div
               key={slot}
-              className="grid grid-cols-[68px_1fr] border-b border-stone-100 last:border-b-0 sm:grid-cols-[82px_1fr] md:grid-cols-[110px_1fr]"
+              className="grid grid-cols-[64px_1fr] border-b border-stone-100 last:border-b-0 sm:grid-cols-[82px_1fr] md:grid-cols-[100px_1fr]"
             >
-              <div className="border-r border-stone-100 bg-stone-50/70 px-2 py-4 md:px-4 md:py-5">
+              <div className="border-r border-stone-100 bg-stone-50/70 px-2 py-3 md:px-4 md:py-4">
                 <p className="text-sm font-semibold text-stone-900 md:text-base">
                   {slot}
                 </p>
@@ -75,7 +77,7 @@ function AgendaScheduleGrid({
                 </span>
               </div>
 
-              <div className="min-w-0 px-2 py-3 md:min-h-[110px] md:px-4 md:py-4">
+              <div className="min-w-0 px-2 py-2 md:min-h-[96px] md:px-4 md:py-3">
                 {isFullDayBlocked ? (
                   <BlockedBox label="Día bloqueado" />
                 ) : isBlocked ? (
@@ -88,12 +90,14 @@ function AgendaScheduleGrid({
                     <ReservationGrid
                       reservations={slotReservations}
                       onUpdateStatus={onUpdateStatus}
+                      onPaymentRegistered={onPaymentRegistered}
                     />
                   ) : (
                     <LashistColumns
                       lashists={lashists}
                       reservations={slotReservations}
                       onUpdateStatus={onUpdateStatus}
+                      onPaymentRegistered={onPaymentRegistered}
                     />
                   )
                 ) : (
@@ -114,17 +118,20 @@ function AgendaScheduleGrid({
 function ReservationGrid({
   reservations,
   onUpdateStatus,
+  onPaymentRegistered,
 }: {
   reservations: AgendaReservation[]
   onUpdateStatus: (id: string, status: string) => void
+  onPaymentRegistered: () => void
 }) {
   return (
-    <div className="grid gap-3 lg:grid-cols-2">
+    <div className="grid gap-2 lg:grid-cols-2">
       {reservations.map((reservation) => (
         <AgendaReservationCard
           key={reservation.id}
           reservation={reservation}
           onUpdateStatus={onUpdateStatus}
+          onPaymentRegistered={onPaymentRegistered}
         />
       ))}
     </div>
@@ -135,10 +142,12 @@ function LashistColumns({
   lashists,
   reservations,
   onUpdateStatus,
+  onPaymentRegistered,
 }: {
   lashists: AgendaLashistRow[]
   reservations: AgendaReservation[]
   onUpdateStatus: (id: string, status: string) => void
+  onPaymentRegistered: () => void
 }) {
   const columns = [
     { id: "__unassigned", name: "Sin asignar" },
@@ -157,7 +166,7 @@ function LashistColumns({
         return (
           <div
             key={column.id}
-            className="min-h-24 rounded-2xl border border-stone-200 bg-stone-50/70 p-2"
+            className="min-h-20 rounded-2xl border border-stone-200 bg-stone-50/70 p-2"
           >
             <div className="mb-2 flex items-center justify-between gap-2 px-1">
               <p className="text-xs font-semibold text-stone-700">
@@ -179,6 +188,7 @@ function LashistColumns({
                     key={reservation.id}
                     reservation={reservation}
                     onUpdateStatus={onUpdateStatus}
+                    onPaymentRegistered={onPaymentRegistered}
                   />
                 ))}
               </div>
@@ -224,7 +234,7 @@ function AvailableTimeSlot({
   onBlock: () => void
 }) {
   return (
-    <div className="flex min-h-[72px] flex-col gap-3 rounded-2xl border border-dashed border-stone-200 bg-stone-50/60 px-4 py-3 md:min-h-[80px] md:flex-row md:items-center md:justify-between">
+    <div className="flex min-h-[58px] flex-col gap-3 rounded-2xl border border-dashed border-stone-200 bg-stone-50/60 px-4 py-3 md:min-h-[64px] md:flex-row md:items-center md:justify-between">
       <p className="text-sm font-medium text-stone-400">Disponible</p>
 
       {canManageBlocks && (
